@@ -119,4 +119,138 @@
 <script src="config.js"></script>
 <script src="app.js"></script>
 </body>
+  
+<style>
+  #fz-opening-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(0, 0, 0, 0.86);
+    backdrop-filter: blur(6px);
+  }
+
+  #fz-opening-overlay[hidden] {
+    display: none;
+  }
+
+  #fz-opening-popup {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    padding: 34px 24px;
+    text-align: center;
+    color: #f4f4ed;
+    background: #151a14;
+    border: 1px solid #a5c957;
+    box-shadow: 0 20px 70px #000;
+    font-family: Arial, sans-serif;
+  }
+
+  #fz-opening-popup .fz-label {
+    color: #a5c957;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 4px;
+  }
+
+  #fz-opening-popup h2 {
+    margin: 20px 0 12px;
+    color: #d3f27b;
+    font-size: clamp(32px, 8vw, 48px);
+    line-height: 1;
+    font-weight: 900;
+  }
+
+  #fz-opening-popup p {
+    color: #d0d4ca;
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  #fz-opening-popup .fz-channel {
+    display: block;
+    margin-top: 24px;
+    padding: 15px 12px;
+    background: #a5c957;
+    color: #111710;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 1px;
+  }
+
+  #fz-opening-popup .fz-channel:hover {
+    background: #c5e77b;
+  }
+
+  #fz-opening-popup .fz-close {
+    margin-top: 18px;
+    padding: 10px 18px;
+    color: #f4f4ed;
+    background: transparent;
+    border: 1px solid #555d50;
+    cursor: pointer;
+    font-size: 13px;
+  }
+
+  #fz-opening-popup .fz-close:hover {
+    border-color: #a5c957;
+  }
+</style>
+
+<div id="fz-opening-overlay">
+  <div id="fz-opening-popup"
+       role="dialog"
+       aria-modal="true"
+       aria-labelledby="fz-opening-title">
+
+    <div class="fz-label">FIELDZERO // IMBULGODA</div>
+
+    <h2 id="fz-opening-title">OPENING<br>SOON</h2>
+
+    <p>
+      THE FIELD IS BEING PREPARED.
+    </p>
+
+    <p>
+      Follow our WhatsApp Channel for arena
+      opening announcements, upcoming events
+      and community updates.
+    </p>
+
+    <a class="fz-channel"
+       href="https://whatsapp.com/channel/0029VbEF8kkDOQIPZOnXk00e"
+       target="_blank"
+       rel="noopener noreferrer">
+      FOLLOW OUR WHATSAPP CHANNEL ↗
+    </a>
+
+    <button class="fz-close" type="button"
+            id="fz-opening-close">
+      CONTINUE TO WEBSITE ↓
+    </button>
+
+    <p style="font-size:11px; margin-bottom:0;">
+      PLAY SMART. PLAY FAIR. PLAY TOGETHER.
+    </p>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var overlay = document.getElementById('fz-opening-overlay');
+    var closeButton = document.getElementById('fz-opening-close');
+
+    if (overlay && closeButton) {
+      closeButton.addEventListener('click', function () {
+        overlay.hidden = true;
+      });
+    }
+  })();
+</script>
+
 </html>

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111710">
+  <meta name="description" content="FIELDZERO — outdoor gel blaster sessions, squads and tournaments in Imbulgoda, Sri Lanka.">
+  <title>FIELDZERO — Gel Blaster Community</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="#home" aria-label="FIELDZERO home"><span class="brand-mark">FZ</span><span><b>FIELD<span>ZERO</span></b><small>GEL BLASTER COMMUNITY</small></span></a>
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+  <nav id="mainNav"><a href="#modes">GAME MODES</a><a href="#roster">OPERATORS</a><a href="#teams">SQUADS</a><a href="#events">EVENTS</a><a href="#book">BOOK A GAME</a><a class="nav-cta" href="#join">JOIN THE ROSTER ↗</a></nav>
+</header>
+<main>
+  <section class="hero" id="home">
+    <div class="hero-image"></div><div class="hero-shade"></div>
+    <div class="hero-content">
+      <div class="eyebrow"><span class="live-dot"></span> IMBULGODA, SRI LANKA <i>/</i> OUTDOOR FIELD</div>
+      <h1>OWN THE<br><em>FIELD.</em></h1>
+      <p class="hero-copy">Find your squad. Build your callsign. Compete for the top spot. A new kind of outdoor gel blaster community starts here.</p>
+      <div class="hero-actions"><a class="button button-lime" href="#join">REQUEST ACCESS ↗</a><a class="button button-ghost" href="#modes">EXPLORE GAME MODES ↓</a></div>
+      <div class="hero-note"><span class="note-line"></span><span>PLAY SMART. PLAY FAIR. PLAY TOGETHER.</span></div>
+    </div>
+    <div class="hero-stamp"><span>FZ</span><small>FIELD<br>DIVISION</small><b>01</b></div>
+    <div class="hero-bottom"><span>COMMUNITY // 001</span><span>EST. 2026</span><span>READY WHEN YOU ARE ↘</span></div>
+  </section>
+  <div class="ticker"><div>TACTICS <b>✳</b> TEAMWORK <b>✳</b> RESPECT <b>✳</b> COMPETITION <b>✳</b> COMMUNITY <b>✳</b> TACTICS <b>✳</b> TEAMWORK <b>✳</b> RESPECT <b>✳</b></div></div>
+
+  <section class="section" id="modes">
+    <div class="section-kicker">01 / THE FIELD</div>
+    <div class="section-heading"><h2>MORE THAN<br><em>A GAME.</em></h2><p>Drop into a session, find your play style, and build your name one match at a time. From first-timers to competitive squads, everyone earns their place.</p></div>
+    <div class="mode-grid">
+      <article class="mode-card mode-featured"><div class="mode-number">MODE / 01</div><div class="mode-symbol">◉</div><h3>TEAM<br>DEATHMATCH</h3><p>Fast rounds. Clear objectives. Every player counts.</p><span class="mode-tag">TEAM PLAY</span></article>
+      <article class="mode-card"><div class="mode-number">MODE / 02</div><div class="mode-symbol">⚑</div><h3>CAPTURE<br>THE FLAG</h3><p>Coordinate your squad. Secure the objective. Bring it home.</p><span class="mode-tag">OBJECTIVE</span></article>
+      <article class="mode-card"><div class="mode-number">MODE / 03</div><div class="mode-symbol">▣</div><h3>KING OF<br>THE HILL</h3><p>Hold the zone, defend your position, and outlast the opposition.</p><span class="mode-tag">CONTROL</span></article>
+      <article class="mode-card"><div class="mode-number">MODE / 04</div><div class="mode-symbol">⌁</div><h3>ELIMINATION</h3><p>Limited lives. Team discipline. Every decision matters.</p><span class="mode-tag">COMPETITIVE</span></article>
+    </div>
+  </section>
+
+  <section class="dark-section" id="roster">
+    <div class="section">
+      <div class="section-kicker">02 / COMMUNITY INTELLIGENCE</div>
+      <div class="section-heading"><h2>KNOW YOUR<br><em>OPERATORS.</em></h2><p>Approved members only. Public listings use callsigns, keeping real names and phone numbers private.</p></div>
+      <div class="toolbar"><label class="searchbox"><span>⌕</span><input id="rosterSearch" type="search" placeholder="Search callsigns…" aria-label="Search callsigns"></label><span class="counter" id="rosterCount">LOADING ROSTER…</span></div>
+      <div id="rosterGrid" class="roster-grid"><div class="empty-state">Connecting to the community database…</div></div>
+    </div>
+  </section>
+
+  <section class="section" id="teams">
+    <div class="section-kicker">03 / SQUAD REGISTER</div>
+    <div class="section-heading"><h2>EIGHT PLAYERS.<br><em>ONE SQUAD.</em></h2><p>Squads are built around eight active roster slots. Team points and ranks are maintained by the community admin.</p></div>
+    <div id="teamsGrid" class="teams-grid"><div class="empty-state">Loading squads…</div></div>
+  </section>
+
+  <section class="events-section" id="events">
+    <div class="section">
+      <div class="section-kicker">04 / NEXT DEPLOYMENT</div>
+      <div class="section-heading"><h2>PLAY DAYS.<br><em>TOURNAMENTS.</em></h2><p>From your first session to organised team competition, keep an eye on upcoming field events.</p></div>
+      <div id="eventsGrid" class="events-grid"><div class="empty-state">Loading events…</div></div>
+      <div class="booking-panel"><div><span class="eyebrow">BRING YOUR SQUAD</span><h3>YOUR NEXT MATCH<br>STARTS HERE.</h3></div><a class="button button-lime" href="#book">BOOK A SESSION ↗</a></div>
+    </div>
+  </section>
+
+  <section class="section" id="book">
+    <div class="section-kicker">05 / RESERVE YOUR SLOT</div>
+    <div class="section-heading"><h2>BOOK IN.<br><em>LOCK ON.</em></h2><p>Request a place in an announced session or tournament. Your booking remains pending until the organiser confirms it. No online payment is collected by this starter site.</p></div>
+    <form id="bookingForm" class="registration-form booking-form">
+      <div class="form-top"><span>SESSION / TOURNAMENT REQUEST</span><span>FZ / BOOK</span></div>
+      <div class="form-grid">
+        <label class="field full">EVENT <select name="eventId" id="bookingEvent" required><option value="">Loading events…</option></select></label>
+        <label class="field">REAL NAME <input name="realName" autocomplete="name" maxlength="100" required></label>
+        <label class="field">CALLSIGN <input name="callsign" maxlength="24" required></label>
+        <label class="field">WHATSAPP / MOBILE <input name="mobile" type="tel" autocomplete="tel" maxlength="24" required placeholder="+94 7X XXX XXXX"></label>
+        <label class="field">PLAYERS IN YOUR REQUEST <select name="playerCount"><option value="1">1 player</option><option value="2">2 players</option><option value="3">3 players</option><option value="4">4 players</option><option value="5">5 players</option><option value="6">6 players</option><option value="7">7 players</option><option value="8">8 players (full squad)</option></select></label>
+        <label class="field full">NOTES (OPTIONAL) <input name="notes" maxlength="500" placeholder="Rental blaster needed, squad name, or questions"></label>
+        <label class="consent full"><input type="checkbox" name="bookingConsent" required><span>I agree my details may be used to manage this booking request and contact me about confirmation. My details are not displayed publicly.</span></label>
+      </div>
+      <button class="button button-lime submit-button" id="submitBooking" type="submit">REQUEST BOOKING <span>↗</span></button>
+      <div class="form-status" id="bookingStatus" role="status" aria-live="polite"></div>
+    </form>
+  </section>
+
+  <section class="join-section" id="join">
+    <div class="join-backdrop">FIELDZERO</div>
+    <div class="section join-layout">
+      <div class="join-copy"><div class="section-kicker">06 / REQUEST ACCESS</div><h2>CHOOSE YOUR<br><em>CALLSIGN.</em></h2><p>Submit your details for review. Once approved, your callsign appears on the public roster. Your real name and mobile number stay private.</p>
+        <ul class="join-points"><li><span>01</span> Submit your player application</li><li><span>02</span> Wait for admin approval</li><li><span>03</span> Join the roster and find your squad</li></ul>
+        <div class="privacy-note"><span>◆</span><div><b>YOUR DETAILS STAY PRIVATE</b><small>Only your approved callsign is shown publicly. Registration does not automatically add you to WhatsApp groups.</small></div></div>
+      </div>
+      <form id="registrationForm" class="registration-form">
+        <div class="form-top"><span>PLAYER APPLICATION</span><span>FZ / 001</span></div>
+        <div class="form-grid">
+          <label class="field full">REAL NAME <input name="realName" autocomplete="name" maxlength="100" required placeholder="Name for admin review"></label>
+          <label class="field full">PREFERRED CALLSIGN <input name="callsign" maxlength="24" pattern="[A-Za-z0-9 _-]{2,24}" required placeholder="e.g. GHOST-07"><small>2–24 letters, numbers, spaces, dashes or underscores.</small></label>
+          <label class="field full">WHATSAPP / MOBILE <input name="mobile" type="tel" autocomplete="tel" maxlength="24" required placeholder="+94 7X XXX XXXX"><small>Used only to contact you about your application and community access.</small></label>
+          <label class="field">PRIMARY BLASTER <select name="gun" required><option value="Electric M4">Electric M4</option><option value="Pistol">Pistol</option><option value="Other">Other</option><option value="Need a rental">I need a rental blaster</option></select></label>
+          <label class="field">TEAM PREFERENCE <select name="teamPreference" required><option value="No team yet">No team yet</option><option value="Request existing team">Request an existing team</option><option value="Open to assignment">Open to assignment</option></select></label>
+          <label class="field full">PLAY STYLE <select name="playStyle" required><option value="Both">Casual games + tournaments</option><option value="Casual">Casual sessions</option><option value="Competitive">Competitive / tournaments</option></select></label>
+          <label class="consent full"><input type="checkbox" name="consent" required><span>I agree that FIELDZERO may use these details to review my application and contact me about community participation. I understand my real name and mobile number will not appear on the public roster.</span></label>
+        </div>
+        <button class="button button-lime submit-button" id="submitApplication" type="submit">SUBMIT APPLICATION <span>↗</span></button>
+        <div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
+        <p class="form-foot">APPLICATIONS ARE REVIEWED BY AN ADMIN. DO NOT ENTER SENSITIVE OR UNNECESSARY PERSONAL INFORMATION.</p>
+      </form>
+    </div>
+  </section>
+</main>
+<footer class="site-footer"><a class="brand" href="#home"><span class="brand-mark">FZ</span><span><b>FIELD<span>ZERO</span></b><small>GEL BLASTER COMMUNITY</small></span></a><div class="footer-center">IMBULGODA, SRI LANKA<br><small>PLAY FAIR. RESPECT THE FIELD.</small></div><div class="footer-links" id="footerLinks"><a href="#join">JOIN COMMUNITY</a></div><div class="footer-bottom"><span>© <span id="year"></span> FIELDZERO COMMUNITY</span><span>OUTDOOR GEL BLASTER SPORT</span></div></footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

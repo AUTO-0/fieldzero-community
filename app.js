@@ -85,17 +85,23 @@
 
   async function loadTeams() {
     if (!db) return;
-    const { data: teams, error } = await db.from("public_teams").select("id,name,team_rank,points,member_count").order("team_rank", {ascending:true});
-    if (error) { $("#teamsGrid").innerHTML = '<div class="empty-state">Could not load squads right now.</div>'; return; }
-    if (!teams?.length) { $("#teamsGrid").innerHTML = '<div class="empty-state">No squads published yet. Check back soon.</div>'; return; }
+    const grid = $("#teamsGrid");
+    const { data: teams, error } = await db.from("public_teams").select("id,name,team_rank,points,member_count").order("team_rank", {ascending:true}).order("name");
+    if (error) { grid.innerHTML = '<div class="empty-state">Squads could not load. The site owner should check the FIELDZERO V6 database migration and public view permissions.</div>'; return; }
+    if (!teams?.length) { grid.innerHTML = '<div class="empty-state">No public squads yet. An admin can create a squad and assign at least one approved player. Squads can recruit up to five operators.</div>'; return; }
     const ids = teams.map(t => t.id);
-    const { data: members } = await db.from("public_team_roster").select("team_id,callsign").in("team_id", ids).order("callsign");
-    $("#teamsGrid").innerHTML = teams.map(t => {
+    const { data: members, error: memberError } = await db.from("public_team_roster").select("team_id,callsign,team_leader").in("team_id", ids).order("callsign");
+    if (memberError) { grid.innerHTML = '<div class="empty-state">Squads loaded, but member rosters could not be read. Check the V6 public_team_roster view.</div>'; return; }
+    grid.innerHTML = teams.map((t, i) => {
       const list = (members || []).filter(m => m.team_id === t.id);
-      const slots = Array.from({length:5}, (_,i) => list[i] ? `<div class="team-player"><span>◈</span><b>${escapeHtml(list[i].callsign)}</b></div>` : `<div class="team-player slot"><span>＋</span><span>OPEN SLOT ${String(i+1).padStart(2,"0")}</span></div>`).join("");
-      const count = Math.min(Number(t.member_count || list.length), 5);
-      return `<article class="team-card"><div class="team-head"><div class="team-badge">${escapeHtml((t.name || "FZ").slice(0,2).toUpperCase())}</div><div class="team-title"><h3>${escapeHtml(t.name)}</h3><p>${count}/5 ACTIVE PLAYERS · ${Number(t.points || 0)} PTS</p></div><div class="team-rank">#${String(t.team_rank || "—").padStart(2,"0")}</div></div><div class="team-meter"><span style="width:${count/5*100}%"></span></div><div class="team-roster">${slots}</div></article>`;
+      const leader = list.find(m => m.team_leader);
+      const slots = Array.from({length:5}, (_,n) => list[n] ? `<div class="team-player ${list[n].team_leader ? 'team-captain' : ''}"><span>${list[n].team_leader ? '★' : '◈'}</span><b>${escapeHtml(list[n].callsign)}</b>${list[n].team_leader ? '<small>CAPTAIN</small>' : ''}</div>` : `<div class="team-player slot"><span>＋</span><span>OPEN SLOT ${String(n+1).padStart(2,"0")}</span></div>`).join("");
+      const count = Math.min(Number(t.member_count ?? list.length), 5);
+      return `<article class="team-card"><div class="team-head"><div class="team-badge">${escapeHtml((t.name || "FZ").slice(0,2).toUpperCase())}</div><div class="team-title"><h3>${escapeHtml(t.name)}</h3><p>${count}/5 OPERATORS · ${Number(t.points || 0)} PTS</p>${leader ? `<small class="team-leader-label">★ CAPTAIN: ${escapeHtml(leader.callsign)}</small>` : '<small class="team-leader-label">CAPTAIN TO BE ANNOUNCED</small>'}</div><div class="team-rank">#${String(t.team_rank || i+1).padStart(2,"0")}</div></div><div class="team-meter"><span style="width:${count/5*100}%"></span></div><div class="team-roster">${slots}</div><div class="team-card-footer"><span>${count === 5 ? 'SQUAD FULL' : `${5-count} OPEN ${5-count===1?'SLOT':'SLOTS'}`}</span><a href="#challenges" class="team-challenge-link" data-challenge-squad="${escapeAttr(t.id)}">CHALLENGE / VIEW RIVALS ↗</a></div></article>`;
     }).join("");
+    grid.querySelectorAll('[data-challenge-squad]').forEach(link => link.addEventListener('click', () => {
+      const select = $('#challengingTeam'); if (select) select.value = link.dataset.challengeSquad;
+    }));
   }
   let publicEvents = [];
   async function loadEvents() {
@@ -197,9 +203,18 @@
   const specialToggle=$("#specialRequest"); if(specialToggle) specialToggle.addEventListener("change",()=>{const slot=$("#arenaStartTime");slot.required=specialToggle.value!=="true";});
   const arenaForm=$("#arenaBookingForm"); if(arenaForm) arenaForm.addEventListener('submit',async e=>{e.preventDefault();const fd=new FormData(arenaForm),el=$("#arenaBookingStatus");if(!db){status(el,'Database is not configured yet.','error');return}const h=fd.get('startTime'),special=fd.get('specialRequest')==='true',specialTime=String(fd.get('specialTime')||'');if(!h&&!special){status(el,'Choose an available start time or select special booking request.','error');return}const date=dateInput.value;const parts=(special&&specialTime)?specialTime.split(':').map(Number):[Number(h||15),0];const start=slDateTime(date,parts[0],parts[1]||0);const end=new Date(start.getTime()+Number($("#arenaDuration").value||1)*3600000);if(!special&&!openingHours(date).includes(Number(h))){status(el,'That start time is outside regular opening hours. Select special request instead.','error');return}const payload={real_name:String(fd.get('realName')).trim(),callsign:String(fd.get('callsign')).trim(),mobile:String(fd.get('mobile')).trim(),booking_start:start.toISOString(),booking_end:end.toISOString(),player_count:Number(fd.get('playerCount')),special_request:special,notes:[fd.get('experience') ? `Experience: ${String(fd.get('experience')).trim()}` : '', String(fd.get('notes')||'').trim()].filter(Boolean).join(' | ').slice(0,700),privacy_consent:true};const btn=$("#submitArenaBooking");btn.disabled=true;const {error}=await db.from('arena_bookings').insert(payload);btn.disabled=false;if(error){status(el,error.message?.includes('overlaps')?'That time is already booked. Please choose another slot.':'Could not submit booking. Check database migration and try again.','error');return}arenaForm.reset();dateInput.value=date;await loadArenaSlots();status(el,'Request received. Your slot is not confirmed until the admin approves it.','success');});
   const profileForm=$("#profileSearchForm");if(profileForm)profileForm.addEventListener('submit',async e=>{e.preventDefault();const box=$("#playerProfile"),call=$("#profileCallsign").value.trim();if(!db){box.innerHTML='<div class="empty-state">Database is not configured.</div>';return}const {data,error}=await db.from('public_player_profiles').select('callsign,player_rank,player_points,playing_hours,matches_played,wins,preferred_role,joined_on,win_rate,team_name').ilike('callsign',call).maybeSingle();if(error||!data){box.innerHTML='<div class="empty-state">No approved player profile found for that callsign.</div>';return}box.innerHTML=`<article class="profile-card"><div class="profile-call">${escapeHtml(data.callsign)}</div><div class="profile-sub">${escapeHtml(data.team_name||'INDEPENDENT')} · ${escapeHtml(data.player_rank)}</div><div class="profile-stats"><div><b>${Number(data.player_points)}</b><span>POINTS</span></div><div><b>${Number(data.playing_hours).toFixed(1)}</b><span>PLAY HOURS</span></div><div><b>${Number(data.matches_played)}</b><span>MATCHES</span></div><div><b>${Number(data.wins)}</b><span>WINS</span></div><div><b>${Number(data.win_rate)}%</b><span>WIN RATE</span></div><div><b>${escapeHtml(data.preferred_role)}</b><span>ROLE</span></div></div><small>Roster since ${escapeHtml(data.joined_on||'—')} · Stats maintained by FIELDZERO admin.</small></article>`;});
-  async function loadChallengeTeams(){if(!db)return;const {data,error}=await db.from('public_challenge_teams').select('id,name,team_rank,points').order('team_rank');if(error)return;['leaderTeam','challengingTeam','challengedTeam'].forEach(id=>{const el=$('#'+id);if(!el)return;el.innerHTML='<option value="">Choose a squad…</option>'+(data||[]).map(t=>`<option value="${t.id}">${escapeHtml(t.name)} · #${t.team_rank}</option>`).join('')});}
+  async function loadChallengeTeams(){
+    const ids=['leaderTeam','challengingTeam','challengedTeam'];
+    if(!db){ids.forEach(id=>{const el=$('#'+id);if(el)el.innerHTML='<option value="">Database unavailable</option>'});return}
+    const {data,error}=await db.from('public_challenge_teams').select('id,name,team_rank,points,member_count').order('team_rank').order('name');
+    if(error){ids.forEach(id=>{const el=$('#'+id);if(el)el.innerHTML='<option value="">Squads unavailable — check database migration</option>'});const help=$('#challengeTeamHelp');if(help)help.textContent='Squad list failed to load. The site owner should apply upgrade-v6.sql and check public view permissions.';return}
+    const rows=data||[];
+    ids.forEach(id=>{const el=$('#'+id);if(!el)return;const previous=el.value;el.innerHTML='<option value="">'+(rows.length?'Choose a squad…':'No public squads yet — ask admin to assign approved players')+'</option>'+rows.map(t=>`<option value="${escapeAttr(t.id)}">${escapeHtml(t.name)} · ${Number(t.member_count||0)}/5 · #${Number(t.team_rank||0)}</option>`).join('');if(rows.some(t=>t.id===previous))el.value=previous;});
+    const help=$('#challengeTeamHelp');if(help)help.textContent=rows.length>=2?'Choose two different active squads. Squads with 1–5 players can be challenged.':`Currently ${rows.length} public squad${rows.length===1?'':'s'}. At least two squads with approved members are needed for a challenge.`;
+  }
   if(db)loadChallengeTeams();
   const leaderForm=$('#leaderForm');if(leaderForm)leaderForm.addEventListener('submit',async e=>{e.preventDefault();const fd=new FormData(leaderForm),el=$('#leaderStatus');if(!db){status(el,'Database is not configured.','error');return}const {error}=await db.from('team_leader_requests').insert({team_id:fd.get('teamId'),callsign:String(fd.get('callsign')).trim(),mobile:String(fd.get('mobile')).trim(),email:String(fd.get('email')||'').trim()});status(el,error?'Could not submit leader registration. Check the V2 database migration.':'Leader registration submitted for admin review.',error?'error':'success');if(!error)leaderForm.reset();});
+  $('#challengingTeam')?.addEventListener('change',()=>{const own=$('#challengingTeam').value,opponent=$('#challengedTeam');if(opponent&&opponent.value===own)opponent.value='';if(opponent)Array.from(opponent.options).forEach(o=>{o.disabled=!!own&&o.value===own;});});
   const challengeForm=$('#challengeForm');if(challengeForm)challengeForm.addEventListener('submit',async e=>{e.preventDefault();const fd=new FormData(challengeForm),el=$('#challengeStatus');if(!db){status(el,'Database is not configured.','error');return}if(fd.get('challengingTeam')===fd.get('challengedTeam')){status(el,'Choose two different squads.','error');return}const {error}=await db.from('team_challenges').insert({challenging_team_id:fd.get('challengingTeam'),challenged_team_id:fd.get('challengedTeam'),leader_callsign:String(fd.get('leaderCallsign')).trim(),leader_mobile:String(fd.get('leaderMobile')).trim(),proposed_format:fd.get('format'),proposed_date:fd.get('proposedDate')||null,message:String(fd.get('message')||'').trim()});status(el,error?'Could not submit challenge. Check V2 migration and choose an active squad.':'Challenge sent to FIELDZERO admin for review. The admin must contact the challenged team leader; this starter does not send automatic WhatsApp/push alerts.',error?'error':'success');if(!error)challengeForm.reset();});
 
   if (!db) notConfigured();
@@ -222,4 +237,28 @@
   }
   document.querySelectorAll("[data-board]").forEach(b=>b.addEventListener("click",()=>loadLeaderboard(b.dataset.board)));
   loadLeaderboard();
+
+  // Public, immediately published feedback. Display names are optional; no contact details are collected.
+  const feedbackForm=$('#feedbackForm');
+  async function loadFeedback(){
+    const list=$('#feedbackList'), summary=$('#feedbackSummary'); if(!list||!summary)return;
+    if(!db){list.innerHTML='<div class="empty-state">Feedback will appear after the site database is configured.</div>';summary.textContent='DATABASE OFFLINE';return;}
+    const {data,error}=await db.from('public_feedback').select('id,display_name,rating,comment,created_at').order('created_at',{ascending:false}).limit(12);
+    if(error){list.innerHTML='<div class="empty-state">Feedback could not load. The site owner should apply upgrade-v6.sql.</div>';summary.textContent='UNAVAILABLE';return;}
+    const rows=data||[]; const avg=rows.length?rows.reduce((a,r)=>a+Number(r.rating||0),0)/rows.length:0;
+    summary.textContent=rows.length?`★ ${avg.toFixed(1)} / 5 · ${rows.length} RECENT`:'NO RATINGS YET';
+    list.innerHTML=rows.length?rows.map(r=>`<article class="feedback-card"><div class="feedback-card-top"><b>${escapeHtml(r.display_name||'FIELDZERO PLAYER')}</b><span class="feedback-stars" aria-label="${Number(r.rating)} out of 5 stars">${'★'.repeat(Math.max(0,Math.min(5,Number(r.rating)||0)))}${'☆'.repeat(5-Math.max(0,Math.min(5,Number(r.rating)||0)))}</span></div><p>${escapeHtml(r.comment)}</p><small>${new Date(r.created_at).toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'})}</small></article>`).join(''):'<div class="empty-state">No feedback yet. Be the first player to leave an after-action report.</div>';
+  }
+  document.querySelectorAll('.star-picker input[type="radio"]').forEach(radio=>radio.addEventListener('change',()=>{const group=radio.closest('.star-picker');group?.querySelectorAll('label').forEach(label=>label.classList.toggle('selected',Number(label.querySelector('input').value)<=Number(radio.value)));}));
+  if(feedbackForm)feedbackForm.addEventListener('submit',async e=>{
+    e.preventDefault();const el=$('#feedbackStatus'),button=$('#submitFeedback'),fd=new FormData(feedbackForm);
+    if(!db){status(el,'Feedback is unavailable until the site database is configured.','error');return;}
+    const rating=Number(fd.get('rating')),comment=String(fd.get('comment')||'').trim(),display_name=String(fd.get('displayName')||'').trim().slice(0,32);
+    if(!(rating>=1&&rating<=5)){status(el,'Please select a star rating from 1 to 5.','error');return;}
+    if(comment.length<5){status(el,'Please add a little more detail (at least 5 characters).','error');return;}
+    button.disabled=true;const {error}=await db.from('feedback').insert({display_name:display_name||'FIELDZERO PLAYER',rating,comment,published:true});button.disabled=false;
+    if(error){status(el,'Could not publish feedback. The site owner should apply upgrade-v6.sql and check database permissions.','error');return;}
+    feedbackForm.reset();document.querySelectorAll('.star-picker label').forEach(label=>label.classList.remove('selected'));status(el,'Thanks — your feedback is now published. Please keep comments respectful.','success');await loadFeedback();
+  });
+  loadFeedback();
 })();

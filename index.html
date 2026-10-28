@@ -15,7 +15,7 @@
 <header class="site-header">
   <a class="brand" href="#home" aria-label="FIELDZERO home"><span class="brand-mark">FZ</span><span><b>FIELD<span>ZERO</span></b><small>GEL BLASTER COMMUNITY</small></span></a>
   <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
-  <nav id="mainNav"><a href="#modes">GAME MODES</a><a href="#packages">EXPERIENCES</a><a href="#calendar">BOOKING</a><a href="#events">EVENTS</a><a href="#teams">SQUADS</a><a href="#leaderboards">RANKINGS</a><a href="#feedback">FEEDBACK</a><a href="#playerlookup">PLAYER PROFILE</a><a href="#faq">FAQ</a><a class="nav-cta" href="#join">JOIN FIELDZERO ↗</a></nav>
+  <nav id="mainNav"><a href="#modes">GAME MODES</a><a href="#packages">EXPERIENCES</a><a href="#calendar">BOOKING</a><a href="#events">EVENTS</a><a href="#gallery">GALLERY</a><a href="#teams">SQUADS</a><a href="#leaderboards">RANKINGS</a><a href="#feedback">FEEDBACK</a><a href="#playerlookup">PLAYER PROFILE</a><a href="#faq">FAQ</a><a class="nav-cta" href="#join">JOIN FIELDZERO ↗</a></nav>
 </header>
 <main>
   <section class="hero" id="home">
@@ -75,6 +75,15 @@
   </section>
 
   <section class="section process-section" id="how-it-works"><div class="section-kicker">06 / YOUR FIRST DEPLOYMENT</div><div class="section-heading"><h2>FROM FIRST CLICK<br><em>TO FIELD READY.</em></h2><p>A simple flow for new players and returning squads. Booking requests are not confirmed until FIELDZERO contacts you.</p></div><div class="process-grid"><article><span>01</span><h3>CHOOSE YOUR EXPERIENCE</h3><p>Pick solo target practice, a quick skirmish, a squad session or a private event.</p></article><article><span>02</span><h3>REQUEST A SLOT</h3><p>Use the calendar to select a date and available time, or request a special booking.</p></article><article><span>03</span><h3>CONFIRM WITH FIELDZERO</h3><p>Wait for an organiser to confirm timing, player count, equipment and final price.</p></article><article><span>04</span><h3>BRIEF. PLAY. PROGRESS.</h3><p>Follow the safety briefing, play the mission, and track approved results on your profile.</p></article></div></section>
+
+  <section class="section gallery-section" id="gallery">
+    <div class="section-kicker">07 / AFTER-ACTION ARCHIVE</div>
+    <div class="section-heading"><h2>MOMENTS FROM<br><em>THE FIELD.</em></h2><p>Session highlights, squad photos and the moments worth remembering. Open any image to view it full screen.</p></div>
+    <div class="gallery-toolbar"><span id="galleryCount" class="counter">LOADING SESSION PHOTOS…</span><span class="gallery-note">REAL SESSIONS. REAL OPERATORS.</span></div>
+    <div id="galleryGrid" class="gallery-grid"><div class="empty-state">Loading session gallery…</div></div>
+  </section>
+  <div class="photo-lightbox" id="photoLightbox" hidden role="dialog" aria-modal="true" aria-label="Photo viewer"><button type="button" class="lightbox-close" id="lightboxClose" aria-label="Close photo viewer">×</button><button type="button" class="lightbox-arrow lightbox-prev" id="lightboxPrev" aria-label="Previous photo">‹</button><figure><img id="lightboxImage" alt="FIELDZERO session photo"><figcaption id="lightboxCaption"></figcaption></figure><button type="button" class="lightbox-arrow lightbox-next" id="lightboxNext" aria-label="Next photo">›</button></div>
+  <div class="featured-popup" id="featuredPopup" hidden role="dialog" aria-modal="true" aria-label="Featured FIELDZERO moment"><div class="featured-popup-card"><button type="button" class="lightbox-close" id="featuredPopupClose" aria-label="Close featured photo">×</button><span class="section-kicker">FIELDZERO / FEATURED MOMENT</span><img id="featuredPopupImage" alt="Featured FIELDZERO session highlight"><div class="featured-popup-copy"><h2 id="featuredPopupTitle">FROM THE FIELD</h2><p id="featuredPopupSession"></p><button type="button" class="button button-lime" id="featuredPopupView">VIEW GALLERY ↗</button></div></div></div>
 
   <section class="events-section" id="events">
     <div class="section">

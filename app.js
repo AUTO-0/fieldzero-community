@@ -261,4 +261,36 @@
     feedbackForm.reset();document.querySelectorAll('.star-picker label').forEach(label=>label.classList.remove('selected'));status(el,'Thanks — your feedback is now published. Please keep comments respectful.','success');await loadFeedback();
   });
   loadFeedback();
+
+  // Session gallery: admin-uploaded public photos with lightbox and optional featured pop-up.
+  const galleryGrid=$('#galleryGrid'), galleryCount=$('#galleryCount'), lightbox=$('#photoLightbox');
+  let galleryPhotos=[], lightboxIndex=0;
+  function renderGallery(){
+    if(!galleryGrid||!galleryCount)return;
+    galleryCount.textContent=`${galleryPhotos.length} SESSION PHOTO${galleryPhotos.length===1?'':'S'}`;
+    if(!galleryPhotos.length){galleryGrid.innerHTML='<div class="empty-state gallery-empty">No session photos have been published yet. FIELDZERO highlights will appear here after the first gallery upload.</div>';return;}
+    galleryGrid.innerHTML=galleryPhotos.map((photo,i)=>`<button type="button" class="gallery-card" data-gallery-index="${i}" aria-label="View ${escapeAttr(photo.title||'session photo')}"><img src="${escapeAttr(photo.image_url)}" alt="${escapeAttr(photo.title||'FIELDZERO session photo')}" loading="lazy"><span class="gallery-open-mark">↗</span><span class="gallery-card-copy"><small>${escapeHtml(photo.session_name||'FIELDZERO SESSION')}</small><b>${escapeHtml(photo.title||'FIELD MOMENT')}</b></span></button>`).join('');
+    galleryGrid.querySelectorAll('[data-gallery-index]').forEach(button=>button.addEventListener('click',()=>openLightbox(Number(button.dataset.galleryIndex))));
+  }
+  async function loadGallery(){
+    if(!galleryGrid)return;
+    if(!db){galleryGrid.innerHTML='<div class="empty-state gallery-empty">Connect the FIELDZERO database to load session photos.</div>';if(galleryCount)galleryCount.textContent='GALLERY OFFLINE';return;}
+    const {data,error}=await db.from('public_gallery_photos').select('id,title,session_name,image_url,popup_featured,created_at').order('created_at',{ascending:false});
+    if(error){galleryGrid.innerHTML='<div class="empty-state gallery-empty">The gallery database is not ready yet. The site owner should run supabase/upgrade-v7-gallery.sql.</div>';galleryCount.textContent='GALLERY UNAVAILABLE';return;}
+    galleryPhotos=data||[];renderGallery();
+    const featured=galleryPhotos.find(photo=>photo.popup_featured);
+    if(featured&&!sessionStorage.getItem('fz-featured-popup-seen')){
+      sessionStorage.setItem('fz-featured-popup-seen','1');
+      const popup=$('#featuredPopup');$('#featuredPopupImage').src=featured.image_url;$('#featuredPopupImage').alt=featured.title||'Featured FIELDZERO moment';$('#featuredPopupTitle').textContent=featured.title||'FROM THE FIELD';$('#featuredPopupSession').textContent=featured.session_name||'FIELDZERO SESSION';popup.hidden=false;document.body.style.overflow='hidden';
+    }
+  }
+  function openLightbox(index){if(!galleryPhotos.length)return;lightboxIndex=(index+galleryPhotos.length)%galleryPhotos.length;const photo=galleryPhotos[lightboxIndex];$('#lightboxImage').src=photo.image_url;$('#lightboxImage').alt=photo.title||'FIELDZERO session photo';$('#lightboxCaption').textContent=`${photo.session_name||'FIELDZERO SESSION'} / ${photo.title||'FIELD MOMENT'} · ${lightboxIndex+1} OF ${galleryPhotos.length}`;lightbox.hidden=false;document.body.style.overflow='hidden';}
+  function closeLightbox(){lightbox.hidden=true;document.body.style.overflow='';$('#lightboxImage').src='';}
+  $('#lightboxClose')?.addEventListener('click',closeLightbox);$('#lightboxPrev')?.addEventListener('click',()=>openLightbox(lightboxIndex-1));$('#lightboxNext')?.addEventListener('click',()=>openLightbox(lightboxIndex+1));
+  lightbox?.addEventListener('click',e=>{if(e.target===lightbox)closeLightbox()});
+  function closeFeaturedPopup(){const popup=$('#featuredPopup');popup.hidden=true;document.body.style.overflow='';}
+  $('#featuredPopupClose')?.addEventListener('click',closeFeaturedPopup);$('#featuredPopupView')?.addEventListener('click',()=>{closeFeaturedPopup();location.hash='#gallery'});
+  $('#featuredPopup')?.addEventListener('click',e=>{if(e.target.id==='featuredPopup')closeFeaturedPopup()});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(lightbox&&!lightbox.hidden)closeLightbox();if(!$('#featuredPopup').hidden)closeFeaturedPopup();}else if(lightbox&&!lightbox.hidden&&e.key==='ArrowRight')openLightbox(lightboxIndex+1);else if(lightbox&&!lightbox.hidden&&e.key==='ArrowLeft')openLightbox(lightboxIndex-1)});
+  loadGallery();
 })();

@@ -63,9 +63,9 @@
     const { data: members } = await db.from("public_team_roster").select("team_id,callsign").in("team_id", ids).order("callsign");
     $("#teamsGrid").innerHTML = teams.map(t => {
       const list = (members || []).filter(m => m.team_id === t.id);
-      const slots = Array.from({length:8}, (_,i) => list[i] ? `<div class="team-player"><span>◈</span><b>${escapeHtml(list[i].callsign)}</b></div>` : `<div class="team-player slot"><span>＋</span><span>OPEN SLOT ${String(i+1).padStart(2,"0")}</span></div>`).join("");
-      const count = Math.min(Number(t.member_count || list.length), 8);
-      return `<article class="team-card"><div class="team-head"><div class="team-badge">${escapeHtml((t.name || "FZ").slice(0,2).toUpperCase())}</div><div class="team-title"><h3>${escapeHtml(t.name)}</h3><p>${count}/8 ACTIVE PLAYERS · ${Number(t.points || 0)} PTS</p></div><div class="team-rank">#${String(t.team_rank || "—").padStart(2,"0")}</div></div><div class="team-meter"><span style="width:${count/8*100}%"></span></div><div class="team-roster">${slots}</div></article>`;
+      const slots = Array.from({length:5}, (_,i) => list[i] ? `<div class="team-player"><span>◈</span><b>${escapeHtml(list[i].callsign)}</b></div>` : `<div class="team-player slot"><span>＋</span><span>OPEN SLOT ${String(i+1).padStart(2,"0")}</span></div>`).join("");
+      const count = Math.min(Number(t.member_count || list.length), 5);
+      return `<article class="team-card"><div class="team-head"><div class="team-badge">${escapeHtml((t.name || "FZ").slice(0,2).toUpperCase())}</div><div class="team-title"><h3>${escapeHtml(t.name)}</h3><p>${count}/5 ACTIVE PLAYERS · ${Number(t.points || 0)} PTS</p></div><div class="team-rank">#${String(t.team_rank || "—").padStart(2,"0")}</div></div><div class="team-meter"><span style="width:${count/5*100}%"></span></div><div class="team-roster">${slots}</div></article>`;
     }).join("");
   }
   let publicEvents = [];
@@ -175,4 +175,22 @@
 
   if (!db) notConfigured();
   else Promise.all([loadRoster(), loadTeams(), loadEvents()]);
+
+  // V4 public leaderboard: only published, admin-maintained profile fields are queried.
+  let currentBoard = "players";
+  async function loadLeaderboard(board = currentBoard) {
+    currentBoard = board; const target = $("#leaderboardTable"); if (!target) return;
+    document.querySelectorAll("[data-board]").forEach(b => b.classList.toggle("active", b.dataset.board === board));
+    if (!db) { target.innerHTML = '<div class="empty-state">Connect Supabase and apply the V4 migration to enable rankings.</div>'; return; }
+    const isTeams = board === "teams";
+    const table = isTeams ? "public_teams" : "public_player_profiles";
+    const fields = isTeams ? "name,team_rank,points,member_count" : "callsign,player_rank,player_points,matches_played,wins";
+    const sort = isTeams ? "points" : "player_points";
+    const {data,error} = await db.from(table).select(fields).order(sort,{ascending:false}).limit(10);
+    if(error) { target.innerHTML = '<div class="empty-state">Leaderboard unavailable. Confirm the V4 SQL migration has completed successfully.</div>'; return; }
+    if(!data?.length) { target.innerHTML = '<div class="empty-state">No verified scores yet. Rankings appear after the admin records results and points.</div>'; return; }
+    target.innerHTML = data.map((r,i)=>{ const name=isTeams?r.name:r.callsign; const pts=Number(isTeams?r.points:r.player_points)||0; const sub=isTeams?`${Number(r.member_count)||0}/5 OPERATORS`:`${escapeHtml(r.player_rank||"ROOKIE")} · ${Number(r.matches_played)||0} MATCHES · ${Number(r.wins)||0} WINS`; return `<div class="leaderboard-row"><div class="leaderboard-rank">${String(i+1).padStart(2,"0")}</div><div><div class="leaderboard-name">${escapeHtml(name)}</div><span class="leaderboard-sub">${sub}</span></div><div class="leaderboard-points">${pts.toLocaleString()}<small>POINTS</small></div></div>`; }).join("");
+  }
+  document.querySelectorAll("[data-board]").forEach(b=>b.addEventListener("click",()=>loadLeaderboard(b.dataset.board)));
+  loadLeaderboard();
 })();

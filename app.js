@@ -21,6 +21,35 @@
   const footerLinks = $("#footerLinks");
   if (channelUrl) footerLinks.insertAdjacentHTML("beforeend", ` <a href="${escapeAttr(channelUrl)}" target="_blank" rel="noopener noreferrer">WHATSAPP CHANNEL ↗</a>`);
   if (groupUrl) footerLinks.insertAdjacentHTML("beforeend", ` <a href="${escapeAttr(groupUrl)}" target="_blank" rel="noopener noreferrer">COMMUNITY GROUP ↗</a>`);
+  const contactLinks = $("#contactCommunityLinks");
+  if (contactLinks) {
+    const links = [];
+    if (channelUrl) links.push(`<a class="contact-link" href="${escapeAttr(channelUrl)}" target="_blank" rel="noopener noreferrer">FOLLOW WHATSAPP CHANNEL ↗</a>`);
+    if (groupUrl) links.push(`<a class="contact-link" href="${escapeAttr(groupUrl)}" target="_blank" rel="noopener noreferrer">JOIN COMMUNITY GROUP ↗</a>`);
+    if (links.length) contactLinks.innerHTML = links.join("");
+  }
+
+  // Reference-inspired filters: these are client-side presentation filters and do not alter database records.
+  document.querySelectorAll("[data-mode-filter]").forEach(button => button.addEventListener("click", () => {
+    const chosen = button.dataset.modeFilter;
+    document.querySelectorAll("[data-mode-filter]").forEach(b => b.classList.toggle("active", b === button));
+    document.querySelectorAll("[data-mode-category]").forEach(card => {
+      const categories = (card.dataset.modeCategory || "").split(/\s+/);
+      card.hidden = chosen !== "all" && !categories.includes(chosen);
+    });
+  }));
+  document.querySelectorAll("[data-package-filter]").forEach(button => button.addEventListener("click", () => {
+    const chosen = button.dataset.packageFilter;
+    document.querySelectorAll("[data-package-filter]").forEach(b => b.classList.toggle("active", b === button));
+    document.querySelectorAll("[data-package-category]").forEach(card => {
+      const categories = (card.dataset.packageCategory || "").split(/\s+/);
+      card.hidden = chosen !== "all" && !categories.includes(chosen);
+    });
+  }));
+  document.querySelectorAll(".package-request[data-package]").forEach(link => link.addEventListener("click", () => {
+    const experience = $("#bookingExperience");
+    if (experience) experience.value = link.dataset.package;
+  }));
 
   function safeWhatsApp(url) {
     try { const u = new URL(url); return u.protocol === "https:" && (u.hostname === "chat.whatsapp.com" || u.hostname === "whatsapp.com" || u.hostname === "www.whatsapp.com") && !url.includes("REPLACE_WITH") ? u.href : ""; } catch { return ""; }
@@ -166,7 +195,7 @@
   }
   if(dateInput){dateInput.addEventListener('change',loadArenaSlots);$("#arenaDuration").addEventListener('change',loadArenaSlots);loadArenaSlots();}
   const specialToggle=$("#specialRequest"); if(specialToggle) specialToggle.addEventListener("change",()=>{const slot=$("#arenaStartTime");slot.required=specialToggle.value!=="true";});
-  const arenaForm=$("#arenaBookingForm"); if(arenaForm) arenaForm.addEventListener('submit',async e=>{e.preventDefault();const fd=new FormData(arenaForm),el=$("#arenaBookingStatus");if(!db){status(el,'Database is not configured yet.','error');return}const h=fd.get('startTime'),special=fd.get('specialRequest')==='true',specialTime=String(fd.get('specialTime')||'');if(!h&&!special){status(el,'Choose an available start time or select special booking request.','error');return}const date=dateInput.value;const parts=(special&&specialTime)?specialTime.split(':').map(Number):[Number(h||15),0];const start=slDateTime(date,parts[0],parts[1]||0);const end=new Date(start.getTime()+Number($("#arenaDuration").value||1)*3600000);if(!special&&!openingHours(date).includes(Number(h))){status(el,'That start time is outside regular opening hours. Select special request instead.','error');return}const payload={real_name:String(fd.get('realName')).trim(),callsign:String(fd.get('callsign')).trim(),mobile:String(fd.get('mobile')).trim(),booking_start:start.toISOString(),booking_end:end.toISOString(),player_count:Number(fd.get('playerCount')),special_request:special,notes:String(fd.get('notes')||'').trim(),privacy_consent:true};const btn=$("#submitArenaBooking");btn.disabled=true;const {error}=await db.from('arena_bookings').insert(payload);btn.disabled=false;if(error){status(el,error.message?.includes('overlaps')?'That time is already booked. Please choose another slot.':'Could not submit booking. Check database migration and try again.','error');return}arenaForm.reset();dateInput.value=date;await loadArenaSlots();status(el,'Request received. Your slot is not confirmed until the admin approves it.','success');});
+  const arenaForm=$("#arenaBookingForm"); if(arenaForm) arenaForm.addEventListener('submit',async e=>{e.preventDefault();const fd=new FormData(arenaForm),el=$("#arenaBookingStatus");if(!db){status(el,'Database is not configured yet.','error');return}const h=fd.get('startTime'),special=fd.get('specialRequest')==='true',specialTime=String(fd.get('specialTime')||'');if(!h&&!special){status(el,'Choose an available start time or select special booking request.','error');return}const date=dateInput.value;const parts=(special&&specialTime)?specialTime.split(':').map(Number):[Number(h||15),0];const start=slDateTime(date,parts[0],parts[1]||0);const end=new Date(start.getTime()+Number($("#arenaDuration").value||1)*3600000);if(!special&&!openingHours(date).includes(Number(h))){status(el,'That start time is outside regular opening hours. Select special request instead.','error');return}const payload={real_name:String(fd.get('realName')).trim(),callsign:String(fd.get('callsign')).trim(),mobile:String(fd.get('mobile')).trim(),booking_start:start.toISOString(),booking_end:end.toISOString(),player_count:Number(fd.get('playerCount')),special_request:special,notes:[fd.get('experience') ? `Experience: ${String(fd.get('experience')).trim()}` : '', String(fd.get('notes')||'').trim()].filter(Boolean).join(' | ').slice(0,700),privacy_consent:true};const btn=$("#submitArenaBooking");btn.disabled=true;const {error}=await db.from('arena_bookings').insert(payload);btn.disabled=false;if(error){status(el,error.message?.includes('overlaps')?'That time is already booked. Please choose another slot.':'Could not submit booking. Check database migration and try again.','error');return}arenaForm.reset();dateInput.value=date;await loadArenaSlots();status(el,'Request received. Your slot is not confirmed until the admin approves it.','success');});
   const profileForm=$("#profileSearchForm");if(profileForm)profileForm.addEventListener('submit',async e=>{e.preventDefault();const box=$("#playerProfile"),call=$("#profileCallsign").value.trim();if(!db){box.innerHTML='<div class="empty-state">Database is not configured.</div>';return}const {data,error}=await db.from('public_player_profiles').select('callsign,player_rank,player_points,playing_hours,matches_played,wins,preferred_role,joined_on,win_rate,team_name').ilike('callsign',call).maybeSingle();if(error||!data){box.innerHTML='<div class="empty-state">No approved player profile found for that callsign.</div>';return}box.innerHTML=`<article class="profile-card"><div class="profile-call">${escapeHtml(data.callsign)}</div><div class="profile-sub">${escapeHtml(data.team_name||'INDEPENDENT')} · ${escapeHtml(data.player_rank)}</div><div class="profile-stats"><div><b>${Number(data.player_points)}</b><span>POINTS</span></div><div><b>${Number(data.playing_hours).toFixed(1)}</b><span>PLAY HOURS</span></div><div><b>${Number(data.matches_played)}</b><span>MATCHES</span></div><div><b>${Number(data.wins)}</b><span>WINS</span></div><div><b>${Number(data.win_rate)}%</b><span>WIN RATE</span></div><div><b>${escapeHtml(data.preferred_role)}</b><span>ROLE</span></div></div><small>Roster since ${escapeHtml(data.joined_on||'—')} · Stats maintained by FIELDZERO admin.</small></article>`;});
   async function loadChallengeTeams(){if(!db)return;const {data,error}=await db.from('public_challenge_teams').select('id,name,team_rank,points').order('team_rank');if(error)return;['leaderTeam','challengingTeam','challengedTeam'].forEach(id=>{const el=$('#'+id);if(!el)return;el.innerHTML='<option value="">Choose a squad…</option>'+(data||[]).map(t=>`<option value="${t.id}">${escapeHtml(t.name)} · #${t.team_rank}</option>`).join('')});}
   if(db)loadChallengeTeams();

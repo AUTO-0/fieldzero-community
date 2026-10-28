@@ -60,7 +60,61 @@
 
   // V9: public prices and a single priority-based announcement overlay.
   let siteSettings = null, siteSettingsReady = false, eventPopupReady = false, galleryPopupReady = false;
+  let siteAppearance = null, appearanceReady = false, campaignsReady = false, seasonalCampaigns = [], activeSeasonalCampaign = null;
   let featuredEventForPopup = null, featuredPhotoForPopup = null;
+  const THEME_KEYS = new Set(["field-ops","jungle-night","graphite","desert-recon","arctic-signal","ember-ops","lantern-glow","winter-night","monsoon"]);
+  function applySiteTheme(themeKey) {
+    const safeTheme = THEME_KEYS.has(themeKey) ? themeKey : "field-ops";
+    document.body.dataset.fzTheme = safeTheme;
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = ({"field-ops":"#111710","jungle-night":"#071a13","graphite":"#151619","desert-recon":"#2a2117","arctic-signal":"#112433","ember-ops":"#201510","lantern-glow":"#191e18","winter-night":"#0e1828","monsoon":"#112124"})[safeTheme];
+  }
+  function getSriLankaDate() { return new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Colombo",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date()); }
+  function campaignIsInWindow(campaign, dateString=getSriLankaDate()) {
+    if (!campaign?.start_date || !campaign?.end_date) return false;
+    const current = dateString.slice(5); const start = String(campaign.start_date).slice(5); const end = String(campaign.end_date).slice(5);
+    if (campaign.recurs_annually) return start <= end ? current >= start && current <= end : current >= start || current <= end;
+    return dateString >= campaign.start_date && dateString <= campaign.end_date;
+  }
+  function campaignCta(campaign) {
+    const target = campaign?.cta_target || "none";
+    if (target === "join") return {href:"#join", label:campaign.cta_label || "JOIN THE COMMUNITY ↗"};
+    if (target === "events") return {href:"#events", label:campaign.cta_label || "VIEW EVENTS ↗"};
+    if (target === "gallery") return {href:"#gallery", label:campaign.cta_label || "VIEW GALLERY ↗"};
+    return null;
+  }
+  function renderSeasonalRibbon(campaign) {
+    const ribbon=$("#seasonalRibbon"); if(!ribbon) return;
+    if(!campaign || siteAppearance?.seasonal_enabled === false) { ribbon.hidden=true; return; }
+    $("#seasonalRibbonKicker").textContent = `FIELDZERO / ${String(campaign.category||"SEASONAL NOTE").toUpperCase()}`;
+    $("#seasonalRibbonTitle").textContent = campaign.title || "A NOTE FROM FIELDZERO";
+    $("#seasonalRibbonMessage").textContent = campaign.message || "Best wishes to everyone observing this season.";
+    const wrap=$("#seasonalRibbonImageWrap"), img=$("#seasonalRibbonImage"), cta=$("#seasonalRibbonCta");
+    if(/^https:\/\//i.test(campaign.image_url||"")){img.src=campaign.image_url;img.alt=campaign.alt_text||campaign.title||"Seasonal FIELDZERO image";wrap.hidden=false;} else {img.removeAttribute("src");wrap.hidden=true;}
+    const action=campaignCta(campaign);
+    if(action){cta.href=action.href;cta.textContent=action.label;cta.hidden=false;} else {cta.hidden=true;}
+    ribbon.hidden=false;
+  }
+  async function loadSiteAppearance() {
+    if(!db){appearanceReady=true;siteAppearance={theme_key:"field-ops",seasonal_enabled:false};applySiteTheme("field-ops");maybeShowAnnouncement();return;}
+    const {data,error}=await db.from("public_site_appearance").select("id,theme_key,seasonal_enabled").eq("id",1).maybeSingle();
+    if(error){console.warn("FIELDZERO appearance settings unavailable; using default theme.",error.message);siteAppearance={theme_key:"field-ops",seasonal_enabled:false};}
+    else siteAppearance=data||{theme_key:"field-ops",seasonal_enabled:true};
+    applySiteTheme(siteAppearance.theme_key); appearanceReady=true;
+    if(campaignsReady){activeSeasonalCampaign=siteAppearance.seasonal_enabled===false?null:(seasonalCampaigns.slice().sort((a,b)=>Number(b.priority||0)-Number(a.priority||0))[0]||null);if(activeSeasonalCampaign?.auto_theme)applySiteTheme(activeSeasonalCampaign.theme_key);renderSeasonalRibbon(activeSeasonalCampaign);}
+    maybeShowAnnouncement();
+  }
+  async function loadSeasonalCampaigns() {
+    if(!db){campaignsReady=true;maybeShowAnnouncement();return;}
+    const {data,error}=await db.from("public_seasonal_campaigns").select("id,slug,title,category,message,image_url,alt_text,start_date,end_date,recurs_annually,active,popup_enabled,auto_theme,theme_key,cta_target,cta_label,priority");
+    if(error){console.warn("FIELDZERO seasonal campaigns unavailable; apply V10 migration.",error.message);campaignsReady=true;maybeShowAnnouncement();return;}
+    seasonalCampaigns=(data||[]).filter(c=>campaignIsInWindow(c));
+    activeSeasonalCampaign=siteAppearance?.seasonal_enabled===false?null:(seasonalCampaigns.slice().sort((a,b)=>Number(b.priority||0)-Number(a.priority||0))[0]||null);
+    if(activeSeasonalCampaign?.auto_theme) applySiteTheme(activeSeasonalCampaign.theme_key);
+    else if(siteAppearance) applySiteTheme(siteAppearance.theme_key);
+    renderSeasonalRibbon(activeSeasonalCampaign);
+    campaignsReady=true; maybeShowAnnouncement();
+  }
   const announcementPopup = $("#announcementPopup");
   const formatPrice = (amount) => Number(amount).toLocaleString("en-LK", {minimumFractionDigits:0,maximumFractionDigits:2});
   function renderSessionPrices(rows) {
@@ -95,7 +149,7 @@
     const title=$("#announcementTitle"), kicker=$("#announcementKicker"), message=$("#announcementMessage");
     const info=$("#announcementEventInfo"), primary=$("#announcementPrimary"), secondary=$("#announcementSecondary");
     const media=$("#announcementMedia"), image=$("#announcementImage");
-    info.hidden = true; media.hidden = true; secondary.hidden = true;
+    info.hidden = true; media.hidden = true; secondary.hidden = true; primary.hidden = false;
     primary.href = "#join"; primary.textContent = "JOIN THE ROSTER ↗";
     if (type === "opening") {
       kicker.textContent = "FIELDZERO / COMMUNITY NOTICE";
@@ -121,6 +175,15 @@
       message.textContent = featuredPhotoForPopup.session_name || "FIELDZERO SESSION";
       image.src = featuredPhotoForPopup.image_url; image.alt = featuredPhotoForPopup.title || "Featured FIELDZERO moment"; media.hidden = false;
       primary.href = "#gallery"; primary.textContent = "VIEW GALLERY ↗";
+    } else if (type === "seasonal" && activeSeasonalCampaign) {
+      const campaign=activeSeasonalCampaign;
+      kicker.textContent = `FIELDZERO / ${String(campaign.category||"SEASONAL NOTE").toUpperCase()}`;
+      title.textContent = campaign.title || "A NOTE FROM FIELDZERO";
+      message.textContent = campaign.message || "Best wishes to everyone observing this season.";
+      if(/^https:\/\//i.test(campaign.image_url||"")){image.src=campaign.image_url;image.alt=campaign.alt_text||campaign.title||"Seasonal FIELDZERO image";media.hidden=false;}
+      const action=campaignCta(campaign);
+      if(action){primary.href=action.href;primary.textContent=action.label;} else {primary.hidden=true;}
+      if(action?.href==="#events") {secondary.href="#events";secondary.textContent="EXPLORE THE FIELD ↗";secondary.hidden=false;}
     }
     announcementPopup.hidden = false;
     document.body.style.overflow = "hidden";
@@ -136,11 +199,17 @@
     $("#announcementEventDescription").textContent = event.description || "Details will be announced by the organiser.";
   }
   function maybeShowAnnouncement() {
-    if (!announcementPopup || !db || !siteSettingsReady || !eventPopupReady || !galleryPopupReady || sessionStorage.getItem("fz-announcement-shown-v9")) return;
-    sessionStorage.setItem("fz-announcement-shown-v9", "1");
-    if (siteSettings?.opening_soon_enabled) showAnnouncement("opening");
-    else if (featuredEventForPopup) showAnnouncement("event");
-    else if (featuredPhotoForPopup) showAnnouncement("gallery");
+    if (!announcementPopup || !db || !siteSettingsReady || !eventPopupReady || !galleryPopupReady || !appearanceReady || !campaignsReady || sessionStorage.getItem("fz-announcement-shown-v10")) return;
+    let chosen=null;
+    // One modal at a time. Preserve the launch notice until the owner switches Opening Soon off;
+    // seasonal greetings still appear in the ribbon and can take popup priority after launch.
+    if (siteSettings?.opening_soon_enabled) chosen="opening";
+    else if (activeSeasonalCampaign?.popup_enabled) chosen="seasonal";
+    else if (featuredEventForPopup) chosen="event";
+    else if (featuredPhotoForPopup) chosen="gallery";
+    if(!chosen) return;
+    sessionStorage.setItem("fz-announcement-shown-v10", "1");
+    showAnnouncement(chosen);
   }
   function closeAnnouncement() {
     if (announcementPopup) announcementPopup.hidden = true;
@@ -399,5 +468,7 @@
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(lightbox&&!lightbox.hidden)closeLightbox();if(!$('#featuredPopup').hidden)closeFeaturedPopup();if(announcementPopup&&!announcementPopup.hidden)closeAnnouncement();}else if(lightbox&&!lightbox.hidden&&e.key==='ArrowRight')openLightbox(lightboxIndex+1);else if(lightbox&&!lightbox.hidden&&e.key==='ArrowLeft')openLightbox(lightboxIndex-1)});
   loadSessionPrices();
   loadSiteSettings();
+  loadSiteAppearance();
+  loadSeasonalCampaigns();
   loadGallery();
 })();

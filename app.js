@@ -58,6 +58,99 @@
   function escapeAttr(v) { return escapeHtml(v); }
   function status(el, message, kind) { el.textContent = message; el.className = "form-status" + (kind ? " " + kind : ""); }
 
+  // V9: public prices and a single priority-based announcement overlay.
+  let siteSettings = null, siteSettingsReady = false, eventPopupReady = false, galleryPopupReady = false;
+  let featuredEventForPopup = null, featuredPhotoForPopup = null;
+  const announcementPopup = $("#announcementPopup");
+  const formatPrice = (amount) => Number(amount).toLocaleString("en-LK", {minimumFractionDigits:0,maximumFractionDigits:2});
+  function renderSessionPrices(rows) {
+    (rows || []).forEach(item => {
+      const el = document.querySelector(`[data-session-price="${item.package_key}"]`);
+      if (!el) return;
+      const label = item.price_amount !== null && item.price_amount !== undefined
+        ? `${escapeHtml(item.price_currency || "LKR")} <b>${formatPrice(item.price_amount)}</b>`
+        : `<b>${escapeHtml(item.display_label || "Custom")}</b>`;
+      el.innerHTML = `${label}${item.price_note ? `<small>${escapeHtml(item.price_note)}</small>` : ""}`;
+      el.closest(".package-card")?.toggleAttribute("hidden", item.active === false);
+    });
+    const visibleKeys = new Set((rows || []).filter(item => item.active !== false).map(item => item.package_key));
+    document.querySelectorAll("[data-session-price]").forEach(el => el.closest(".package-card")?.toggleAttribute("hidden", !visibleKeys.has(el.dataset.sessionPrice)));
+  }
+  async function loadSessionPrices() {
+    if (!db) return;
+    const {data,error} = await db.from("public_session_prices").select("package_key,package_name,price_amount,price_currency,display_label,price_note,active");
+    if (error) { console.warn("FIELDZERO session prices unavailable; static prices remain visible.", error.message); return; }
+    renderSessionPrices(data || []);
+  }
+  async function loadSiteSettings() {
+    if (!db) { siteSettingsReady = true; return; }
+    const {data,error} = await db.from("public_site_settings").select("opening_soon_enabled,opening_soon_title,opening_soon_message").eq("id",1).maybeSingle();
+    if (!error) siteSettings = data || {opening_soon_enabled:true,opening_soon_title:"OPENING SOON",opening_soon_message:"FIELDZERO is preparing for deployment. Register your callsign now to join the community and receive launch updates."};
+    else { console.warn("FIELDZERO site settings unavailable. Apply the V9 migration.", error.message); siteSettings = {opening_soon_enabled:false}; }
+    siteSettingsReady = true;
+    maybeShowAnnouncement();
+  }
+  function showAnnouncement(type) {
+    if (!announcementPopup) return;
+    const title=$("#announcementTitle"), kicker=$("#announcementKicker"), message=$("#announcementMessage");
+    const info=$("#announcementEventInfo"), primary=$("#announcementPrimary"), secondary=$("#announcementSecondary");
+    const media=$("#announcementMedia"), image=$("#announcementImage");
+    info.hidden = true; media.hidden = true; secondary.hidden = true;
+    primary.href = "#join"; primary.textContent = "JOIN THE ROSTER ↗";
+    if (type === "opening") {
+      kicker.textContent = "FIELDZERO / COMMUNITY NOTICE";
+      title.textContent = siteSettings?.opening_soon_title || "OPENING SOON";
+      message.textContent = siteSettings?.opening_soon_message || "FIELDZERO is preparing for deployment. Register your callsign now to join the community.";
+      if (featuredEventForPopup) {
+        populateEventAnnouncement(featuredEventForPopup);
+        info.hidden = false; secondary.hidden = false;
+        secondary.href = `event.html?id=${encodeURIComponent(featuredEventForPopup.id)}`;
+        secondary.textContent = "VIEW NEXT MISSION ↗";
+      }
+    } else if (type === "event" && featuredEventForPopup) {
+      kicker.textContent = "FIELDZERO / EVENT ANNOUNCEMENT";
+      title.textContent = featuredEventForPopup.event_type === "Tournament" ? "TOURNAMENT ALERT" : "NEW MISSION ANNOUNCED";
+      message.textContent = "A new FIELDZERO event is published. Review the details and send your registration request.";
+      populateEventAnnouncement(featuredEventForPopup);
+      info.hidden = false;
+      primary.href = `event.html?id=${encodeURIComponent(featuredEventForPopup.id)}`;
+      primary.textContent = featuredEventForPopup.event_type === "Tournament" ? "VIEW / REGISTER ↗" : "VIEW / BOOK SESSION ↗";
+    } else if (type === "gallery" && featuredPhotoForPopup) {
+      kicker.textContent = "FIELDZERO / FEATURED MOMENT";
+      title.textContent = featuredPhotoForPopup.title || "FROM THE FIELD";
+      message.textContent = featuredPhotoForPopup.session_name || "FIELDZERO SESSION";
+      image.src = featuredPhotoForPopup.image_url; image.alt = featuredPhotoForPopup.title || "Featured FIELDZERO moment"; media.hidden = false;
+      primary.href = "#gallery"; primary.textContent = "VIEW GALLERY ↗";
+    }
+    announcementPopup.hidden = false;
+    document.body.style.overflow = "hidden";
+  }
+  function populateEventAnnouncement(event) {
+    $("#announcementEventTitle").textContent = event.title || "FIELDZERO EVENT";
+    const parts = [];
+    if (event.event_date) parts.push(new Date(`${event.event_date}T12:00:00`).toLocaleDateString("en-LK", {day:"2-digit",month:"short",year:"numeric"}));
+    if (event.start_time) parts.push(event.start_time + (event.end_time ? `–${event.end_time}` : ""));
+    if (event.location) parts.push(event.location);
+    if (event.price_amount !== null && event.price_amount !== undefined) parts.push(Number(event.price_amount) === 0 ? "Price to be confirmed" : `${event.price_currency || "LKR"} ${formatPrice(event.price_amount)}`);
+    $("#announcementEventMeta").textContent = parts.join(" · ") || "Date and details will be confirmed by the organiser.";
+    $("#announcementEventDescription").textContent = event.description || "Details will be announced by the organiser.";
+  }
+  function maybeShowAnnouncement() {
+    if (!announcementPopup || !db || !siteSettingsReady || !eventPopupReady || !galleryPopupReady || sessionStorage.getItem("fz-announcement-shown-v9")) return;
+    sessionStorage.setItem("fz-announcement-shown-v9", "1");
+    if (siteSettings?.opening_soon_enabled) showAnnouncement("opening");
+    else if (featuredEventForPopup) showAnnouncement("event");
+    else if (featuredPhotoForPopup) showAnnouncement("gallery");
+  }
+  function closeAnnouncement() {
+    if (announcementPopup) announcementPopup.hidden = true;
+    document.body.style.overflow = "";
+  }
+  $("#announcementClose")?.addEventListener("click", closeAnnouncement);
+  announcementPopup?.addEventListener("click", e => { if (e.target === announcementPopup) closeAnnouncement(); });
+  $("#announcementPrimary")?.addEventListener("click", () => { closeAnnouncement(); });
+  $("#announcementSecondary")?.addEventListener("click", () => { closeAnnouncement(); });
+
   function notConfigured() {
     $("#rosterCount").textContent = "DATABASE NOT CONFIGURED";
     $("#rosterGrid").innerHTML = '<div class="empty-state">Connect Supabase to display the approved callsign roster. Registration will stay disabled until configuration is complete.</div>';
@@ -115,16 +208,20 @@
 
   let publicEvents = [];
   async function loadEvents() {
-    if (!db) return;
-    const { data, error } = await db.from("public_events").select("id,title,event_type,event_date,description,location,price_amount,price_currency,field_id,field_address,google_maps_url").order("event_date", {ascending:true}).limit(6);
-    if (error) { $("#eventsGrid").innerHTML = '<div class="empty-state">Could not load events right now.</div>'; return; }
-    publicEvents = data || [];
+    if (!db) { eventPopupReady = true; maybeShowAnnouncement(); return; }
+    const todaySL = new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Colombo",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+    const { data, error } = await db.from("public_events").select("id,title,event_type,event_date,start_time,end_time,description,location,price_amount,price_currency,field_id,field_address,google_maps_url,popup_featured").or(`event_date.gte.${todaySL},event_date.is.null`).order("event_date", {ascending:true,nullsFirst:false}).limit(100);
+    if (error) { $("#eventsGrid").innerHTML = '<div class="empty-state">Could not load events right now.</div>'; eventPopupReady = true; maybeShowAnnouncement(); return; }
+    publicEvents = (data || []).filter(e => !e.event_date || e.event_date >= todaySL).sort((a,b) => { if (!a.event_date) return 1; if (!b.event_date) return -1; return a.event_date.localeCompare(b.event_date); });
+    featuredEventForPopup = publicEvents.find(e => e.popup_featured && e.event_date && e.event_date >= todaySL) || publicEvents.find(e => e.popup_featured && !e.event_date) || null;
+    eventPopupReady = true;
     fillBookingEvents(publicEvents);
-    if (!data?.length) { $("#eventsGrid").innerHTML = '<div class="empty-state">No events announced yet. Follow the community for the next game day.</div>'; return; }
-    $("#eventsGrid").innerHTML = data.map(e => {
+    if (!publicEvents.length) { $("#eventsGrid").innerHTML = '<div class="empty-state">No upcoming events announced yet. Follow the community for the next game day.</div>'; maybeShowAnnouncement(); return; }
+    $("#eventsGrid").innerHTML = publicEvents.slice(0,6).map(e => {
       const date = e.event_date ? new Date(e.event_date + "T12:00:00").toLocaleDateString(undefined,{day:"2-digit",month:"short",year:"numeric"}) : "DATE TBA";
       return `<article class="event-card"><span class="event-type">${escapeHtml((e.event_type || "SESSION").toUpperCase())}</span><h3>${escapeHtml(e.title)}</h3><p>${escapeHtml(e.description || "Details will be announced by the organiser.")}</p><div class="event-meta"><span>▣ ${escapeHtml(date)}</span><span>⌖ ${escapeHtml(e.location || "FIELDZERO FIELD")}</span></div><strong class="event-price">${Number(e.price_amount||0)===0?"PRICE TO BE CONFIRMED":`${escapeHtml(e.price_currency||"LKR")} ${Number(e.price_amount||0).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:2})}`}</strong>${e.google_maps_url?`<a class="event-map-link" href="${escapeAttr(e.google_maps_url)}" target="_blank" rel="noopener noreferrer">OPEN FIELD MAP ↗</a><br><br>`:""}<a class="button button-lime event-book-link" href="event.html?id=${encodeURIComponent(e.id)}">${e.event_type === "Tournament" ? "REGISTER TEAM ↗" : "BOOK SESSION ↗"}</a></article>`;
     }).join("");
+    maybeShowAnnouncement();
   }
 
   function fillBookingEvents(events) {
@@ -284,15 +381,13 @@
   }
   async function loadGallery(){
     if(!galleryGrid)return;
-    if(!db){galleryGrid.innerHTML='<div class="empty-state gallery-empty">Connect the FIELDZERO database to load session photos.</div>';if(galleryCount)galleryCount.textContent='GALLERY OFFLINE';return;}
+    if(!db){galleryGrid.innerHTML='<div class="empty-state gallery-empty">Connect the FIELDZERO database to load session photos.</div>';if(galleryCount)galleryCount.textContent='GALLERY OFFLINE';galleryPopupReady=true;maybeShowAnnouncement();return;}
     const {data,error}=await db.from('public_gallery_photos').select('id,title,session_name,image_url,popup_featured,created_at').order('created_at',{ascending:false});
-    if(error){galleryGrid.innerHTML='<div class="empty-state gallery-empty">The gallery database is not ready yet. The site owner should run supabase/upgrade-v7-gallery.sql.</div>';galleryCount.textContent='GALLERY UNAVAILABLE';return;}
+    if(error){galleryGrid.innerHTML='<div class="empty-state gallery-empty">The gallery database is not ready yet. The site owner should run supabase/upgrade-v7-gallery.sql.</div>';galleryCount.textContent='GALLERY UNAVAILABLE';galleryPopupReady=true;maybeShowAnnouncement();return;}
     galleryPhotos=data||[];renderGallery();
-    const featured=galleryPhotos.find(photo=>photo.popup_featured);
-    if(featured&&!sessionStorage.getItem('fz-featured-popup-seen')){
-      sessionStorage.setItem('fz-featured-popup-seen','1');
-      const popup=$('#featuredPopup');$('#featuredPopupImage').src=featured.image_url;$('#featuredPopupImage').alt=featured.title||'Featured FIELDZERO moment';$('#featuredPopupTitle').textContent=featured.title||'FROM THE FIELD';$('#featuredPopupSession').textContent=featured.session_name||'FIELDZERO SESSION';popup.hidden=false;document.body.style.overflow='hidden';
-    }
+    featuredPhotoForPopup=galleryPhotos.find(photo=>photo.popup_featured)||null;
+    galleryPopupReady=true;
+    maybeShowAnnouncement();
   }
   function openLightbox(index){if(!galleryPhotos.length)return;lightboxIndex=(index+galleryPhotos.length)%galleryPhotos.length;const photo=galleryPhotos[lightboxIndex];$('#lightboxImage').src=photo.image_url;$('#lightboxImage').alt=photo.title||'FIELDZERO session photo';$('#lightboxCaption').textContent=`${photo.session_name||'FIELDZERO SESSION'} / ${photo.title||'FIELD MOMENT'} · ${lightboxIndex+1} OF ${galleryPhotos.length}`;lightbox.hidden=false;document.body.style.overflow='hidden';}
   function closeLightbox(){lightbox.hidden=true;document.body.style.overflow='';$('#lightboxImage').src='';}
@@ -301,6 +396,8 @@
   function closeFeaturedPopup(){const popup=$('#featuredPopup');popup.hidden=true;document.body.style.overflow='';}
   $('#featuredPopupClose')?.addEventListener('click',closeFeaturedPopup);$('#featuredPopupView')?.addEventListener('click',()=>{closeFeaturedPopup();location.hash='#gallery'});
   $('#featuredPopup')?.addEventListener('click',e=>{if(e.target.id==='featuredPopup')closeFeaturedPopup()});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(lightbox&&!lightbox.hidden)closeLightbox();if(!$('#featuredPopup').hidden)closeFeaturedPopup();}else if(lightbox&&!lightbox.hidden&&e.key==='ArrowRight')openLightbox(lightboxIndex+1);else if(lightbox&&!lightbox.hidden&&e.key==='ArrowLeft')openLightbox(lightboxIndex-1)});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(lightbox&&!lightbox.hidden)closeLightbox();if(!$('#featuredPopup').hidden)closeFeaturedPopup();if(announcementPopup&&!announcementPopup.hidden)closeAnnouncement();}else if(lightbox&&!lightbox.hidden&&e.key==='ArrowRight')openLightbox(lightboxIndex+1);else if(lightbox&&!lightbox.hidden&&e.key==='ArrowLeft')openLightbox(lightboxIndex-1)});
+  loadSessionPrices();
+  loadSiteSettings();
   loadGallery();
 })();

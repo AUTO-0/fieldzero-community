@@ -56,6 +56,17 @@
   }
   function escapeHtml(v) { return String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
   function escapeAttr(v) { return escapeHtml(v); }
+  function renderSocialLinks(settings) {
+    const profiles=[
+      ["instagram_url","INSTAGRAM ↗","instagram"],
+      ["facebook_url","FACEBOOK ↗","facebook"],
+      ["tiktok_url","TIKTOK ↗","tiktok"]
+    ];
+    const valid=[];
+    for(const [key,label,host] of profiles){const raw=settings?.[key];if(!raw)continue;try{const u=new URL(raw);if(u.protocol==="https:"&&[host+".com","www."+host+".com","m."+host+".com"].includes(u.hostname))valid.push(`<a class="social-profile-link" href="${escapeAttr(u.href)}" target="_blank" rel="noopener noreferrer">${label}</a>`);}catch{}}
+    const targets=[$("#socialProfiles"),$("#footerSocialProfiles")].filter(Boolean);targets.forEach(el=>{el.innerHTML=valid.join("");el.hidden=!valid.length;});
+  }
+
   function status(el, message, kind) { el.textContent = message; el.className = "form-status" + (kind ? " " + kind : ""); }
 
   // V9: public prices and a single priority-based announcement overlay.
@@ -138,9 +149,10 @@
   }
   async function loadSiteSettings() {
     if (!db) { siteSettingsReady = true; return; }
-    const {data,error} = await db.from("public_site_settings").select("opening_soon_enabled,opening_soon_title,opening_soon_message").eq("id",1).maybeSingle();
+    const {data,error} = await db.from("public_site_settings").select("opening_soon_enabled,opening_soon_title,opening_soon_message,instagram_url,facebook_url,tiktok_url").eq("id",1).maybeSingle();
     if (!error) siteSettings = data || {opening_soon_enabled:true,opening_soon_title:"OPENING SOON",opening_soon_message:"FIELDZERO is preparing for deployment. Register your callsign now to join the community and receive launch updates."};
     else { console.warn("FIELDZERO site settings unavailable. Apply the V9 migration.", error.message); siteSettings = {opening_soon_enabled:false}; }
+    renderSocialLinks(siteSettings);
     siteSettingsReady = true;
     maybeShowAnnouncement();
   }

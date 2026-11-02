@@ -109,3 +109,40 @@ body[data-fz-theme] .site-header{background:var(--ink)}body[data-fz-theme] .bran
 .season-campaign-card{display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px;border:1px solid #354032;background:#182017;color:#eff2e9;padding:14px;margin:12px 0}.season-campaign-card>img{width:100%;height:130px;object-fit:cover;background:#20291e}.season-campaign-content{min-width:0}.season-campaign-content h3{font-family:'Barlow Condensed',sans-serif;font-size:25px;margin:2px 0 8px}.season-campaign-content p{font-size:11px;line-height:1.7;color:#bbc7b4;margin:5px 0 12px}.season-campaign-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.season-campaign-fields label{display:flex;flex-direction:column;gap:5px;min-width:0;color:#bdc8b6;font-size:8px;text-transform:uppercase;letter-spacing:.6px}.season-campaign-fields input:not([type=checkbox]),.season-campaign-fields select,.season-campaign-fields textarea{width:100%;min-width:0;padding:9px;background:#20291e;border:1px solid #45513f;color:#f0f2e9;font:inherit;font-size:11px;text-transform:none;letter-spacing:0}.season-campaign-fields textarea{min-height:70px;resize:vertical}.season-campaign-fields .full{grid-column:1/-1}.season-campaign-checks{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0;color:#c4cebc;font-size:9px}.season-campaign-checks label{display:flex;gap:6px;align-items:center}.season-campaign-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.theme-admin-form{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:end}.theme-admin-form label{display:flex;flex-direction:column;gap:6px;color:#bdc8b6;font-size:9px;letter-spacing:.8px;text-transform:uppercase}.theme-admin-form select,.theme-admin-form input{width:100%;padding:11px;background:#20291e;border:1px solid #45513f;color:#f0f2e9}.theme-admin-form .wide{grid-column:1/-1}.theme-help{font-size:11px;line-height:1.7;color:#9fad9b;margin:6px 0 15px}.season-window-chip{display:inline-block;border:1px solid #758d4c;color:var(--lime);padding:5px 7px;font-size:8px;letter-spacing:.8px;text-transform:uppercase}
 @media(max-width:760px){.seasonal-ribbon{grid-template-columns:88px minmax(0,1fr);gap:13px;padding:13px 18px}.seasonal-ribbon-image{height:98px}.seasonal-ribbon-cta{grid-column:1/-1;justify-self:start}.season-campaign-card{grid-template-columns:1fr}.season-campaign-card>img{height:180px}.season-campaign-fields{grid-template-columns:1fr 1fr}.theme-admin-form{grid-template-columns:1fr}.theme-admin-form .wide{grid-column:auto}}
 @media(max-width:440px){.seasonal-ribbon{grid-template-columns:74px minmax(0,1fr);gap:10px;padding:11px 14px}.seasonal-ribbon-image{height:86px}.seasonal-ribbon p{font-size:10px}.season-campaign-fields{grid-template-columns:1fr}.season-campaign-fields .full{grid-column:auto}}
+
+
+/* FIELDZERO V11 — editorial experience layer: spacious hierarchy, clear discovery and confident photography. */
+.site-header{min-height:76px;backdrop-filter:saturate(120%)}
+.site-header nav{gap:clamp(9px,1.25vw,19px)}
+.site-header nav a{transition:color .2s ease,opacity .2s ease}
+.site-header nav a:hover{color:var(--lime)}
+.hero{min-height:690px}
+.hero-content{max-width:760px}
+.hero h1{letter-spacing:-.055em;line-height:.78}
+.hero-copy{max-width:510px;font-size:clamp(14px,1.25vw,17px);line-height:1.9;color:#e1e6d9}
+.hero-actions{margin-top:30px}
+.hero-note{margin-top:58px}
+.section{padding-top:clamp(76px,9vw,132px);padding-bottom:clamp(76px,9vw,132px)}
+.section-heading{gap:clamp(24px,6vw,90px);margin-bottom:44px}
+.section-heading>p{max-width:470px;font-size:13px;line-height:1.95;color:#65705f}
+.section-kicker{letter-spacing:2.2px}
+.mode-card,.package-card,.team-card,.event-card,.field-card{transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}
+.mode-card:hover,.package-card:hover,.team-card:hover,.event-card:hover,.field-card:hover{transform:translateY(-4px);box-shadow:0 18px 40px #10190d12}
+.mode-card{min-height:300px}
+.mode-card h3{letter-spacing:-.02em}
+.ticker{letter-spacing:2.1px}
+.inline-cta{padding:clamp(20px,3vw,34px);margin-top:34px}
+.contact-panel{padding:clamp(30px,6vw,78px);gap:clamp(25px,5vw,70px)}
+.contact-panel>div:first-child p{max-width:510px;line-height:1.9}
+.social-follow-block{padding:18px 0 22px;border-top:1px solid #ffffff26;border-bottom:1px solid #ffffff26;margin-bottom:18px}
+.social-follow-block>p{font-size:10px;line-height:1.6;color:#aeb9a7;margin:10px 0 0}
+.social-profiles,.footer-social{display:flex;gap:9px;flex-wrap:wrap;margin-top:13px}
+.social-profile-link{display:inline-flex;align-items:center;justify-content:center;padding:11px 14px;border:1px solid #87957a;color:var(--paper);font-size:9px;font-weight:800;letter-spacing:1px;transition:background .2s,color .2s}
+.social-profile-link:hover{background:var(--lime);color:var(--ink);border-color:var(--lime)}
+.footer-social{grid-column:1/-1;justify-content:center;padding:0 0 12px}
+.footer-social .social-profile-link{font-size:8px;padding:9px 12px}
+.social-profiles[hidden],.footer-social[hidden]{display:none!important}
+.site-footer{row-gap:18px}
+.faq-grid details{transition:border-color .2s ease}
+.faq-grid details[open]{border-color:#8c9b7d}
+@media(max-width:640px){.hero{min-height:650px}.hero-note{margin-top:38px}.section{padding-top:66px;padding-bottom:66px}.mode-card{min-height:255px}.contact-panel{padding:27px 21px}.social-profile-link{flex:1 1 auto}.footer-social{justify-content:flex-start}}

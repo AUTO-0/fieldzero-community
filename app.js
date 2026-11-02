@@ -277,17 +277,52 @@
       const select = $('#challengingTeam'); if (select) select.value = link.dataset.challengeSquad;
     }));
   }
+  let publicFields = [];
+  const fieldNames = new Map();
+  function fillFieldSelect(select, fields, firstLabel='Choose a field…') {
+    if (!select) return;
+    const previous = select.value;
+    select.innerHTML = `<option value="">${escapeHtml(firstLabel)}</option>` + fields.map(f => `<option value="${escapeAttr(f.id)}">${escapeHtml(f.name)}${f.is_main ? ' · MAIN' : ''}</option>`).join('');
+    if (fields.some(f => f.id === previous)) select.value = previous;
+    else if (fields.length) select.value = fields.find(f => f.is_main)?.id || fields[0].id;
+  }
   async function loadFields() {
     const grid = $("#fieldsGrid"); if (!grid) return;
     if (!db) { grid.innerHTML = '<div class="empty-state">Field locations will appear here once Supabase is configured.</div>'; return; }
-    const {data,error}=await db.from("public_arena_fields").select("id,name,address,google_maps_url,latitude,longitude").order("name");
-    if(error){grid.innerHTML='<div class="empty-state">Field locations could not load. Check the V8 fields migration.</div>';return;}
-    if(!data?.length){grid.innerHTML='<div class="empty-state">No active fields have been published yet.</div>';return;}
-    const fieldSelect=$("#arenaFieldSelect");if(fieldSelect){const previous=fieldSelect.value;fieldSelect.innerHTML=data.map(f=>`<option value="${escapeAttr(f.id)}">${escapeHtml(f.name)}</option>`).join("");if(data.some(f=>f.id===previous))fieldSelect.value=previous;else if(data.length)fieldSelect.value=data[0].id;fieldSelect.addEventListener("change",()=>{if(dateInput)loadArenaSlots();});}
-    grid.innerHTML=data.map(f=>{const q=encodeURIComponent((f.latitude!=null&&f.longitude!=null)?`${f.latitude},${f.longitude}`:f.address||f.name);const mapSrc=`https://www.google.com/maps?q=${q}&output=embed`;const url=/^https:\/\//i.test(f.google_maps_url||"")?f.google_maps_url:"";return `<article class="field-card"><iframe title="Map for ${escapeHtml(f.name)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${mapSrc}"></iframe><div class="field-card-copy"><span class="event-type">FIELD LOCATION</span><h3>${escapeHtml(f.name)}</h3><p>${escapeHtml(f.address||"Address to be announced")}</p><div class="field-card-actions">${url?`<a class="button button-lime" href="${escapeAttr(url)}" target="_blank" rel="noopener noreferrer">OPEN IN GOOGLE MAPS ↗</a>`:""}</div></div></article>`}).join(""); if(dateInput)loadArenaSlots();
+    const {data,error}=await db.from("public_arena_fields").select("id,name,address,google_maps_url,latitude,longitude,slug,is_main");
+    if(error){grid.innerHTML='<div class="empty-state">Field locations could not load. Check the V8 and V15 fields migrations.</div>';return;}
+    publicFields=(data||[]).sort((a,b)=>(b.is_main?1:0)-(a.is_main?1:0)||String(a.name).localeCompare(String(b.name)));
+    publicFields.forEach(f=>fieldNames.set(f.id,f.name));
+    if(!publicFields.length){grid.innerHTML='<div class="empty-state">No active fields have been published yet.</div>';return;}
+    fillFieldSelect($("#arenaFieldSelect"),publicFields,'Choose a field…');
+    fillFieldSelect($("#feedbackFieldSelect"),publicFields,'Choose the field you visited');
+    const feedbackFilter=$("#feedbackFieldFilter");
+    if(feedbackFilter){const previous=feedbackFilter.value;feedbackFilter.innerHTML='<option value="all">ALL FIELDZERO FIELDS</option>'+publicFields.map(f=>`<option value="${escapeAttr(f.id)}">${escapeHtml(f.name)}</option>`).join('');feedbackFilter.value=publicFields.some(f=>f.id===previous)?previous:'all';}
+    fillFieldSelect($("#galleryFieldFilter"),publicFields,'ALL FIELDS');
+    fillFieldSelect($("#eventsFieldFilter"),publicFields,'ALL FIELDS');
+    // For public browsing filters, keep the all-fields option at the top.
+    [$("#galleryFieldFilter"),$("#eventsFieldFilter")].filter(Boolean).forEach(select=>{
+      const all=document.createElement('option');all.value='all';all.textContent='ALL FIELDS';select.insertBefore(all,select.firstChild);select.value='all';
+    });
+    const fieldSelect=$("#arenaFieldSelect");
+    if(fieldSelect&&!fieldSelect.dataset.v15Bound){fieldSelect.dataset.v15Bound='1';fieldSelect.addEventListener('change',()=>{if(dateInput)loadArenaSlots();});}
+    document.dispatchEvent(new CustomEvent('fieldzero:fields-ready',{detail:{mainFieldId:publicFields.find(f=>f.is_main)?.id||publicFields[0]?.id||'',selectedFieldId:fieldSelect?.value||''}}));
+    loadPublicSpotlight();
+    grid.innerHTML=publicFields.map(f=>{const q=encodeURIComponent((f.latitude!=null&&f.longitude!=null)?`${f.latitude},${f.longitude}`:f.address||f.name);const mapSrc=`https://www.google.com/maps?q=${q}&output=embed`;const url=/^https:\/\//i.test(f.google_maps_url||"")?f.google_maps_url:"";return `<article class="field-card ${f.is_main?'main-field-card':''}"><iframe title="Map for ${escapeHtml(f.name)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${mapSrc}"></iframe><div class="field-card-copy"><span class="event-type">${f.is_main?'MAIN FIELD':'FIELDZERO NETWORK'}</span><h3>${escapeHtml(f.name)}</h3><p>${escapeHtml(f.address||"Address to be announced")}</p><div class="field-card-actions">${url?`<a class="button button-lime" href="${escapeAttr(url)}" target="_blank" rel="noopener noreferrer">OPEN IN GOOGLE MAPS ↗</a>`:""}</div></div></article>`}).join("");
+    if(dateInput)loadArenaSlots();
   }
 
   let publicEvents = [];
+  function renderUpcomingEvents() {
+    const filter = $("#eventsFieldFilter")?.value || 'all';
+    const rows = publicEvents.filter(e => filter === 'all' || e.field_id === filter);
+    if (!rows.length) { $("#eventsGrid").innerHTML = '<div class="empty-state">No upcoming events are listed for this field yet.</div>'; return; }
+    $("#eventsGrid").innerHTML = rows.slice(0,8).map(e => {
+      const date = e.event_date ? new Date(e.event_date + "T12:00:00").toLocaleDateString(undefined,{day:"2-digit",month:"short",year:"numeric"}) : "DATE TBA";
+      const fieldName = fieldNames.get(e.field_id) || e.location || "FIELDZERO FIELD";
+      return `<article class="event-card"><span class="event-type">${escapeHtml((e.event_type || "SESSION").toUpperCase())}</span><h3>${escapeHtml(e.title)}</h3><p>${escapeHtml(e.description || "Details will be announced by the organiser.")}</p><div class="event-meta"><span>▣ ${escapeHtml(date)}</span><span>⌖ ${escapeHtml(fieldName)}</span></div><strong class="event-price">${Number(e.price_amount||0)===0?"PRICE TO BE CONFIRMED":`${escapeHtml(e.price_currency||"LKR")} ${Number(e.price_amount||0).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:2})}`}</strong>${e.google_maps_url?`<a class="event-map-link" href="${escapeAttr(e.google_maps_url)}" target="_blank" rel="noopener noreferrer">OPEN FIELD MAP ↗</a><br><br>`:""}<a class="button button-lime event-book-link" href="event.html?id=${encodeURIComponent(e.id)}">${e.event_type === "Tournament" ? "REGISTER TEAM ↗" : "BOOK SESSION ↗"}</a></article>`;
+    }).join("");
+  }
   async function loadEvents() {
     if (!db) { eventPopupReady = true; maybeShowAnnouncement(); return; }
     const todaySL = new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Colombo",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
@@ -297,13 +332,11 @@
     featuredEventForPopup = publicEvents.find(e => e.popup_featured && e.event_date && e.event_date >= todaySL) || publicEvents.find(e => e.popup_featured && !e.event_date) || null;
     eventPopupReady = true;
     fillBookingEvents(publicEvents);
-    if (!publicEvents.length) { $("#eventsGrid").innerHTML = '<div class="empty-state">No upcoming events announced yet. Follow the community for the next game day.</div>'; maybeShowAnnouncement(); return; }
-    $("#eventsGrid").innerHTML = publicEvents.slice(0,6).map(e => {
-      const date = e.event_date ? new Date(e.event_date + "T12:00:00").toLocaleDateString(undefined,{day:"2-digit",month:"short",year:"numeric"}) : "DATE TBA";
-      return `<article class="event-card"><span class="event-type">${escapeHtml((e.event_type || "SESSION").toUpperCase())}</span><h3>${escapeHtml(e.title)}</h3><p>${escapeHtml(e.description || "Details will be announced by the organiser.")}</p><div class="event-meta"><span>▣ ${escapeHtml(date)}</span><span>⌖ ${escapeHtml(e.location || "FIELDZERO FIELD")}</span></div><strong class="event-price">${Number(e.price_amount||0)===0?"PRICE TO BE CONFIRMED":`${escapeHtml(e.price_currency||"LKR")} ${Number(e.price_amount||0).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:2})}`}</strong>${e.google_maps_url?`<a class="event-map-link" href="${escapeAttr(e.google_maps_url)}" target="_blank" rel="noopener noreferrer">OPEN FIELD MAP ↗</a><br><br>`:""}<a class="button button-lime event-book-link" href="event.html?id=${encodeURIComponent(e.id)}">${e.event_type === "Tournament" ? "REGISTER TEAM ↗" : "BOOK SESSION ↗"}</a></article>`;
-    }).join("");
+    renderUpcomingEvents();
     maybeShowAnnouncement();
   }
+  $("#eventsFieldFilter")?.addEventListener('change', renderUpcomingEvents);
+  $("#galleryFieldFilter")?.addEventListener('change', renderGallery);
 
   function fillBookingEvents(events) {
     const select = $("#bookingEvent");
@@ -398,9 +431,28 @@
     rows.forEach((r,i)=>{doc.setDrawColor(218,224,214);doc.line(14,y+13,196,y+13);doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...muted);doc.text(r[0],16,y);doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...dark);doc.text(doc.splitTextToSize(String(r[1]),112),70,y);if(r[2]){doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...muted);doc.text(doc.splitTextToSize(String(r[2]),60),137,y)}y+=23});
     doc.setFillColor(...dark);doc.roundedRect(14, y+3,182,42,2,2,'F');doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...lime);doc.text('ARRIVAL CHECK-IN',20,y+14);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(255,255,255);doc.text('Show this booking ID to the FIELDZERO administrator on arrival.',20,y+22);doc.text('Please arrive 15 minutes before your scheduled start time.',20,y+30);doc.setFontSize(6.5);doc.setTextColor(...muted);doc.text('This booking pass is not a tax invoice or proof of payment. Special bookings are only confirmed after written approval.',14,282,{maxWidth:182});doc.setDrawColor(...lime);doc.setLineWidth(1);doc.line(14,287,196,287);doc.save(`${b.booking_reference||'FIELDZERO-BOOKING'}.pdf`);
   }
-  async function loadPublicSpotlight(){if(!db)return;const {data,error}=await db.from('fz_spotlight_cards').select('title,subtitle,image_url,card_type').order('created_at',{ascending:false}).limit(1);if(error||!data?.length)return;const card=data[0],modal=$('#fzSpotlightModal');if(!modal||sessionStorage.getItem('fzSpotlightSeen'))return;$('#fzSpotlightTitle').textContent=card.title;$('#fzSpotlightSubtitle').textContent=card.subtitle||'';$('#fzSpotlightKicker').textContent=card.card_type==='top_player'?'FIELDZERO / PLAYER OF THE MOMENT':card.card_type==='special_occasion'?'FIELDZERO / SPECIAL OCCASION':'FIELDZERO / SPOTLIGHT';$('#fzSpotlightImage').style.backgroundImage=`url("${String(card.image_url).replace(/"/g,'%22')}")`;modal.hidden=false;sessionStorage.setItem('fzSpotlightSeen','1')}
+  async function loadPublicSpotlight(){
+    if(!db)return;
+    const fieldId=$('#arenaFieldSelect')?.value||'';
+    const modal=$('#fzSpotlightModal');
+    if(!fieldId||!modal||sessionStorage.getItem('fzSpotlightSeen'))return;
+    const {data,error}=await db.from('fz_spotlight_cards')
+      .select('title,subtitle,image_url,card_type')
+      .eq('field_id',fieldId)
+      .eq('active',true)
+      .order('created_at',{ascending:false})
+      .limit(1);
+    if(error||!data?.length)return;
+    const card=data[0];
+    $('#fzSpotlightTitle').textContent=card.title;
+    $('#fzSpotlightSubtitle').textContent=card.subtitle||'';
+    $('#fzSpotlightKicker').textContent=card.card_type==='top_player'?'FIELDZERO / PLAYER OF THE MOMENT':card.card_type==='special_occasion'?'FIELDZERO / SPECIAL OCCASION':'FIELDZERO / SPOTLIGHT';
+    $('#fzSpotlightImage').style.backgroundImage=`url("${String(card.image_url).replace(/"/g,'%22')}")`;
+    modal.hidden=false;
+    sessionStorage.setItem('fzSpotlightSeen','1');
+  }
+  $('#arenaFieldSelect')?.addEventListener('change',()=>loadPublicSpotlight());
   $('#fzSpotlightClose')?.addEventListener('click',()=>{$('#fzSpotlightModal').hidden=true});
-  loadPublicSpotlight();
   const arenaForm=$("#arenaBookingForm"); if(arenaForm) arenaForm.addEventListener('submit',async e=>{e.preventDefault();const fd=new FormData(arenaForm),el=$("#arenaBookingStatus");if(!db){status(el,'Database is not configured yet.','error');return}const h=fd.get('startTime'),special=fd.get('specialRequest')==='true',specialTime=String(fd.get('specialTime')||'');if(!h&&!special){status(el,'Choose an available start time or select special booking request.','error');return}const date=dateInput.value;const parts=(special&&specialTime)?specialTime.split(':').map(Number):[Number(h||15),0];const start=slDateTime(date,parts[0],parts[1]||0);const end=new Date(start.getTime()+Number($("#arenaDuration").value||1)*3600000);if(!special&&!openingHours(date).includes(Number(h))){status(el,'That start time is outside regular opening hours. Select special request instead.','error');return}const payload={field_id:$("#arenaFieldSelect")?.value||null,real_name:String(fd.get('realName')).trim(),callsign:String(fd.get('callsign')).trim(),mobile:String(fd.get('mobile')).trim(),customer_email:String(fd.get('customerEmail')||'').trim(),experience:String(fd.get('experience')||''),booking_start:start.toISOString(),booking_end:end.toISOString(),player_count:Number(fd.get('playerCount')),special_request:special,notes:[fd.get('experience') ? `Experience: ${String(fd.get('experience')).trim()}` : '', String(fd.get('notes')||'').trim()].filter(Boolean).join(' | ').slice(0,700),privacy_consent:true};const btn=$("#submitArenaBooking");btn.disabled=true;btn.textContent='PROCESSING BOOKING…';const {data,error}=await db.rpc('fz_submit_arena_booking',{p_booking:payload});btn.disabled=false;btn.textContent='REQUEST THIS SLOT ↗';if(error){status(el,error.message||'Could not submit booking. Please try again.','error');return}const booking=data?.[0];if(!booking){status(el,'Booking submitted but reference could not be loaded. Contact FIELDZERO.','error');return}try{await generateCustomerBookingPdf({...payload,...booking,field_name:$("#arenaFieldSelect")?.selectedOptions?.[0]?.textContent||'FIELDZERO FIELD'});}catch(pdfErr){console.warn('Booking PDF generation failed',pdfErr)}arenaForm.reset();dateInput.value=date;await loadArenaSlots();status(el,special?`SPECIAL REQUEST RECEIVED · ${booking.booking_reference}. This is not confirmed until FIELDZERO contacts you.`:`BOOKING CONFIRMED · ${booking.booking_reference}. Your booking pass PDF has been downloaded. Bring this booking ID on arrival.`, 'success');});
   const profileForm=$("#profileSearchForm");if(profileForm)profileForm.addEventListener('submit',async e=>{e.preventDefault();const box=$("#playerProfile"),call=$("#profileCallsign").value.trim();if(!db){box.innerHTML='<div class="empty-state">Database is not configured.</div>';return}const {data,error}=await db.from('public_player_profiles').select('callsign,player_rank,player_points,playing_hours,matches_played,wins,preferred_role,joined_on,win_rate,team_name').ilike('callsign',call).maybeSingle();if(error||!data){box.innerHTML='<div class="empty-state">No approved player profile found for that callsign.</div>';return}box.innerHTML=`<article class="profile-card"><div class="profile-call">${escapeHtml(data.callsign)}</div><div class="profile-sub">${escapeHtml(data.team_name||'INDEPENDENT')} · ${escapeHtml(data.player_rank)}</div><div class="profile-stats"><div><b>${Number(data.player_points)}</b><span>POINTS</span></div><div><b>${Number(data.playing_hours).toFixed(1)}</b><span>PLAY HOURS</span></div><div><b>${Number(data.matches_played)}</b><span>MATCHES</span></div><div><b>${Number(data.wins)}</b><span>WINS</span></div><div><b>${Number(data.win_rate)}%</b><span>WIN RATE</span></div><div><b>${escapeHtml(data.preferred_role)}</b><span>ROLE</span></div></div><small>Roster since ${escapeHtml(data.joined_on||'—')} · Stats maintained by FIELDZERO admin.</small></article>`;});
   async function loadChallengeTeams(){
@@ -440,15 +492,23 @@
 
   // Public, immediately published feedback. Display names are optional; no contact details are collected.
   const feedbackForm=$('#feedbackForm');
+  let allPublicFeedback=[];
+  function renderFeedback(){
+    const list=$('#feedbackList'), summary=$('#feedbackSummary'); if(!list||!summary)return;
+    const selected=$('#feedbackFieldFilter')?.value||'all';
+    const rows=allPublicFeedback.filter(r=>selected==='all'||r.field_id===selected);
+    const avg=rows.length?rows.reduce((a,r)=>a+Number(r.rating||0),0)/rows.length:0;
+    summary.textContent=rows.length?`★ ${avg.toFixed(1)} / 5 · ${rows.length} RECENT`:'NO RATINGS YET';
+    list.innerHTML=rows.length?rows.slice(0,12).map(r=>`<article class="feedback-card"><div class="feedback-card-top"><b>${escapeHtml(r.display_name||'FIELDZERO PLAYER')}</b><span class="feedback-stars" aria-label="${Number(r.rating)} out of 5 stars">${'★'.repeat(Math.max(0,Math.min(5,Number(r.rating)||0)))}${'☆'.repeat(5-Math.max(0,Math.min(5,Number(r.rating)||0)))}</span></div><p>${escapeHtml(r.comment)}</p><small>${escapeHtml(fieldNames.get(r.field_id)||'FIELDZERO FIELD')} · ${new Date(r.created_at).toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'})}</small></article>`).join(''):'<div class="empty-state">No feedback has been published for this field yet.</div>';
+  }
   async function loadFeedback(){
     const list=$('#feedbackList'), summary=$('#feedbackSummary'); if(!list||!summary)return;
     if(!db){list.innerHTML='<div class="empty-state">Feedback will appear after the site database is configured.</div>';summary.textContent='DATABASE OFFLINE';return;}
-    const {data,error}=await db.from('public_feedback').select('id,display_name,rating,comment,created_at').order('created_at',{ascending:false}).limit(12);
+    const {data,error}=await db.from('public_feedback').select('id,display_name,rating,comment,created_at,field_id').order('created_at',{ascending:false}).limit(100);
     if(error){list.innerHTML='<div class="empty-state">Feedback could not load. The site owner should apply upgrade-v6.sql.</div>';summary.textContent='UNAVAILABLE';return;}
-    const rows=data||[]; const avg=rows.length?rows.reduce((a,r)=>a+Number(r.rating||0),0)/rows.length:0;
-    summary.textContent=rows.length?`★ ${avg.toFixed(1)} / 5 · ${rows.length} RECENT`:'NO RATINGS YET';
-    list.innerHTML=rows.length?rows.map(r=>`<article class="feedback-card"><div class="feedback-card-top"><b>${escapeHtml(r.display_name||'FIELDZERO PLAYER')}</b><span class="feedback-stars" aria-label="${Number(r.rating)} out of 5 stars">${'★'.repeat(Math.max(0,Math.min(5,Number(r.rating)||0)))}${'☆'.repeat(5-Math.max(0,Math.min(5,Number(r.rating)||0)))}</span></div><p>${escapeHtml(r.comment)}</p><small>${new Date(r.created_at).toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'})}</small></article>`).join(''):'<div class="empty-state">No feedback yet. Be the first player to leave an after-action report.</div>';
+    allPublicFeedback=data||[];renderFeedback();
   }
+  $('#feedbackFieldFilter')?.addEventListener('change',renderFeedback);
   document.querySelectorAll('.star-picker input[type="radio"]').forEach(radio=>radio.addEventListener('change',()=>{const group=radio.closest('.star-picker');group?.querySelectorAll('label').forEach(label=>label.classList.toggle('selected',Number(label.querySelector('input').value)<=Number(radio.value)));}));
   if(feedbackForm)feedbackForm.addEventListener('submit',async e=>{
     e.preventDefault();const el=$('#feedbackStatus'),button=$('#submitFeedback'),fd=new FormData(feedbackForm);
@@ -456,17 +516,19 @@
     const rating=Number(fd.get('rating')),comment=String(fd.get('comment')||'').trim(),display_name=String(fd.get('displayName')||'').trim().slice(0,32);
     if(!(rating>=1&&rating<=5)){status(el,'Please select a star rating from 1 to 5.','error');return;}
     if(comment.length<5){status(el,'Please add a little more detail (at least 5 characters).','error');return;}
-    button.disabled=true;const {error}=await db.from('feedback').insert({display_name:display_name||'FIELDZERO PLAYER',rating,comment,published:true});button.disabled=false;
+    button.disabled=true;const {error}=await db.from('feedback').insert({field_id:fd.get('field_id'),display_name:display_name||'FIELDZERO PLAYER',rating,comment,published:true});button.disabled=false;
     if(error){status(el,'Could not publish feedback. The site owner should apply upgrade-v6.sql and check database permissions.','error');return;}
-    feedbackForm.reset();document.querySelectorAll('.star-picker label').forEach(label=>label.classList.remove('selected'));status(el,'Thanks — your feedback is now published. Please keep comments respectful.','success');await loadFeedback();
+    feedbackForm.reset();const fbField=$('#feedbackFieldSelect');if(fbField)fbField.value=publicFields.find(f=>f.is_main)?.id||publicFields[0]?.id||'';document.querySelectorAll('.star-picker label').forEach(label=>label.classList.remove('selected'));status(el,'Thanks — your feedback is now published. Please keep comments respectful.','success');await loadFeedback();
   });
   loadFeedback();
 
   // Session gallery: admin-uploaded public photos with lightbox and optional featured pop-up.
   const galleryGrid=$('#galleryGrid'), galleryCount=$('#galleryCount'), lightbox=$('#photoLightbox');
-  let galleryPhotos=[], lightboxIndex=0;
+  let galleryPhotos=[], allGalleryPhotos=[], lightboxIndex=0;
   function renderGallery(){
     if(!galleryGrid||!galleryCount)return;
+    const filter=$('#galleryFieldFilter')?.value||'all';
+    galleryPhotos=allGalleryPhotos.filter(photo=>filter==='all'||photo.field_id===filter);
     galleryCount.textContent=`${galleryPhotos.length} SESSION PHOTO${galleryPhotos.length===1?'':'S'}`;
     if(!galleryPhotos.length){galleryGrid.innerHTML='<div class="empty-state gallery-empty">No session photos have been published yet. FIELDZERO highlights will appear here after the first gallery upload.</div>';return;}
     galleryGrid.innerHTML=galleryPhotos.map((photo,i)=>`<button type="button" class="gallery-card" data-gallery-index="${i}" aria-label="View ${escapeAttr(photo.title||'session photo')}"><img src="${escapeAttr(photo.image_url)}" alt="${escapeAttr(photo.title||'FIELDZERO session photo')}" loading="lazy"><span class="gallery-open-mark">↗</span><span class="gallery-card-copy"><small>${escapeHtml(photo.session_name||'FIELDZERO SESSION')}</small><b>${escapeHtml(photo.title||'FIELD MOMENT')}</b></span></button>`).join('');
@@ -475,10 +537,10 @@
   async function loadGallery(){
     if(!galleryGrid)return;
     if(!db){galleryGrid.innerHTML='<div class="empty-state gallery-empty">Connect the FIELDZERO database to load session photos.</div>';if(galleryCount)galleryCount.textContent='GALLERY OFFLINE';galleryPopupReady=true;maybeShowAnnouncement();return;}
-    const {data,error}=await db.from('public_gallery_photos').select('id,title,session_name,image_url,popup_featured,created_at').order('created_at',{ascending:false});
+    const {data,error}=await db.from('public_gallery_photos').select('id,title,session_name,image_url,popup_featured,created_at,field_id').order('created_at',{ascending:false});
     if(error){galleryGrid.innerHTML='<div class="empty-state gallery-empty">The gallery database is not ready yet. The site owner should run supabase/upgrade-v7-gallery.sql.</div>';galleryCount.textContent='GALLERY UNAVAILABLE';galleryPopupReady=true;maybeShowAnnouncement();return;}
-    galleryPhotos=data||[];renderGallery();
-    featuredPhotoForPopup=galleryPhotos.find(photo=>photo.popup_featured)||null;
+    allGalleryPhotos=data||[];renderGallery();
+    featuredPhotoForPopup=allGalleryPhotos.find(photo=>photo.popup_featured)||null;
     galleryPopupReady=true;
     maybeShowAnnouncement();
   }

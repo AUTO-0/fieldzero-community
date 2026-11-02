@@ -146,3 +146,6 @@ body[data-fz-theme] .site-header{background:var(--ink)}body[data-fz-theme] .bran
 .faq-grid details{transition:border-color .2s ease}
 .faq-grid details[open]{border-color:#8c9b7d}
 @media(max-width:640px){.hero{min-height:650px}.hero-note{margin-top:38px}.section{padding-top:66px;padding-bottom:66px}.mode-card{min-height:255px}.contact-panel{padding:27px 21px}.social-profile-link{flex:1 1 auto}.footer-social{justify-content:flex-start}}
+
+/* V14 editorial / graphic direction: Gorilla Science-inspired energy, original FIELDZERO identity */
+.hero h1{letter-spacing:-.055em;text-shadow:0 8px 36px #0009}.hero-content{max-width:900px}.hero-copy{max-width:560px;font-size:clamp(14px,1.25vw,18px);line-height:1.8}.hero-stamp{transform:rotate(3deg);border:1px solid #b9ff4080;box-shadow:10px 10px 0 #b9ff4020}.section-kicker{font-weight:900}.section-heading h2{letter-spacing:-.045em}.mode-card,.event-card,.team-card{border-radius:2px}.ticker{background:#b9ff40;color:#111710}.ticker b{color:#111710}.fz-spotlight-modal{font-family:'DM Sans',sans-serif}

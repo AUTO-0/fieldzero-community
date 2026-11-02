@@ -149,3 +149,37 @@ body[data-fz-theme] .site-header{background:var(--ink)}body[data-fz-theme] .bran
 
 /* V14 editorial / graphic direction: Gorilla Science-inspired energy, original FIELDZERO identity */
 .hero h1{letter-spacing:-.055em;text-shadow:0 8px 36px #0009}.hero-content{max-width:900px}.hero-copy{max-width:560px;font-size:clamp(14px,1.25vw,18px);line-height:1.8}.hero-stamp{transform:rotate(3deg);border:1px solid #b9ff4080;box-shadow:10px 10px 0 #b9ff4020}.section-kicker{font-weight:900}.section-heading h2{letter-spacing:-.045em}.mode-card,.event-card,.team-card{border-radius:2px}.ticker{background:#b9ff40;color:#111710}.ticker b{color:#111710}.fz-spotlight-modal{font-family:'DM Sans',sans-serif}
+
+
+/* ===============================================================
+   FIELDZERO V16 — RESERVATION / DEPOSIT EXPERIENCE REFINEMENTS
+   Reference-led layout cues: clear booking CTA, location choice,
+   event discovery and newcomer information. Original FIELDZERO style.
+   =============================================================== */
+:root{scroll-behavior:smooth;scroll-padding-top:94px}
+#mainNav a.nav-book{color:#c9ff58;border-bottom:1px solid rgba(201,255,88,.55);font-weight:800;letter-spacing:.08em}
+#mainNav a.nav-book:hover{color:#fff;border-color:#c9ff58}
+.hero-copy{max-width:640px;line-height:1.75;font-size:clamp(1rem,1.5vw,1.18rem)}
+.hero-actions{gap:12px;flex-wrap:wrap}
+.hero-actions .button{min-height:52px;padding-inline:24px}
+.section-heading{align-items:end;gap:clamp(20px,4vw,56px)}
+.section-heading>p{max-width:510px;line-height:1.8}
+#calendar .section-heading{margin-bottom:28px}
+#calendar .section-heading>p{padding:20px 22px;border-left:2px solid var(--lime,#c9ff58);background:rgba(255,255,255,.035)}
+.booking-deposit-note{display:flex;gap:17px;align-items:flex-start;margin:22px 0 6px;padding:20px 22px;border:1px solid rgba(201,255,88,.24);background:linear-gradient(115deg,rgba(201,255,88,.08),rgba(255,255,255,.025));border-radius:10px}
+.booking-deposit-icon{display:grid;place-items:center;flex:0 0 38px;height:38px;border-radius:8px;background:#c9ff58;color:#10170f;font:900 14px/1 system-ui}
+.booking-deposit-note b{display:block;color:#eaffc9;font-size:.78rem;letter-spacing:.12em;line-height:1.5}
+.booking-deposit-note p{margin:7px 0;color:rgba(239,244,232,.88);font-size:.92rem;line-height:1.75}
+.booking-deposit-note small{color:rgba(210,220,205,.68);font-size:.76rem;line-height:1.6}
+.arena-slot.pending{border-color:rgba(255,195,84,.4);background:rgba(255,195,84,.08)}
+.arena-slot.booked{opacity:.55}
+#fields .field-card,#events .event-card,#packages .package-card{transition:transform .2s ease,border-color .2s ease,background .2s ease}
+#fields .field-card:hover,#events .event-card:hover,#packages .package-card:hover{transform:translateY(-3px);border-color:rgba(201,255,88,.48)}
+#fields,#events,#packages,#calendar{scroll-margin-top:95px}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #c9ff58;outline-offset:3px}
+@media(max-width:760px){#mainNav a.nav-book{display:inline-flex}.booking-deposit-note{padding:16px;gap:12px}.booking-deposit-note p{font-size:.86rem}.hero-actions .button{width:100%;justify-content:center}.section-heading{align-items:flex-start}}
+
+
+/* V16 — clearer advance/payment and location information */
+.field-deposit-rate{display:block;margin-top:10px;padding:9px 11px;border-left:2px solid var(--lime,#b9ff40);background:rgba(185,255,64,.06);color:rgba(238,245,230,.82);font-size:.76rem;line-height:1.55}
+#bookingAdvanceRate{display:block;margin-top:8px;color:#d9e6ce;font-size:.78rem;line-height:1.55}

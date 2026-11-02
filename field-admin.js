@@ -35,7 +35,7 @@
       return;
     }
     const ids = map.data.map(x => x.field_id);
-    const fields = await db.from('arena_fields').select('id,name,slug,address,is_main,commission_rate,network_status,active').in('id', ids);
+    const fields = await db.from('arena_fields').select('id,name,slug,address,is_main,commission_rate,booking_deposit_percent,network_status,active').in('id', ids);
     if (fields.error) { show($('#fieldLoginStatus'), `Could not load your field profile: ${fields.error.message}`, 'error'); return; }
     const available = (fields.data || []).filter(f => f.active && f.network_status === 'active');
     field = available.find(f => f.slug === queryField) || (!queryField && available.length === 1 ? available[0] : null);
@@ -74,7 +74,10 @@
     host.innerHTML = rows.length ? rows.map(b => {
       const when = new Date(b.booking_start).toLocaleString('en-GB',{timeZone:'Asia/Colombo',dateStyle:'medium',timeStyle:'short'});
       const special = b.special_request || b.booking_kind === 'special';
-      return `<article class="field-record-card"><div class="field-record-main"><span class="field-record-kicker">${special ? 'SPECIAL REQUEST' : 'STANDARD BOOKING'} · ${esc(b.status.toUpperCase())}</span><h4>${esc(b.booking_reference || 'LEGACY BOOKING')} · ${esc(b.callsign)}</h4><p>${esc(b.real_name)} · ${esc(b.mobile)} · ${Number(b.player_count || 1)} player(s)</p><small>${esc(when)} · ${esc(b.experience || 'Field session')}</small>${b.notes ? `<p>${esc(b.notes)}</p>` : ''}</div><div class="field-record-actions">${b.status === 'pending' ? `<button class="button button-lime" data-booking-action="approve" data-id="${esc(b.id)}">APPROVE</button><button class="button button-ghost" data-booking-action="reject" data-id="${esc(b.id)}">DECLINE</button>` : ''}${b.status === 'approved' ? `<button class="button button-ghost" data-booking-invoice="${esc(b.id)}">CREATE INVOICE</button>` : ''}<button class="button button-ghost" data-booking-pass="${esc(b.id)}">BOOKING PASS PDF</button></div></article>`;
+      const payLabel = ({not_invoiced:'NOT INVOICED',awaiting_deposit:'AWAITING ADVANCE',partial_deposit:'PARTIAL ADVANCE',deposit_paid:'ADVANCE PAID',paid:'FULLY PAID',void:'VOID'})[b.payment_status] || 'PAYMENT CHECK';
+      const invoice = invoices.find(x=>x.id===b.invoice_id);
+      const moneyLine = invoice ? `Invoice ${money(invoice.total_amount)} · Received ${money(invoice.amount_paid)} · Balance ${money(invoice.balance_due)}` : (Number(b.quoted_amount||0)>0 ? `Quoted ${money(b.quoted_amount)} · Advance required ${money(b.deposit_required_amount||0)}` : 'Price / advance invoice not yet issued');
+      return `<article class="field-record-card"><div class="field-record-main"><span class="field-record-kicker">${special ? 'SPECIAL REQUEST' : 'STANDARD BOOKING'} · ${esc(b.status.toUpperCase())} · ${esc(payLabel)}</span><h4>${esc(b.booking_reference || 'LEGACY BOOKING')} · ${esc(b.callsign)}</h4><p>${esc(b.real_name)} · ${esc(b.mobile)} · ${Number(b.player_count || 1)} player(s)</p><small>${esc(when)} · ${esc(b.experience || 'Field session')}</small><p>${esc(moneyLine)}</p>${b.status==='pending_payment'&&b.booking_hold_expires_at?`<small>Temporary hold expires ${esc(new Date(b.booking_hold_expires_at).toLocaleString('en-GB',{timeZone:'Asia/Colombo'}))}</small>`:''}${b.status==='pending_payment'&&['deposit_paid','paid'].includes(b.payment_status)?'<small class="field-payment-warning">Advance recorded, but the original slot is no longer available. Contact the customer to reschedule.</small>':''}${b.notes ? `<p>${esc(b.notes)}</p>` : ''}</div><div class="field-record-actions">${b.status === 'pending' ? `<button class="button button-lime" data-booking-action="approve" data-id="${esc(b.id)}">APPROVE & REQUEST ADVANCE</button><button class="button button-ghost" data-booking-action="reject" data-id="${esc(b.id)}">DECLINE</button>` : ''}${['pending_payment','approved'].includes(b.status)&&!b.invoice_id ? `<button class="button button-lime" data-booking-invoice="${esc(b.id)}">CREATE DEPOSIT INVOICE</button>` : ''}${b.invoice_id&&Number(invoice?.balance_due||0)>0 ? `<button class="button button-lime" data-invoice-pay="${esc(b.invoice_id)}">RECORD PAYMENT</button>` : ''}${b.status === 'approved' ? `<button class="button button-ghost" data-booking-pass="${esc(b.id)}">CONFIRMED PASS PDF</button>` : ''}</div></article>`;
     }).join('') : '<div class="empty-state">No bookings match this view.</div>';
     host.querySelectorAll('[data-booking-action]').forEach(btn => btn.addEventListener('click', async () => {
       const decision = btn.dataset.bookingAction;
@@ -83,36 +86,52 @@
       if (error) { alert(error.message); return; }
       await loadBookings(); renderOverview();
     }));
-    host.querySelectorAll('[data-booking-pass]').forEach(btn => btn.addEventListener('click', () => makeBookingPass(bookings.find(b => b.id === btn.dataset.bookingPass))));
+    host.querySelectorAll('[data-booking-pass]').forEach(btn => btn.addEventListener('click', async () => { try { await makeBookingPass(bookings.find(b => b.id === btn.dataset.bookingPass)); } catch (error) { alert(error.message || 'Could not generate the booking pass.'); } }));
+    host.querySelectorAll('[data-invoice-pay]').forEach(btn => btn.addEventListener('click', () => { selectTab('finance'); recordPayment(btn.dataset.invoicePay); }));
     host.querySelectorAll('[data-booking-invoice]').forEach(btn => btn.addEventListener('click', () => createInvoiceFromBooking(bookings.find(b => b.id === btn.dataset.bookingInvoice))));
   }
 
-  function makeBookingPass(b) {
-    if (!b || !window.jspdf?.jsPDF) return;
+  async function makeBookingPass(b) {
+    if (!b || b.status !== 'approved') { alert('A confirmed booking pass is available only after the required advance has been received.'); return; }
+    if (!window.jspdf?.jsPDF) throw new Error('PDF library could not load. Refresh the field admin portal and try again.');
+    const invoiceResult = b.invoice_id
+      ? await db.from('fz_invoices').select('total_amount,amount_paid,balance_due').eq('id',b.invoice_id).maybeSingle()
+      : { data: null, error: null };
+    if (invoiceResult.error) throw invoiceResult.error;
+    const inv = invoiceResult.data || {};
     const {jsPDF}=window.jspdf, doc=new jsPDF({unit:'mm',format:'a4'});
     doc.setFillColor(17,23,16); doc.rect(0,0,210,70,'F'); doc.setTextColor(185,255,64); doc.setFont('helvetica','bold'); doc.setFontSize(17); doc.text('FIELDZERO',15,25);
-    doc.setTextColor(255,255,255); doc.setFontSize(23); doc.text('BOOKING PASS',15,51);
-    doc.setTextColor(20,30,20); doc.setFontSize(17); doc.text(String(b.booking_reference || 'LEGACY BOOKING'),15,91);
-    const rows=[['CUSTOMER',`${b.real_name} / ${b.callsign}`],['MOBILE',b.mobile],['FIELD',field.name],['DATE & TIME',new Date(b.booking_start).toLocaleString('en-GB',{timeZone:'Asia/Colombo'})],['PLAYERS',String(b.player_count)],['EXPERIENCE',b.experience || 'Field session'],['STATUS',b.status.toUpperCase()]];
-    rows.forEach((r,i)=>{ const y=113+i*19; doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text(r[0],15,y);doc.setFont('helvetica','normal');doc.setFontSize(11);doc.text(String(r[1]||''),70,y); });
-    doc.setFontSize(8);doc.text('Present this booking reference at the field check-in. This is not an invoice or payment receipt.',15,271,{maxWidth:180});
-    doc.save(`${b.booking_reference || 'FIELDZERO-BOOKING'}.pdf`);
+    doc.setTextColor(255,255,255); doc.setFontSize(23); doc.text('CONFIRMED BOOKING PASS',15,51);
+    doc.setTextColor(20,30,20); doc.setFontSize(16); doc.text(String(b.booking_reference || 'LEGACY BOOKING'),15,91);
+    const rows=[
+      ['CUSTOMER',`${b.real_name} / ${b.callsign}`],['MOBILE',b.mobile],['FIELD',field.name],
+      ['DATE & TIME',new Date(b.booking_start).toLocaleString('en-GB',{timeZone:'Asia/Colombo'})],
+      ['PLAYERS',String(b.player_count)],['EXPERIENCE',b.experience || 'Field session'],
+      ['BOOKING TOTAL',money(inv.total_amount ?? b.quoted_amount ?? 0)],
+      ['ADVANCE RECEIVED',money(inv.amount_paid || 0)],
+      ['BALANCE AT CHECK-IN',money(inv.balance_due || 0)],['STATUS','CONFIRMED · ADVANCE RECEIVED']
+    ];
+    rows.forEach((r,i)=>{ const y=111+i*14; doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text(r[0],15,y);doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text(String(r[1]||''),70,y); });
+    doc.setFontSize(8);doc.text('Present this booking reference at field check-in. Any remaining balance is payable before the session. This pass is not a tax invoice or payment receipt.',15,266,{maxWidth:180});
+    doc.save(`${b.booking_reference || 'FIELDZERO-BOOKING'}-CONFIRMED.pdf`);
   }
 
   async function createInvoiceFromBooking(b) {
-    if (!b || b.status !== 'approved') { alert('Only confirmed bookings can be invoiced.'); return; }
-    const value = prompt(`Enter the agreed invoice amount in LKR for ${b.booking_reference || b.callsign}:`, String(Number(b.quoted_amount || 0)));
+    if (!b || !['pending_payment','approved'].includes(b.status)) { alert('Approve a special request first.'); return; }
+    const value = prompt(`Enter the agreed total booking amount in LKR for ${b.booking_reference || b.callsign}:`, String(Number(b.quoted_amount || 0)));
     if (value === null) return;
     const amount = Number(value);
     if (!Number.isFinite(amount) || amount <= 0) { alert('Enter an amount greater than zero.'); return; }
-    const customer = b.real_name || b.callsign;
-    const payload = { field_id:field.id, customer_name:customer, customer_phone:b.mobile || '', customer_email:b.customer_email || '', invoice_date:today(), due_date:today(), currency:'LKR', discount_amount:0, tax_rate:0, notes:`Booking reference: ${b.booking_reference || b.id}\nField: ${field.name}`, terms:'Please retain the payment receipt.' };
-    const items = [{description:`${b.experience || 'Field booking'} · ${b.booking_reference || ''} · ${b.player_count} player(s)`,quantity:1,unit_price:amount}];
-    const {data,error}=await db.rpc('fz_admin_create_invoice',{p_invoice:payload,p_items:items});
-    if(error){alert(`Invoice could not be created: ${error.message}`);return;}
-    await loadFinance();
+    const pctRaw = prompt(`Advance percentage for this booking (field default ${Number(field.booking_deposit_percent||30)}%):`, String(Number(field.booking_deposit_percent||30)));
+    if (pctRaw === null) return;
+    const pct = Number(pctRaw);
+    if (!Number.isFinite(pct) || pct < 1 || pct > 100) { alert('Enter an advance percentage from 1 to 100.'); return; }
+    const {data,error}=await db.rpc('fz_admin_create_booking_invoice',{p_booking_id:b.id,p_total_amount:amount,p_deposit_percent:pct});
+    if(error){alert(`Booking invoice could not be created: ${error.message}`);return;}
+    await Promise.all([loadFinance(),loadBookings()]);
     await downloadInvoice(data);
     selectTab('finance');
+    alert('Invoice created. Send the invoice and payment instructions to the customer. The booking is confirmed only after the required advance is actually recorded.');
   }
 
   async function loadFinance() {
@@ -125,7 +144,7 @@
     ]);
     accounts=a.data||[]; invoices=i.data||[]; cashbook=c.data||[]; const payments=p.data||[]; invoiceSettings=settings.data||{};
     const settingsForm=$('#fieldInvoiceSettingsForm');
-    if(settingsForm){['business_name','legal_name','address','phone','email','registration_number','tax_registration_number','payment_instructions','invoice_footer'].forEach(k=>{if(settingsForm.elements.namedItem(k))settingsForm.elements.namedItem(k).value=invoiceSettings[k]||'';});}
+    if(settingsForm){['business_name','legal_name','address','phone','email','registration_number','tax_registration_number','payment_instructions','invoice_footer'].forEach(k=>{if(settingsForm.elements.namedItem(k))settingsForm.elements.namedItem(k).value=invoiceSettings[k]||'';});if(settingsForm.elements.namedItem('booking_deposit_percent'))settingsForm.elements.namedItem('booking_deposit_percent').value=Number(field.booking_deposit_percent||30);}
     const month=today().slice(0,7);
     const invoicePaidThisMonth=payments.filter(x=>String(x.payment_date||'').slice(0,7)===month).reduce((sum,x)=>sum+Number(x.amount||0),0);
     const otherIncomeThisMonth=cashbook.filter(x=>x.entry_type==='income'&&!x.invoice_id&&String(x.entry_date||'').slice(0,7)===month).reduce((sum,x)=>sum+Number(x.amount||0),0);
@@ -135,34 +154,36 @@
     $('#fieldFinanceKpis').innerHTML=[['Income received this month',money(paidThisMonth)],['Expenses this month',money(expensesThisMonth)],['Cash result this month',money(paidThisMonth-expensesThisMonth)],['Outstanding invoices',money(due)],['Invoices issued',String(invoices.length)]].map(([a,b])=>`<article class="field-kpi"><small>${esc(a)}</small><strong>${esc(b)}</strong></article>`).join('');
     $('#fieldAccountsList').innerHTML=accounts.map(x=>`<div class="field-mini-row"><b>${esc(x.account_name)}</b><span>${esc(x.account_type)} · ${x.active?'ACTIVE':'INACTIVE'}</span></div>`).join('')||'<p>No accounts configured.</p>';
     ['#fieldCashAccount','#fieldMaintenanceAccount'].forEach(selector=>{const accountSelect=$(selector);if(accountSelect){const prev=accountSelect.value;accountSelect.innerHTML='<option value="">Choose account</option>'+accounts.filter(x=>x.active).map(x=>`<option value="${esc(x.id)}">${esc(x.account_name)}</option>`).join('');if(accounts.some(x=>x.id===prev))accountSelect.value=prev;}});
-    $('#fieldInvoicesList').innerHTML=invoices.map(x=>`<article class="field-record-card compact"><div class="field-record-main"><b>${esc(x.invoice_number)} · ${esc(x.customer_name)}</b><small>${esc(x.invoice_date)} · ${esc(x.status.toUpperCase())}</small><p>Total ${money(x.total_amount)} · Paid ${money(x.amount_paid)} · Due ${money(x.balance_due)}</p></div><div class="field-record-actions"><button class="button button-ghost" data-invoice-pdf="${esc(x.id)}">PDF</button>${Number(x.balance_due)>0&&x.status!=='void'?`<button class="button button-lime" data-invoice-pay="${esc(x.id)}">RECORD PAYMENT</button>`:''}</div></article>`).join('')||'<div class="empty-state">No invoices yet. Create one from a confirmed booking.</div>';
+    $('#fieldInvoicesList').innerHTML=invoices.map(x=>`<article class="field-record-card compact"><div class="field-record-main"><b>${esc(x.invoice_number)} · ${esc(x.customer_name)}</b><small>${esc(x.invoice_date)} · ${esc(x.status.toUpperCase())}</small><p>Total ${money(x.total_amount)} · Paid ${money(x.amount_paid)} · Due ${money(x.balance_due)}</p></div><div class="field-record-actions"><button class="button button-ghost" data-invoice-pdf="${esc(x.id)}">${x.status==='paid'?'FINAL PAID INVOICE':'INVOICE PDF'}</button>${Number(x.balance_due)>0&&x.status!=='void'?`<button class="button button-lime" data-invoice-pay="${esc(x.id)}">RECORD PAYMENT</button>`:''}</div></article>`).join('')||'<div class="empty-state">No invoices yet. Issue a deposit invoice from a booking, then record the advance when it is received.</div>';
     $('#fieldInvoicesList').querySelectorAll('[data-invoice-pdf]').forEach(btn=>btn.addEventListener('click',()=>downloadInvoice(btn.dataset.invoicePdf)));
     $('#fieldInvoicesList').querySelectorAll('[data-invoice-pay]').forEach(btn=>btn.addEventListener('click',()=>recordPayment(btn.dataset.invoicePay)));
     $('#fieldCashbookList').innerHTML=cashbook.slice(0,12).map(x=>`<div class="field-mini-row"><div><b>${esc(x.category)}</b><small>${esc(x.entry_date)} · ${esc(x.description)}</small></div><strong class="${x.entry_type==='expense'?'negative':''}">${x.entry_type==='expense'?'-':'+'}${money(x.amount)}</strong></div>`).join('')||'<p>No cashbook entries yet.</p>';
     $('#fieldCashbookForm').elements.entry_date.value=today();
+    renderBookings();
   }
 
   async function downloadInvoice(invoiceId) {
     if(!window.jspdf?.jsPDF) return;
-    const [i,items]=await Promise.all([
+    const [i,items,bookingQ]=await Promise.all([
       db.from('fz_invoices').select('*').eq('id',invoiceId).single(),
-      db.from('fz_invoice_items').select('description,quantity,unit_price,line_total').eq('invoice_id',invoiceId).order('line_number')
+      db.from('fz_invoice_items').select('description,quantity,unit_price,line_total').eq('invoice_id',invoiceId).order('line_number'),
+      db.from('arena_bookings').select('booking_reference,deposit_required_amount,deposit_percent').eq('invoice_id',invoiceId).maybeSingle()
     ]);
     if(i.error||!i.data){alert(i.error?.message||'Invoice not found');return;}
-    const doc=new window.jspdf.jsPDF({unit:'mm',format:'a4'}),inv=i.data;
-    doc.setFillColor(17,23,16);doc.rect(0,0,210,52,'F');doc.setTextColor(185,255,64);doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text('FIELDZERO',15,22);doc.setTextColor(255,255,255);doc.setFontSize(18);doc.text('INVOICE',15,40);
-    doc.setTextColor(20,30,20);doc.setFontSize(11);doc.text(`Invoice: ${inv.invoice_number}`,15,68);doc.text(`Date: ${inv.invoice_date}`,15,76);doc.text(`Customer: ${inv.customer_name}`,15,88);doc.text(`Field: ${field.name}`,15,96);
+    const doc=new window.jspdf.jsPDF({unit:'mm',format:'a4'}),inv=i.data,booking=bookingQ.data||{};
+    doc.setFillColor(17,23,16);doc.rect(0,0,210,52,'F');doc.setTextColor(185,255,64);doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text('FIELDZERO',15,22);doc.setTextColor(255,255,255);doc.setFontSize(18);doc.text(inv.status==='paid'?'FINAL PAID INVOICE':'BOOKING INVOICE',15,40);
+    doc.setTextColor(20,30,20);doc.setFontSize(11);doc.text(`Invoice: ${inv.invoice_number}`,15,68);doc.text(`Date: ${inv.invoice_date}`,15,76);doc.text(`Customer: ${inv.customer_name}`,15,88);doc.text(`Field: ${field.name}`,15,96);if(booking.booking_reference)doc.text(`Booking: ${booking.booking_reference}`,15,104);
     const issuer=[invoiceSettings.business_name||field.name,invoiceSettings.legal_name,invoiceSettings.address||field.address,invoiceSettings.phone,invoiceSettings.email,invoiceSettings.registration_number?`Reg: ${invoiceSettings.registration_number}`:''].filter(Boolean);
     doc.setFontSize(8);issuer.forEach((v,n)=>doc.text(String(v),115,68+n*5,{maxWidth:80,align:'right'}));
     let y=116;doc.setFont('helvetica','bold');doc.text('DESCRIPTION',15,y);doc.text('QTY',125,y);doc.text('UNIT',148,y);doc.text('TOTAL',190,y,{align:'right'});y+=9;doc.setFont('helvetica','normal');
     (items.data||[]).forEach(row=>{doc.text(doc.splitTextToSize(row.description,98),15,y);doc.text(String(row.quantity),125,y);doc.text(Number(row.unit_price).toFixed(2),148,y);doc.text(Number(row.line_total).toFixed(2),190,y,{align:'right'});y+=12;});
-    y=Math.max(y+10,190);doc.setFont('helvetica','bold');doc.text(`TOTAL: ${money(inv.total_amount)}`,190,y,{align:'right'});doc.text(`PAID: ${money(inv.amount_paid)}`,190,y+9,{align:'right'});doc.text(`BALANCE: ${money(inv.balance_due)}`,190,y+18,{align:'right'});doc.setFont('helvetica','normal');doc.setFontSize(8);doc.text(String(invoiceSettings.payment_instructions||''),15,263,{maxWidth:180});doc.text(String(invoiceSettings.invoice_footer||'Please keep this invoice and request a receipt when payment is received.'),15,275,{maxWidth:180});
+    y=Math.max(y+10,190);doc.setFont('helvetica','bold');if(booking.deposit_required_amount>0)doc.text(`ADVANCE REQUIRED (${Number(booking.deposit_percent||0)}%): ${money(booking.deposit_required_amount)}`,190,y,{align:'right'});doc.text(`TOTAL: ${money(inv.total_amount)}`,190,y+9,{align:'right'});doc.text(`TOTAL PAID: ${money(inv.amount_paid)}`,190,y+18,{align:'right'});doc.text(`BALANCE: ${money(inv.balance_due)}`,190,y+27,{align:'right'});if(inv.status==='paid'){doc.setTextColor(20,120,45);doc.text('PAID IN FULL',15,y+27);}doc.setFont('helvetica','normal');doc.setFontSize(8);doc.text(String(invoiceSettings.payment_instructions||''),15,263,{maxWidth:180});doc.text(String(invoiceSettings.invoice_footer||'Please keep this invoice and request a receipt when payment is received.'),15,275,{maxWidth:180});
     doc.save(`${inv.invoice_number}.pdf`);
   }
 
   async function recordPayment(invoiceId) {
     const inv=invoices.find(x=>x.id===invoiceId);if(!inv)return;
-    const amountText=prompt(`Amount received (maximum ${money(inv.balance_due)}):`,String(inv.balance_due));if(amountText===null)return;
+    const linkedBooking=bookings.find(x=>x.invoice_id===invoiceId);const suggested=linkedBooking&&['awaiting_deposit','partial_deposit'].includes(linkedBooking.payment_status)?Math.min(Number(inv.balance_due),Math.max(0,Number(linkedBooking.deposit_required_amount||0)-Number(inv.amount_paid||0))):Number(inv.balance_due);const amountText=prompt(`Amount received (maximum ${money(inv.balance_due)}):`,String(suggested>0?suggested:inv.balance_due));if(amountText===null)return;
     const amount=Number(amountText);if(!Number.isFinite(amount)||amount<=0||amount>Number(inv.balance_due)){alert('Enter a valid payment up to the outstanding balance.');return;}
     if(!accounts.some(x=>x.active)){alert('Create an active financial account first.');return;}
     const methods=['cash','bank','card','online','other'];const methodText=prompt('Payment method: cash, bank, card, online or other','cash');if(methodText===null)return;
@@ -175,8 +196,10 @@
     if(error){alert(`Payment not recorded: ${error.message}`);return;}
     await loadFinance();
     const payment=await db.from('fz_invoice_payments').select('receipt_number,amount,payment_date,payment_method').eq('id',data).single();
-    if(payment.data&&window.jspdf?.jsPDF){const doc=new window.jspdf.jsPDF({unit:'mm',format:'a5'});doc.setFillColor(17,23,16);doc.rect(0,0,148,42,'F');doc.setTextColor(185,255,64);doc.setFont('helvetica','bold');doc.setFontSize(17);doc.text('FIELDZERO',12,20);doc.setTextColor(255,255,255);doc.setFontSize(13);doc.text('PAYMENT RECEIPT',12,32);doc.setTextColor(20,30,20);doc.setFontSize(10);doc.text(`Receipt: ${payment.data.receipt_number}`,12,60);doc.text(`Invoice: ${inv.invoice_number}`,12,70);doc.text(`Received from: ${inv.customer_name}`,12,80);doc.text(`Amount: ${money(payment.data.amount)}`,12,90);doc.text(`Date: ${payment.data.payment_date}`,12,100);doc.text(`Method: ${payment.data.payment_method}`,12,110);doc.text(`Field: ${field.name}`,12,120);doc.setFontSize(8);doc.text(String(invoiceSettings.business_name||field.name),12,128);doc.text(String(invoiceSettings.invoice_footer||'Thank you. Please retain this receipt.'),12,137,{maxWidth:120});doc.save(`${payment.data.receipt_number}.pdf`);}
-    alert(`Payment saved. ${payment.data?.receipt_number || ''} receipt downloaded.`);
+    if(payment.data&&window.jspdf?.jsPDF){const doc=new window.jspdf.jsPDF({unit:'mm',format:'a4'});doc.setFillColor(17,23,16);doc.rect(0,0,210,55,'F');doc.setTextColor(185,255,64);doc.setFont('helvetica','bold');doc.setFontSize(19);doc.text('FIELDZERO',15,23);doc.setTextColor(255,255,255);doc.setFontSize(16);doc.text('PAYMENT RECEIPT',15,42);doc.setTextColor(20,30,20);doc.setFontSize(10);const details=[['Receipt',payment.data.receipt_number],['Invoice',inv.invoice_number],['Booking',linkedBooking?.booking_reference||'—'],['Received from',inv.customer_name],['Field',field.name],['Payment date',payment.data.payment_date],['Method',payment.data.payment_method],['This payment',money(payment.data.amount)],['Advance required',money(linkedBooking?.deposit_required_amount||0)],['Invoice total',money(inv.total_amount)],['Total received',money(Number(inv.amount_paid)+Number(payment.data.amount))],['Balance outstanding',money(Math.max(0,Number(inv.balance_due)-Number(payment.data.amount)))]];details.forEach((r,n)=>{const y=75+n*13;doc.setFont('helvetica','bold');doc.text(r[0].toUpperCase(),15,y);doc.setFont('helvetica','normal');doc.text(String(r[1]??''),80,y)});doc.setFontSize(8);doc.text('This receipt acknowledges only the amount shown as this payment. Retain it with the booking invoice.',15,250,{maxWidth:180});doc.text(String(invoiceSettings.business_name||field.name),15,267);doc.text(String(invoiceSettings.invoice_footer||'Thank you. Please retain this receipt.'),15,276,{maxWidth:180});doc.save(`${payment.data.receipt_number}.pdf`);}
+    await loadBookings();
+    const refreshed=await db.from('arena_bookings').select('*').eq('invoice_id',invoiceId).maybeSingle();
+    if(refreshed.data?.status==='approved'){await makeBookingPass(refreshed.data);alert(`Payment saved. Booking ${refreshed.data.booking_reference} is confirmed. Payment receipt and confirmed booking pass downloaded.`);}else if(refreshed.data?.payment_status==='deposit_paid'){alert(`Payment receipt downloaded. The advance is recorded, but the original slot is no longer available. Contact the customer to reschedule.`);}else{alert(`Payment saved. ${payment.data?.receipt_number || ''} receipt downloaded. Booking is not yet confirmed because the required advance has not been met.`);}
   }
 
   $('#fieldCashbookForm')?.addEventListener('submit',async e=>{
@@ -325,9 +348,11 @@
     e.preventDefault();const fd=new FormData(e.currentTarget);
     const payload={field_id:field.id};
     ['business_name','legal_name','address','phone','email','registration_number','tax_registration_number','payment_instructions','invoice_footer'].forEach(k=>payload[k]=String(fd.get(k)||'').trim());
+    const pct=Number(fd.get('booking_deposit_percent'));if(!Number.isFinite(pct)||pct<1||pct>100){show($('#fieldInvoiceSettingsStatus'),'Default booking advance must be between 1 and 100 percent.','error');return;}
     const {error}=await db.from('fz_field_invoice_settings').upsert(payload,{onConflict:'field_id'});
     if(error){show($('#fieldInvoiceSettingsStatus'),error.message,'error');return;}
-    invoiceSettings=payload;show($('#fieldInvoiceSettingsStatus'),'Field invoice identity saved. New PDFs will use these details.','success');
+    const rate=await db.rpc('fz_admin_set_booking_deposit_percent',{p_field_id:field.id,p_percent:pct});if(rate.error){show($('#fieldInvoiceSettingsStatus'),rate.error.message,'error');return;}
+    field.booking_deposit_percent=pct;invoiceSettings=payload;show($('#fieldInvoiceSettingsStatus'),'Invoice identity and default booking advance saved.','success');
   });
   loginForm?.addEventListener('submit',async e=>{
     e.preventDefault();if(!db){show($('#fieldLoginStatus'),'Database configuration is missing.','error');return;}

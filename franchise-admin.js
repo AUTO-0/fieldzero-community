@@ -31,7 +31,7 @@
     await Promise.all([loadFields(),loadRequests(),loadFieldEvents(),loadCommissions(),loadAds(),loadPerformance()]);
   }
   async function loadFields(){
-    const result=await db.from('arena_fields').select('id,name,address,slug,is_main,active,network_status,owner_name,owner_email,owner_mobile,commission_rate').order('is_main',{ascending:false}).order('name');
+    const result=await db.from('arena_fields').select('id,name,address,slug,is_main,active,network_status,owner_name,owner_email,owner_mobile,commission_rate,booking_deposit_percent').order('is_main',{ascending:false}).order('name');
     if(result.error){$('#franchiseFieldsAdmin').innerHTML=`<p class="admin-error">${esc(result.error.message)}</p>`;return;}
     fields=result.data||[];mainField=fields.find(x=>x.is_main)||null;
     const select=$('#fzAdFieldSelect');
@@ -41,7 +41,7 @@
     $('#franchiseFieldsAdmin').innerHTML=fields.map(f=>{
       const portal=`field-admin.html?field=${encodeURIComponent(f.slug||'')}`;
       const isOn=f.active&&f.network_status==='active';
-      return `<article class="field-record-card"><div class="field-record-main"><span class="field-record-kicker">${f.is_main?'MAIN FIELD':'FRANCHISE FIELD'} · ${isOn?'ACTIVE':'SUSPENDED'}</span><h4>${esc(f.name)}</h4><p>${esc(f.address||'Address not set')}</p><small>Owner: ${esc(f.owner_name||'FIELDZERO central')} · ${esc(f.owner_email||'No owner assigned')} · Commission ${Number(f.commission_rate||0)}%</small><small>Field admin: ${esc(portal)}</small></div><div class="field-record-actions"><a class="button button-ghost" target="_blank" rel="noopener" href="${esc(portal)}">OPEN PORTAL ↗</a>${!f.is_main?`<button class="button button-ghost" data-field-rate="${esc(f.id)}" data-rate="${Number(f.commission_rate||10)}">SET COMMISSION</button><button class="button ${isOn?'button-danger':'button-lime'}" data-field-active="${esc(f.id)}" data-next="${!isOn}">${isOn?'SUSPEND FIELD':'REACTIVATE'}</button>`:''}</div></article>`;
+      return `<article class="field-record-card"><div class="field-record-main"><span class="field-record-kicker">${f.is_main?'MAIN FIELD':'FRANCHISE FIELD'} · ${isOn?'ACTIVE':'SUSPENDED'}</span><h4>${esc(f.name)}</h4><p>${esc(f.address||'Address not set')}</p><small>Owner: ${esc(f.owner_name||'FIELDZERO central')} · ${esc(f.owner_email||'No owner assigned')} · Commission ${Number(f.commission_rate||0)}% · Booking advance ${Number(f.booking_deposit_percent||30)}%</small><small>Field admin: ${esc(portal)}</small></div><div class="field-record-actions"><a class="button button-ghost" target="_blank" rel="noopener" href="${esc(portal)}">OPEN PORTAL ↗</a><button class="button button-ghost" data-field-deposit="${esc(f.id)}" data-deposit="${Number(f.booking_deposit_percent||30)}">SET ADVANCE %</button>${!f.is_main?`<button class="button button-ghost" data-field-rate="${esc(f.id)}" data-rate="${Number(f.commission_rate||10)}">SET COMMISSION</button><button class="button ${isOn?'button-danger':'button-lime'}" data-field-active="${esc(f.id)}" data-next="${!isOn}">${isOn?'SUSPEND FIELD':'REACTIVATE'}</button>`:''}</div></article>`;
     }).join('')||'<div class="empty-state">No fields are registered.</div>';
     $('#franchiseFieldsAdmin').querySelectorAll('[data-field-active]').forEach(btn=>btn.addEventListener('click',async()=>{
       const activate=btn.dataset.next==='true';
@@ -49,6 +49,7 @@
       const {error}=await db.rpc('fz_admin_set_field_status',{p_field_id:btn.dataset.fieldActive,p_active:activate,p_note:''});
       if(error){alert(error.message);return;}await loadFields();
     }));
+    $('#franchiseFieldsAdmin').querySelectorAll('[data-field-deposit]').forEach(btn=>btn.addEventListener('click',async()=>{const f=fields.find(x=>x.id===btn.dataset.fieldDeposit);const raw=prompt(`Default advance percentage for ${f?.name||'this field'} (1–100):`,btn.dataset.deposit);if(raw===null)return;const rate=Number(raw);if(!Number.isFinite(rate)||rate<1||rate>100){alert('Enter a percentage from 1 to 100.');return;}const {error}=await db.rpc('fz_admin_set_booking_deposit_percent',{p_field_id:btn.dataset.fieldDeposit,p_percent:rate});if(error){alert(error.message);return;}await loadFields();}));
     $('#franchiseFieldsAdmin').querySelectorAll('[data-field-rate]').forEach(btn=>btn.addEventListener('click',async()=>{
       const old=Number(btn.dataset.rate),raw=prompt('Enter franchise commission percentage (default 10):',String(old));if(raw===null)return;
       const rate=Number(raw);if(!Number.isFinite(rate)||rate<0||rate>100){alert('Enter a percentage from 0 to 100.');return;}

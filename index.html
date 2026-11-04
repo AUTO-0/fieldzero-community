@@ -150,12 +150,12 @@
 <div class="form-top"><span>PLAYER APPLICATION</span><span>FZ / 001</span></div>
 <div class="form-grid">
 <label class="field full">REAL NAME <input autocomplete="name" maxlength="100" name="realName" placeholder="Name for admin review" required=""/></label>
-<label class="field full">PREFERRED CALLSIGN <input maxlength="24" name="callsign" pattern="[A-Za-z0-9 _-]{2,24}" placeholder="e.g. GHOST-07" required=""/><small>2–24 letters, numbers, spaces, dashes or underscores.</small></label>
+<label class="field full">CHOOSE USERNAME / CALLSIGN <input maxlength="24" name="callsign" pattern="[A-Za-z0-9_-]{3,24}" placeholder="e.g. GHOST07" autocomplete="username" required=""/><small>This is your personal FIELDZERO login username and public callsign. Use 3–24 letters, numbers or underscores.</small></label>
 <label class="field full">WHATSAPP / MOBILE <input autocomplete="tel" maxlength="24" name="mobile" placeholder="+94 7X XXX XXXX" required="" type="tel"/><small>Used only to contact you about your application and community access.</small></label>
 <label class="field">PRIMARY BLASTER <select name="gun" required=""><option value="Electric M4">Electric M4</option><option value="Pistol">Pistol</option><option value="Other">Other</option><option value="Need a rental">I need a rental blaster</option></select></label>
 <label class="field">TEAM PREFERENCE <select name="teamPreference" required=""><option value="No team yet">No team yet</option><option value="Request existing team">Request an existing team</option><option value="Open to assignment">Open to assignment</option></select></label>
 <label class="field full">PLAY STYLE <select name="playStyle" required=""><option value="Both">Casual games + tournaments</option><option value="Casual">Casual sessions</option><option value="Competitive">Competitive / tournaments</option></select></label>
-<label class="field">EMAIL / LOGIN <input autocomplete="email" maxlength="160" name="memberEmail" required type="email" placeholder="you@example.com"/></label><label class="field">CREATE PASSWORD <input autocomplete="new-password" minlength="8" maxlength="72" name="memberPassword" required type="password" placeholder="At least 8 characters"/><small>You choose this password for your FIELDZERO member account.</small></label>
+<label class="field">PRIVATE EMAIL <input autocomplete="email" maxlength="160" name="memberEmail" required type="email" placeholder="you@example.com"/><small>Used for verification and password recovery. Never shown publicly.</small></label><label class="field">CREATE PASSWORD <input autocomplete="new-password" minlength="8" maxlength="72" name="memberPassword" required type="password" placeholder="At least 8 characters"/><small>You choose this password for your FIELDZERO member account.</small></label>
 <label class="consent full"><input name="consent" required="" type="checkbox"/><span>I agree that FIELDZERO may use these details to review my application and contact me about community participation. I understand my real name and mobile number will not appear on the public roster.</span></label>
 </div>
 <button class="button button-lime submit-button" id="submitApplication" type="submit">CREATE MEMBER ACCOUNT <span>↗</span></button>
@@ -166,11 +166,11 @@
 </section>
 <section class="section fz-member-section" id="memberArea">
   <div class="section-kicker">FIELDZERO / MEMBER ACCOUNT</div>
-  <div class="section-heading"><h2>YOUR PLAYER<br/><em>ACCOUNT.</em></h2><p>Sign in to update your callsign and photo, check your verified results, search squads and manage your team.</p></div>
+  <div class="section-heading"><h2>YOUR PLAYER<br/><em>ACCOUNT.</em></h2><p>Sign in with your username and password to manage your profile, results and squad.</p></div>
   <div class="fz-member-shell">
     <form class="registration-form fz-member-login" id="memberLoginForm">
       <div class="form-top"><span>MEMBER SIGN IN</span><span>FZ / ACCOUNT</span></div>
-      <label class="field">EMAIL <input name="email" type="email" autocomplete="username" required></label>
+      <label class="field">USERNAME <input name="username" type="text" autocomplete="username" minlength="3" maxlength="24" pattern="[A-Za-z0-9_-]{3,24}" required placeholder="Your FIELDZERO username"></label>
       <label class="field">PASSWORD <input name="password" type="password" autocomplete="current-password" required></label>
       <div class="fz-member-login-actions"><button class="button button-lime" type="submit" id="memberLoginButton">SIGN IN ↗</button><button class="button button-ghost" type="button" id="memberForgotPassword">RESET PASSWORD</button></div>
       <div class="form-status" id="memberLoginStatus" role="status"></div>

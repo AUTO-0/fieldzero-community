@@ -74,3 +74,6 @@
 .season-campaign-checks label:has([data-cfield-check="recurs_annually"]),
 .season-campaign-checks label:has([data-cfield-check="auto_theme"]),
 .season-campaign-checks label:has([data-cfield-check="popup_enabled"]){display:none!important}
+
+/* V19: simplify seasonal campaign advanced controls */
+.fz-seasonal-advanced{grid-column:1/-1;border:1px solid var(--line,rgba(255,255,255,.14));border-radius:12px;padding:12px;margin:4px 0 10px}.fz-seasonal-advanced summary{cursor:pointer;font-weight:800;letter-spacing:.08em;color:var(--lime,#c6f36a);padding:4px}.fz-seasonal-advanced[open] summary{margin-bottom:12px}

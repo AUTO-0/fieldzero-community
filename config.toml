@@ -1,0 +1,2 @@
+[functions.member-login]
+verify_jwt = false

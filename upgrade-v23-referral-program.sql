@@ -164,3 +164,5 @@ end;
 $function$;
 revoke all on function public.fz_admin_reward_referral(uuid) from public,anon;
 grant execute on function public.fz_admin_reward_referral(uuid) to authenticated;
+
+notify pgrst, 'reload schema';

@@ -58,14 +58,18 @@
   function escapeAttr(v) { return escapeHtml(v); }
   function renderSocialLinks(settings) {
     const profiles=[
-      ["instagram_url","instagram",'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.25" fill="currentColor"/></svg>'],
-      ["facebook_url","facebook",'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13.5 21v-8h2.7l.4-3.1h-3.1V8c0-.9.3-1.5 1.6-1.5h1.7V3.7c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3v2H7.3V13h2.8v8z"/></svg>'],
-      ["tiktok_url","tiktok",'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.6 8.2a7.1 7.1 0 0 1-4.3-1.4v7.1a5.8 5.8 0 1 1-5-5.7v3a2.8 2.8 0 1 0 2 2.7V2.8h3a4.2 4.2 0 0 0 4.3 4.1z"/></svg>']
+      ["instagram_url","instagram","https://www.instagram.com/fiel_dzero/ ", '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.25" fill="currentColor"/></svg>'],
+      ["facebook_url","facebook","https://www.facebook.com/","<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path fill=\"currentColor\" d=\"M13.5 21v-8h2.7l.4-3.1h-3.1V8c0-.9.3-1.5 1.6-1.5h1.7V3.7c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3v2H7.3V13h2.8v8z\"/></svg>"],
+      ["tiktok_url","tiktok","https://www.tiktok.com/@field.zero8","<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path fill=\"currentColor\" d=\"M19.6 8.2a7.1 7.1 0 0 1-4.3-1.4v7.1a5.8 5.8 0 1 1-5-5.7v3a2.8 2.8 0 1 0 2 2.7V2.8h3a4.2 4.2 0 0 0 4.3 4.1z\"/></svg>"]
     ];
-    const valid=[];
-    for(const [key,platform,icon] of profiles){const raw=settings?.[key];if(!raw)continue;try{const u=new URL(raw);if(u.protocol==="https:"&&[platform+".com","www."+platform+".com","m."+platform+".com"].includes(u.hostname))valid.push(`<a class="social-profile-link social-icon-link social-${platform}" href="${escapeAttr(u.href)}" target="_blank" rel="noopener noreferrer" aria-label="Follow FIELDZERO on ${platform}">${icon}<span class="social-link-label">${platform.toUpperCase()}</span></a>`);}catch{}}
+    const links=profiles.map(([key,platform,fallback,icon])=>{
+      const raw=String(settings?.[key]||fallback).trim();
+      let href=fallback;
+      try{const u=new URL(raw);if(u.protocol==="https:"&&[platform+".com","www."+platform+".com","m."+platform+".com"].includes(u.hostname))href=u.href;}catch{}
+      return `<a class="social-profile-link social-icon-link social-${platform}" href="${escapeAttr(href)}" target="_blank" rel="noopener noreferrer" aria-label="Follow FIELDZERO on ${platform}" title="${platform.toUpperCase()}">${icon}<span class="social-link-label">${platform.toUpperCase()}</span></a>`;
+    });
     const targets=[$("#headerSocialProfiles"),$("#socialProfiles"),$("#footerSocialProfiles")].filter(Boolean);
-    targets.forEach(el=>{el.innerHTML=valid.join("");el.hidden=!valid.length;});
+    targets.forEach(el=>{el.innerHTML=links.join("");el.hidden=false;});
   }
 
   function status(el, message, kind) { el.textContent = message; el.className = "form-status" + (kind ? " " + kind : ""); }
@@ -149,10 +153,10 @@
     renderSessionPrices(data || []);
   }
   async function loadSiteSettings() {
-    if (!db) { siteSettingsReady = true; return; }
+    if (!db) { renderSocialLinks({}); siteSettingsReady = true; return; }
     const {data,error} = await db.from("public_site_settings").select("opening_soon_enabled,opening_soon_title,opening_soon_message,instagram_url,facebook_url,tiktok_url").eq("id",1).maybeSingle();
     if (!error) siteSettings = data || {opening_soon_enabled:true,opening_soon_title:"OPENING SOON",opening_soon_message:"FIELDZERO is preparing for deployment. Register your callsign now to join the community and receive launch updates."};
-    else { console.warn("FIELDZERO site settings unavailable. Apply the V9 migration.", error.message); siteSettings = {opening_soon_enabled:false}; }
+    else { console.warn("FIELDZERO site settings unavailable. Apply the V9 migration.", error.message); siteSettings = {opening_soon_enabled:false}; renderSocialLinks({}); }
     renderSocialLinks(siteSettings);
     siteSettingsReady = true;
     maybeShowAnnouncement();

@@ -183,3 +183,58 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 /* V16 — clearer advance/payment and location information */
 .field-deposit-rate{display:block;margin-top:10px;padding:9px 11px;border-left:2px solid var(--lime,#b9ff40);background:rgba(185,255,64,.06);color:rgba(238,245,230,.82);font-size:.76rem;line-height:1.55}
 #bookingAdvanceRate{display:block;margin-top:8px;color:#d9e6ce;font-size:.78rem;line-height:1.55}
+
+
+/* FIELDZERO V18 — calm, low-clutter public and admin experience */
+#mainNav{gap:clamp(12px,2vw,26px)}
+#mainNav a{font-size:10px;letter-spacing:1px}
+.active-member-counter{display:inline-flex;align-items:center;gap:9px;margin-left:12px;padding:7px 11px;border:1px solid var(--line);background:rgba(0,0,0,.18)}
+.active-member-counter b{font:800 22px/1 'Barlow Condensed',sans-serif;color:var(--lime)}
+.active-member-counter small{font-size:8px;letter-spacing:1px;color:var(--muted);font-weight:800}
+.fz-member-section{background:#f2f4ed}
+.fz-member-shell{max-width:1050px;margin:0 auto;border:1px solid #d8dfd1;background:#fff;padding:clamp(16px,3vw,30px);box-shadow:0 18px 45px #1724140b}
+.fz-member-login{max-width:510px;margin:0 auto;box-shadow:none}
+.fz-member-login-actions{display:flex;gap:10px;flex-wrap:wrap}
+.fz-member-dashboard{display:grid;gap:22px}
+.fz-member-top{display:flex;align-items:center;gap:16px;border-bottom:1px solid #e2e7dc;padding-bottom:18px}
+.fz-member-top>div:nth-child(2){flex:1;min-width:0}
+.fz-member-top h3{margin:4px 0;font:800 30px/1 'Barlow Condensed',sans-serif;color:#172116}
+.fz-member-top p{margin:0;color:#66725f;font-size:12px}
+.fz-member-avatar-wrap{width:72px;height:72px;border-radius:50%;overflow:hidden;background:#1a2518;color:#c6f45b;display:grid;place-items:center;flex:0 0 72px;font:800 22px 'Barlow Condensed',sans-serif}
+.fz-member-avatar-wrap img{width:100%;height:100%;object-fit:cover}
+.fz-member-avatar-wrap img[hidden],.fz-member-avatar-wrap span[hidden]{display:none}
+.fz-member-profile-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end}
+.fz-member-profile-form label{display:grid;gap:6px;color:#5b6854;font-size:9px;letter-spacing:.8px;text-transform:uppercase}
+.fz-member-profile-form input{width:100%;padding:11px;border:1px solid #d5ddcf;background:#fbfcf9;color:#172116;font:inherit;font-size:12px;letter-spacing:0;text-transform:none}
+.fz-member-profile-form .form-status{grid-column:1/-1}
+.fz-member-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.fz-member-stats>div{padding:15px;background:#172116;color:#f3f5ed;display:grid;gap:4px}
+.fz-member-stats b{font:800 26px/1 'Barlow Condensed',sans-serif;color:#c6f45b}
+.fz-member-stats small{font-size:8px;letter-spacing:1px;color:#b6c2ad}
+.fz-member-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fz-member-card{border:1px solid #e0e5da;padding:17px;min-width:0}
+.fz-member-card h4{margin:0 0 12px;font:800 22px 'Barlow Condensed',sans-serif;color:#182217}
+.fz-member-card input[type=search]{width:100%;padding:11px;border:1px solid #d7dfd1;margin-bottom:10px}
+.fz-member-squad-row,.fz-member-join-row{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid #e4e9df;padding:11px 0;color:#1d291a}
+.fz-member-squad-row>div,.fz-member-join-row{min-width:0}
+.fz-member-squad-row b,.fz-member-join-row b{display:block;font-size:12px}
+.fz-member-squad-row small,.fz-member-join-row small{display:block;color:#71806a;font-size:10px;margin-top:3px}
+.fz-member-squad-row .button,.fz-member-join-row .button{font-size:9px;padding:8px 10px;white-space:nowrap}
+.fz-member-join-row{display:block}.fz-member-join-row>div{display:flex;gap:7px;margin-top:8px}
+.fz-member-danger{border-top:1px solid #e1e5dc;padding-top:16px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+.fz-member-danger p,.fz-member-footnote{color:#75816e;font-size:11px;line-height:1.6;margin:5px 0}
+.fz-member-danger b{font-size:10px;letter-spacing:1px;color:#8e342c}
+.fz-member-footnote{max-width:800px;margin:18px auto 0}
+.fz-muted{color:#78836f;font-size:11px}
+@media(max-width:760px){.fz-member-profile-form{grid-template-columns:1fr 1fr}.fz-member-grid{grid-template-columns:1fr}.fz-member-top{flex-wrap:wrap}.fz-member-top .button{margin-left:auto}}
+@media(max-width:480px){.active-member-counter{margin:10px 0 0}.fz-member-profile-form,.fz-member-stats{grid-template-columns:1fr 1fr}.fz-member-top h3{font-size:25px}.fz-member-danger{align-items:flex-start;flex-direction:column}.fz-member-danger .button{width:100%}.fz-member-squad-row{align-items:flex-start;flex-direction:column}.fz-member-squad-row .button{width:100%}}
+
+.roster-count-wrap{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+
+.operator-call{display:flex;align-items:center;gap:10px}
+.operator-avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;border:1px solid var(--line)}
+.team-player-avatar{width:25px;height:25px;border-radius:50%;object-fit:cover;flex:0 0 25px;border:1px solid var(--line)}
+
+.fz-member-top-actions{display:flex;gap:8px;flex-wrap:wrap}
+.fz-password-update{margin-top:14px;padding:14px;background:#f1f4ec;border:1px solid #dce3d6;display:grid;gap:10px}
+.fz-password-update[hidden]{display:none!important}

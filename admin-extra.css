@@ -50,3 +50,27 @@
 .fz-checkout-title{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px}.fz-checkout-title b{display:block;font:800 22px 'Barlow Condensed',sans-serif;letter-spacing:.04em}.fz-checkout-title small{display:block;max-width:620px;margin-top:5px;color:#53624d;font-size:11px;line-height:1.5}
 .fz-checkout-head,.fz-checkout-row{display:grid;grid-template-columns:minmax(170px,1fr) 78px minmax(120px,150px) 84px;gap:9px;align-items:center}.fz-checkout-head{padding:8px 10px;background:#172016;color:#d8e4d0;font-size:8px;font-weight:900;letter-spacing:.12em}.fz-checkout-row{padding:9px 10px;border-bottom:1px solid #d2dccb;background:rgba(255,255,255,.45)}.fz-checkout-row input,.fz-checkout-controls input{width:100%;min-width:0;min-height:39px;padding:9px 10px;border:1px solid #c5d0bc;border-radius:7px;background:#fff;color:#172016;font:600 12px 'DM Sans',sans-serif}.fz-checkout-row .button{min-height:36px;padding:8px 9px;font-size:8px}.fz-checkout-controls{display:flex;align-items:end;gap:14px;flex-wrap:wrap;margin-top:14px}.fz-checkout-controls label{display:grid;gap:5px;min-width:130px;color:#53624d;font-size:8px;font-weight:900;letter-spacing:.1em}.fz-checkout-controls [data-checkout-add]{margin-right:auto}.fz-checkout-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;padding-top:13px;border-top:1px solid #cbd6c2}.fz-checkout-footer span{font-size:10px;color:#53624d;line-height:1.45}.fz-checkout-editor .form-status{margin-top:10px;color:#253222}.field-fixed-advance{display:grid;gap:3px;align-content:center;padding:12px 14px;border:1px solid rgba(185,255,64,.35);border-radius:9px;background:#172016;color:#eaf3e4}.field-fixed-advance b{font-size:8px;letter-spacing:.13em;color:#c9d7c2}.field-fixed-advance strong{font:800 25px 'Barlow Condensed',sans-serif;color:#b9ff40}.field-fixed-advance small{font-size:9px;line-height:1.4;color:#acb9a6}
 @media(max-width:680px){.fz-checkout-title,.fz-checkout-footer{align-items:stretch;flex-direction:column}.fz-checkout-head{display:none}.fz-checkout-row{grid-template-columns:minmax(0,1fr) 72px;gap:8px}.fz-checkout-row input:first-child{grid-column:1/-1}.fz-checkout-row .button{grid-column:2;justify-self:end}.fz-checkout-controls{display:grid;grid-template-columns:1fr 1fr}.fz-checkout-controls [data-checkout-add]{grid-column:1/-1}.field-fixed-advance{grid-column:1/-1}}
+
+
+/* FIELDZERO V18 — unclutter the private admin workspace */
+.admin-simple-module{border:1px solid #344131;background:#151e14;color:#eef2e8;margin:10px 0}
+.admin-simple-module>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:15px 17px;font:800 21px 'Barlow Condensed',sans-serif;text-transform:uppercase}
+.admin-simple-module>summary::-webkit-details-marker{display:none}
+.admin-simple-module>summary:after{content:'＋';color:var(--lime);font:700 20px 'DM Sans',sans-serif}
+.admin-simple-module[open]>summary:after{content:'−'}
+.admin-simple-module>summary small{max-width:55%;font:500 10px/1.5 'DM Sans',sans-serif;text-align:right;color:#9eac96;text-transform:none;letter-spacing:0}
+.admin-simple-module-content{padding:0 16px 17px;border-top:1px solid #ffffff14}
+#seasonalCampaignForm label:has([name="category"]),#seasonalCampaignForm label:has([name="theme_key"]),#seasonalCampaignForm label:has([name="alt_text"]),#seasonalCampaignForm label:has([name="cta_target"]),#seasonalCampaignForm label:has([name="cta_label"]),#seasonalCampaignForm label:has([name="priority"]),#seasonalCampaignForm .admin-toggle-label label:has([name="recurs_annually"]),#seasonalCampaignForm .admin-toggle-label label:has([name="auto_theme"]),#seasonalCampaignForm .admin-toggle-label label:has([name="popup_enabled"]){display:none!important}
+#seasonalCampaignForm:before{content:'Simple mode: add a greeting, choose a photo and set the dates. The website handles the banner and optional popup automatically.';display:block;grid-column:1/-1;color:#aebba4;font-size:11px;line-height:1.6;padding:8px 0}
+@media(max-width:760px){.admin-simple-module>summary{align-items:flex-start;flex-direction:column;gap:4px}.admin-simple-module>summary small{max-width:100%;text-align:left}}
+
+/* Seasonal campaign editor: simple defaults; advanced controls remain stored and intact. */
+.season-campaign-fields label:has([data-cfield="category"]),
+.season-campaign-fields label:has([data-cfield="alt_text"]),
+.season-campaign-fields label:has([data-cfield="theme_key"]),
+.season-campaign-fields label:has([data-cfield="cta_target"]),
+.season-campaign-fields label:has([data-cfield="cta_label"]),
+.season-campaign-fields label:has([data-cfield="priority"]),
+.season-campaign-checks label:has([data-cfield-check="recurs_annually"]),
+.season-campaign-checks label:has([data-cfield-check="auto_theme"]),
+.season-campaign-checks label:has([data-cfield-check="popup_enabled"]){display:none!important}

@@ -55,7 +55,7 @@
       button.classList.toggle('active',active);
       button.setAttribute('aria-current',active ? 'page' : 'false');
     });
-    const openDetails = panels.get(key)?.querySelector('details');
+    const openDetails = panels.get(key)?.querySelector('details.admin-simple-module, details.ops-module');
     if (openDetails) openDetails.open = true;
   }
 
@@ -125,8 +125,25 @@
       currentBlock.append(node);
     }
   });
+  // Convert long legacy admin blocks into compact accordions, keeping every control and ID intact.
+  document.querySelectorAll('.admin-content-block').forEach(block => {
+    const heading = block.querySelector(':scope > .admin-bar');
+    if (!heading) return;
+    const h = heading.querySelector('h2,h3');
+    const title = (h?.textContent || 'Management tools').trim();
+    const desc = heading.querySelector('p')?.textContent || '';
+    const details = document.createElement('details');
+    details.className = 'admin-simple-module';
+    const summary = document.createElement('summary');
+    summary.innerHTML = `<span>${title}</span><small>${desc}</small>`;
+    const content = document.createElement('div'); content.className = 'admin-simple-module-content';
+    [...block.children].forEach(node => { if (node !== heading) content.append(node); });
+    details.append(summary,content);
+    block.replaceWith(details);
+  });
+
   if (foot) dashboard.append(foot);
 
-  // Make the long controls opt-in: a manager opens only the module needed now.
+  // Make long operational controls opt-in while preserving every feature.
   document.querySelectorAll('#dashboard details.ops-module').forEach(d => { d.open = false; });
 })();

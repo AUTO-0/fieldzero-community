@@ -278,8 +278,8 @@
    db.from('fz_equipment').select('id',{count:'exact',head:true}).eq('availability_status','available'),
    db.from('fz_incidents').select('id',{count:'exact',head:true}).neq('status','closed'),
    db.from('fz_sessions').select('id',{count:'exact',head:true}).gte('session_date',today).neq('status','cancelled').neq('status','completed'),
-   db.from('arena_bookings').select('id',{count:'exact',head:true}).gte('created_at',monthStart).lt('created_at',nextMonth),
-   db.from('fz_session_attendance').select('player_id').eq('checked_in',true),
+   db.from('arena_bookings').select('id',{count:'exact',head:true}).gte('created_at',monthStart+'T00:00:00+05:30').lt('created_at',nextMonth+'T00:00:00+05:30'),
+   db.from('players').select('id',{count:'exact',head:true}).eq('active',true).gte('matches_played',2),
    db.from('fz_invoices').select('balance_due,currency').gt('balance_due',0)
   ]);
   $('#opsActivePlayers').textContent=players.error?'—':String(players.count||0);
@@ -287,8 +287,7 @@
   $('#opsOpenIncidents').textContent=incidents.error?'—':String(incidents.count||0);
   $('#opsUpcomingSessions').textContent=sessions.error?'—':String(sessions.count||0);
   $('#opsMonthlyBookings').textContent=bookings.error?'—':String(bookings.count||0);
-  const visits={};(attendance.data||[]).forEach(row=>{if(row.player_id)visits[row.player_id]=(visits[row.player_id]||0)+1;});
-  $('#opsRepeatOperators').textContent=attendance.error?'—':String(Object.values(visits).filter(count=>count>=2).length);
+  $('#opsRepeatOperators').textContent=attendance.error?'—':String(attendance.count||0);
   const balances={};(invoices.data||[]).forEach(row=>{const currency=String(row.currency||'LKR').toUpperCase();balances[currency]=(balances[currency]||0)+Number(row.balance_due||0);});
   const moneyText=Object.entries(balances).filter(([,amount])=>amount>0).map(([currency,amount])=>currency+' '+new Intl.NumberFormat('en-LK',{maximumFractionDigits:0}).format(amount)).join(' · ');
   $('#opsOutstandingInvoices').textContent=invoices.error?'—':(moneyText||'0');

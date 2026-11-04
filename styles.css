@@ -386,3 +386,55 @@ body{background:#0c120d;color:#edf1e9}
  .brand small{letter-spacing:.7px}
  .mode-grid{grid-template-columns:1fr}
 }
+
+
+/* FIELDZERO V23 — booking clarity + community-led service design
+   Loka Lanka-inspired: clear schedule choices, friendly onboarding,
+   useful booking guidance and a readable FAQ. Original FIELDZERO UI. */
+#calendar{background:#0b130d!important;color:#f3f6ef!important}
+#calendar .section-heading>p{color:#f0f5e9!important;background:linear-gradient(120deg,rgba(200,243,106,.13),rgba(255,255,255,.035))!important;border-left:3px solid #c8f36a!important}
+#calendar .calendar-panel{background:linear-gradient(145deg,#19251b,#101811)!important;border:1px solid rgba(200,243,106,.32)!important;color:#f2f5ed!important;box-shadow:0 22px 55px rgba(0,0,0,.28)}
+#calendar .calendar-controls .field{color:#eaf1e4!important}
+#calendar .calendar-controls input,#calendar .calendar-controls select{background:#f1f4eb!important;color:#152016!important;border:1px solid #9aaa8c!important}
+#calendar .arena-slots{color:#f3f6ef}
+#calendar .calendar-legend{display:flex;gap:18px;flex-wrap:wrap;padding:14px 16px;margin-top:14px;border:1px solid rgba(200,243,106,.18);background:rgba(0,0,0,.22);color:#edf3e7!important;font-size:12px}
+#calendar .calendar-legend span{display:inline-flex;align-items:center;gap:8px}
+#calendar .booking-form{background:#f0f2e9!important;color:#142015!important;border:1px solid #d4ddcd!important;box-shadow:0 18px 42px rgba(0,0,0,.25)}
+#calendar .booking-form .form-top{color:#182317;border-color:#cbd5c2}
+#calendar .booking-form .field{color:#263322!important}
+#calendar .booking-form .field small{color:#596753!important}
+#calendar .booking-form .field input,#calendar .booking-form .field select,#calendar .booking-form .field textarea{background:#fff!important;color:#172216!important;border:1px solid #b8c5ae!important}
+#calendar .booking-form .consent{color:#3f4d39!important}
+#calendar .booking-deposit-note{display:grid;grid-template-columns:42px minmax(0,1fr);gap:16px;margin:24px 0 10px;padding:22px 24px;border:1px solid #c8f36a;background:linear-gradient(115deg,#172719,#0f1911);border-radius:3px;box-shadow:inset 4px 0 0 #c8f36a,0 12px 30px rgba(16,25,16,.14)}
+#calendar .booking-deposit-icon{width:38px;height:38px;background:#c8f36a;color:#111a11;border-radius:2px;font-size:14px}
+#calendar .booking-deposit-note b{color:#e5ffb6!important;font-size:12px;letter-spacing:.1em}
+#calendar .booking-deposit-note p{color:#f1f5ed!important;font-size:14px;line-height:1.8;margin:10px 0}
+#calendar .booking-deposit-note small,#calendar #bookingAdvanceRate{display:block;color:#d3dfcb!important;font-size:12px;line-height:1.7}
+#calendar .booking-next-steps{margin:22px 0 0;padding:clamp(18px,3vw,30px);border:1px solid rgba(200,243,106,.32);background:linear-gradient(145deg,#172319,#0e160f);color:#f2f5ed}
+.booking-next-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.booking-next-heading span{font-size:9px;font-weight:900;letter-spacing:.18em;color:#c8f36a}
+.booking-next-heading b{font:800 clamp(23px,3vw,34px)/.95 'Barlow Condensed',sans-serif;letter-spacing:.02em}
+.booking-next-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.booking-next-grid article{display:flex;gap:13px;align-items:flex-start;padding:18px 15px;border:1px solid rgba(200,243,106,.18);background:rgba(255,255,255,.035);min-width:0}
+.booking-next-grid article>span{display:grid;place-items:center;flex:0 0 34px;height:34px;background:#c8f36a;color:#111a11;font:900 17px 'Barlow Condensed',sans-serif}
+.booking-next-grid article b{display:block;color:#f4f7ef;font-size:11px;letter-spacing:.08em;margin:2px 0 8px}
+.booking-next-grid article p{margin:0;color:#c3cebb;font-size:12px;line-height:1.7}
+.booking-guide-foot{margin:15px 0 0;padding-top:13px;border-top:1px solid rgba(255,255,255,.13);color:#d8e4cf;font-size:11px;line-height:1.7}
+.faq-section{background:#0c140e!important;color:#f1f5ed!important}
+.faq-section .section-heading h2{color:#f4f6ef!important}
+.faq-section .section-heading h2 em{color:#c8f36a!important}
+.faq-section .section-heading>p{color:#c5d0bd!important}
+.faq-grid{gap:12px}
+.faq-grid details{position:relative;background:linear-gradient(145deg,#1b281d,#121b14)!important;border:1px solid rgba(200,243,106,.2)!important;padding:20px 22px!important;color:#f2f5ed!important;box-shadow:0 10px 25px rgba(0,0,0,.14);transition:background .2s,border-color .2s,transform .2s}
+.faq-grid details:hover{border-color:rgba(200,243,106,.58)!important;transform:translateY(-2px)}
+.faq-grid summary{color:#f5f7f1!important;font-size:14px!important;line-height:1.5;padding-right:30px!important}
+.faq-grid summary:after{color:#c8f36a!important;font-weight:700}
+.faq-grid details[open]{background:linear-gradient(145deg,#202f22,#131e15)!important;border-color:#c8f36a!important}
+.faq-grid details p{color:#d2ddcc!important;font-size:13px!important;line-height:1.85!important;border-top:1px solid rgba(255,255,255,.12);padding-top:13px}
+@media(max-width:760px){
+ .booking-next-grid{grid-template-columns:1fr}
+ #calendar .booking-deposit-note{grid-template-columns:34px minmax(0,1fr);padding:17px 15px;gap:12px}
+ #calendar .booking-deposit-note p{font-size:13px}
+ .booking-next-heading{align-items:flex-start;flex-direction:column}
+ .faq-grid{grid-template-columns:1fr}
+}

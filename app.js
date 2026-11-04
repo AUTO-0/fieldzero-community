@@ -504,13 +504,12 @@
     if(!db){host.innerHTML='<div class="empty-state">Monthly MVP is unavailable while the database is disconnected.</div>';return;}
     const now=new Date().toISOString();
     const {data,error}=await db.from('fz_spotlight_cards')
-      .select('title,subtitle,image_url,starts_at,ends_at')
+      .select('title,subtitle,image_url,starts_at,ends_at,created_at')
       .eq('card_type','season_mvp').eq('active',true)
-      .or('starts_at.is.null,starts_at.lte.'+now)
-      .or('ends_at.is.null,ends_at.gte.'+now)
-      .order('starts_at',{ascending:false}).limit(1);
+      .order('created_at',{ascending:false}).limit(20);
     if(error){host.innerHTML='<div class="empty-state">Monthly MVP is temporarily unavailable.</div>';console.warn('[FIELDZERO] Monthly MVP unavailable:',error.message);return;}
-    const card=(data||[])[0];
+    const currentTime=Date.now();
+    const card=(data||[]).find(item=>(!item.starts_at||new Date(item.starts_at).getTime()<=currentTime)&&(!item.ends_at||new Date(item.ends_at).getTime()>=currentTime));
     host.innerHTML=card?'<article class="monthly-mvp-card"><div class="monthly-mvp-photo">'+(card.image_url?'<img src="'+escapeAttr(card.image_url)+'" alt="'+escapeAttr(card.title)+'" loading="lazy">':'<div class="monthly-mvp-monogram">MVP</div>')+'</div><div class="monthly-mvp-copy"><span>FIELDZERO / MONTHLY MVP</span><h3>'+escapeHtml(card.title)+'</h3><p>'+escapeHtml(card.subtitle||'Recognised for outstanding performance, teamwork and sportsmanship.')+'</p><small>'+escapeHtml(card.starts_at?new Date(card.starts_at).toLocaleDateString('en-LK',{month:'long',year:'numeric'}):'CURRENT RECOGNITION')+'</small></div></article>':'<div class="empty-state">The next Monthly MVP will be announced after verified match results are reviewed.</div>';
   }
   async function loadHallOfFame(){

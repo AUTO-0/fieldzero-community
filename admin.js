@@ -272,20 +272,29 @@
   opsSetOptions($('#opsMaintenanceEquipment'),a,r=>`${r.asset_code} · ${r.item_name}`,'id','Field / site maintenance');
  }
  async function loadOpsDashboard(){
-  const today=opsToday();
-  const [players,assets,incidents,sessions]=await Promise.all([
+  const today=opsToday(),[year,month]=today.slice(0,7).split('-').map(Number),nextMonth=month===12?`${year+1}-01-01`:`${year}-${String(month+1).padStart(2,'0')}-01`,monthStart=`${year}-${String(month).padStart(2,'0')}-01`;
+  const [players,assets,incidents,sessions,bookings,attendance,invoices]=await Promise.all([
    db.from('players').select('id',{count:'exact',head:true}).eq('active',true),
    db.from('fz_equipment').select('id',{count:'exact',head:true}).eq('availability_status','available'),
    db.from('fz_incidents').select('id',{count:'exact',head:true}).neq('status','closed'),
-   db.from('fz_sessions').select('id',{count:'exact',head:true}).gte('session_date',today).neq('status','cancelled').neq('status','completed')
+   db.from('fz_sessions').select('id',{count:'exact',head:true}).gte('session_date',today).neq('status','cancelled').neq('status','completed'),
+   db.from('arena_bookings').select('id',{count:'exact',head:true}).gte('created_at',monthStart).lt('created_at',nextMonth),
+   db.from('fz_session_attendance').select('player_id').eq('checked_in',true),
+   db.from('fz_invoices').select('balance_due,currency').gt('balance_due',0)
   ]);
   $('#opsActivePlayers').textContent=players.error?'—':String(players.count||0);
   $('#opsAvailableAssets').textContent=assets.error?'—':String(assets.count||0);
   $('#opsOpenIncidents').textContent=incidents.error?'—':String(incidents.count||0);
   $('#opsUpcomingSessions').textContent=sessions.error?'—':String(sessions.count||0);
-  const firstErr=[players,assets,incidents,sessions].find(x=>x.error);
-  if(firstErr)msg($('#opsConsoleStatus'),'Some V12 metrics are unavailable. Check that upgrade-v12-operations-console.sql ran successfully. '+(firstErr.error.message||''),'error');
-  else msg($('#opsConsoleStatus'),'Operations data updated · '+today+' (Sri Lanka time).','success');
+  $('#opsMonthlyBookings').textContent=bookings.error?'—':String(bookings.count||0);
+  const visits={};(attendance.data||[]).forEach(row=>{if(row.player_id)visits[row.player_id]=(visits[row.player_id]||0)+1;});
+  $('#opsRepeatOperators').textContent=attendance.error?'—':String(Object.values(visits).filter(count=>count>=2).length);
+  const balances={};(invoices.data||[]).forEach(row=>{const currency=String(row.currency||'LKR').toUpperCase();balances[currency]=(balances[currency]||0)+Number(row.balance_due||0);});
+  const moneyText=Object.entries(balances).filter(([,amount])=>amount>0).map(([currency,amount])=>currency+' '+new Intl.NumberFormat('en-LK',{maximumFractionDigits:0}).format(amount)).join(' · ');
+  $('#opsOutstandingInvoices').textContent=invoices.error?'—':(moneyText||'0');
+  const all=[players,assets,incidents,sessions,bookings,attendance,invoices],firstErr=all.find(x=>x.error);
+  if(firstErr)msg($('#opsConsoleStatus'),'Some business metrics could not load. Check the relevant table permissions and operations migrations. '+(firstErr.error.message||''),'error');
+  else msg($('#opsConsoleStatus'),'Operations & business metrics updated · '+today+' (Sri Lanka time).','success');
  }
  function renderOpsChecklistItems(){
   const type=$('#opsChecklistType')?.value||'opening',items=opsTemplates[type]||[];

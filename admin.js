@@ -299,7 +299,7 @@
   const monthAttendance=attendanceRows.filter(row=>{const t=Date.parse(row.checked_in_at||'');return Number.isFinite(t)&&t>=monthStartMs&&t<nextMonthMs;});
   $('#opsRepeatOperators').textContent=attendance.error?'—':String(repeatVisitors);
   $('#opsMonthlyCheckins').textContent=attendance.error?'—':String(monthAttendance.length);
-  $('#opsReturnRate').textContent=attendance.error?'—':(uniqueVisitors?Math.round(repeatVisitors/uniqueVisitors*100)+'%':'0%');
+  $('#opsReturnRate').textContent=attendance.error?'—':(uniqueVisitors?Math.round(repeatVisitors/uniqueVisitors*100)+'%':'—');
   const balances={};(invoices.data||[]).forEach(row=>{const currency=String(row.currency||'LKR').toUpperCase();balances[currency]=(balances[currency]||0)+Number(row.balance_due||0);});
   const moneyText=Object.entries(balances).filter(([,amount])=>amount>0).map(([currency,amount])=>currency+' '+new Intl.NumberFormat('en-LK',{maximumFractionDigits:0}).format(amount)).join(' · ');
   $('#opsOutstandingInvoices').textContent=invoices.error?'—':(moneyText||'0');

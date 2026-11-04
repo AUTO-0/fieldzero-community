@@ -58,13 +58,14 @@
   function escapeAttr(v) { return escapeHtml(v); }
   function renderSocialLinks(settings) {
     const profiles=[
-      ["instagram_url","INSTAGRAM ↗","instagram"],
-      ["facebook_url","FACEBOOK ↗","facebook"],
-      ["tiktok_url","TIKTOK ↗","tiktok"]
+      ["instagram_url","instagram",'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.25" fill="currentColor"/></svg>'],
+      ["facebook_url","facebook",'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13.5 21v-8h2.7l.4-3.1h-3.1V8c0-.9.3-1.5 1.6-1.5h1.7V3.7c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3v2H7.3V13h2.8v8z"/></svg>'],
+      ["tiktok_url","tiktok",'<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.6 8.2a7.1 7.1 0 0 1-4.3-1.4v7.1a5.8 5.8 0 1 1-5-5.7v3a2.8 2.8 0 1 0 2 2.7V2.8h3a4.2 4.2 0 0 0 4.3 4.1z"/></svg>']
     ];
     const valid=[];
-    for(const [key,label,host] of profiles){const raw=settings?.[key];if(!raw)continue;try{const u=new URL(raw);if(u.protocol==="https:"&&[host+".com","www."+host+".com","m."+host+".com"].includes(u.hostname))valid.push(`<a class="social-profile-link" href="${escapeAttr(u.href)}" target="_blank" rel="noopener noreferrer">${label}</a>`);}catch{}}
-    const targets=[$("#socialProfiles"),$("#footerSocialProfiles")].filter(Boolean);targets.forEach(el=>{el.innerHTML=valid.join("");el.hidden=!valid.length;});
+    for(const [key,platform,icon] of profiles){const raw=settings?.[key];if(!raw)continue;try{const u=new URL(raw);if(u.protocol==="https:"&&[platform+".com","www."+platform+".com","m."+platform+".com"].includes(u.hostname))valid.push(`<a class="social-profile-link social-icon-link social-${platform}" href="${escapeAttr(u.href)}" target="_blank" rel="noopener noreferrer" aria-label="Follow FIELDZERO on ${platform}">${icon}<span class="social-link-label">${platform.toUpperCase()}</span></a>`);}catch{}}
+    const targets=[$("#headerSocialProfiles"),$("#socialProfiles"),$("#footerSocialProfiles")].filter(Boolean);
+    targets.forEach(el=>{el.innerHTML=valid.join("");el.hidden=!valid.length;});
   }
 
   function status(el, message, kind) { el.textContent = message; el.className = "form-status" + (kind ? " " + kind : ""); }

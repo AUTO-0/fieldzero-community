@@ -614,7 +614,7 @@
       target.innerHTML = `<div class="leaderboard-podium">${podium}</div>${remaining ? `<div class="leaderboard-rest">${remaining}</div>` : ""}`;
       target.querySelectorAll("[data-share-rank]").forEach(button => {
         button.addEventListener("click", async () => {
-          const shareText = `FIELDZERO ${button.dataset.shareBoard.toUpperCase()} RANKING\\n#${button.dataset.shareRank} — ${button.dataset.shareName}\\n${Number(button.dataset.sharePoints).toLocaleString()} POINTS\\nOWN THE FIELD. BUILD YOUR SQUAD.\\nhttps://auto-0.github.io/fieldzero-community/#leaderboards`;
+          const shareText = `FIELDZERO ${button.dataset.shareBoard.toUpperCase()} RANKING\n#${button.dataset.shareRank} — ${button.dataset.shareName}\n${Number(button.dataset.sharePoints).toLocaleString()} POINTS\nOWN THE FIELD. BUILD YOUR SQUAD.\nhttps://auto-0.github.io/fieldzero-community/#leaderboards`;
           try {
             if (navigator.share) await navigator.share({ title: "FIELDZERO Field Records", text: shareText });
             else if (navigator.clipboard?.writeText) {

@@ -535,22 +535,74 @@
   if (!db) { notConfigured(); loadFields(); }
   else Promise.all([loadRoster(), loadTeams(), loadEvents(), loadFields()]);
 
-  // V4 public leaderboard: only published, admin-maintained profile fields are queried.
+  // V21.2 public leaderboard: public-safe views only. Squad visibility is
+  // derived from active approved membership by the V21.2 SQL migration.
   let currentBoard = "players";
   async function loadLeaderboard(board = currentBoard) {
-    currentBoard = board; const target = $("#leaderboardTable"); if (!target) return;
-    document.querySelectorAll("[data-board]").forEach(b => b.classList.toggle("active", b.dataset.board === board));
-    if (!db) { target.innerHTML = '<div class="empty-state">Connect Supabase and apply the V4 migration to enable rankings.</div>'; return; }
-    const isTeams = board === "teams";
-    const table = isTeams ? "public_teams" : "public_player_profiles";
-    const fields = isTeams ? "name,team_rank,points,member_count" : "callsign,player_rank,player_points,matches_played,wins";
-    const sort = isTeams ? "points" : "player_points";
-    const {data,error} = await db.from(table).select(fields).order(sort,{ascending:false}).limit(10);
-    if(error) { target.innerHTML = '<div class="empty-state">Leaderboard unavailable. Confirm the V4 SQL migration has completed successfully.</div>'; return; }
-    if(!data?.length) { target.innerHTML = '<div class="empty-state">No verified scores yet. Rankings appear after the admin records results and points.</div>'; return; }
-    target.innerHTML = data.map((r,i)=>{ const name=isTeams?r.name:r.callsign; const pts=Number(isTeams?r.points:r.player_points)||0; const sub=isTeams?`${Number(r.member_count)||0}/5 OPERATORS`:`${escapeHtml(r.player_rank||"ROOKIE")} · ${Number(r.matches_played)||0} MATCHES · ${Number(r.wins)||0} WINS`; return `<div class="leaderboard-row"><div class="leaderboard-rank">${String(i+1).padStart(2,"0")}</div><div><div class="leaderboard-name">${escapeHtml(name)}</div><span class="leaderboard-sub">${sub}</span></div><div class="leaderboard-points">${pts.toLocaleString()}<small>POINTS</small></div></div>`; }).join("");
+    currentBoard = board === "teams" ? "teams" : "players";
+    const target = $("#leaderboardTable");
+    if (!target) return;
+    document.querySelectorAll("[data-board]").forEach(button => {
+      button.classList.toggle("active", button.dataset.board === currentBoard);
+      button.setAttribute("aria-pressed", button.dataset.board === currentBoard ? "true" : "false");
+    });
+
+    if (!db) {
+      target.innerHTML = '<div class="empty-state">The FIELDZERO database is not connected. Rankings are temporarily unavailable.</div>';
+      return;
+    }
+
+    const isTeams = currentBoard === "teams";
+    const view = isTeams ? "public_teams" : "public_player_profiles";
+    const columns = isTeams
+      ? "id,name,team_rank,points,member_count"
+      : "callsign,player_rank,player_points,matches_played,wins";
+
+    target.setAttribute("aria-live", "polite");
+    target.innerHTML = '<div class="empty-state">Loading ' + (isTeams ? 'squad' : 'operator') + ' rankings…</div>';
+
+    try {
+      let query = db.from(view).select(columns).order(isTeams ? "points" : "player_points", { ascending: false });
+      if (isTeams) query = query.order("team_rank", { ascending: true }).order("name", { ascending: true });
+      const { data, error } = await query.limit(10);
+
+      if (error) {
+        console.error("[FIELDZERO] Public leaderboard query failed:", { view, code: error.code, message: error.message, details: error.details });
+        target.innerHTML = '<div class="empty-state">' + (isTeams
+          ? 'Squad rankings could not be loaded. The administrator should apply the V21.2 public squad leaderboard SQL repair and confirm public view access.'
+          : 'Operator rankings could not be loaded. Please try again later.') + '</div>';
+        return;
+      }
+
+      if (!Array.isArray(data) || data.length === 0) {
+        target.innerHTML = '<div class="empty-state">' + (isTeams
+          ? 'No public squads yet. A squad appears here when it has 1–5 active approved operators. Ask an admin to check squad membership.'
+          : 'No verified operator scores yet. Rankings appear after the admin records results and points.') + '</div>';
+        return;
+      }
+
+      target.innerHTML = data.map((row, index) => {
+        const name = isTeams ? row.name : row.callsign;
+        const points = Number(isTeams ? row.points : row.player_points) || 0;
+        const subtitle = isTeams
+          ? `${Number(row.member_count) || 0}/5 ACTIVE OPERATORS · SQUAD RANK #${Number(row.team_rank) || index + 1}`
+          : `${escapeHtml(row.player_rank || "ROOKIE")} · ${Number(row.matches_played) || 0} MATCHES · ${Number(row.wins) || 0} WINS`;
+        return `<div class="leaderboard-row">
+          <div class="leaderboard-rank">${String(index + 1).padStart(2, "0")}</div>
+          <div><div class="leaderboard-name">${escapeHtml(name || (isTeams ? "UNNAMED SQUAD" : "UNKNOWN OPERATOR"))}</div>
+          <span class="leaderboard-sub">${subtitle}</span></div>
+          <div class="leaderboard-points">${points.toLocaleString()}<small>POINTS</small></div>
+        </div>`;
+      }).join("");
+    } catch (error) {
+      console.error("[FIELDZERO] Unexpected leaderboard error:", error);
+      target.innerHTML = '<div class="empty-state">Rankings could not be loaded right now. Please refresh the page.</div>';
+    }
   }
-  document.querySelectorAll("[data-board]").forEach(b=>b.addEventListener("click",()=>loadLeaderboard(b.dataset.board)));
+
+  document.querySelectorAll("[data-board]").forEach(button => {
+    button.addEventListener("click", () => loadLeaderboard(button.dataset.board));
+  });
   loadLeaderboard();
 
   // Public, immediately published feedback. Display names are optional; no contact details are collected.

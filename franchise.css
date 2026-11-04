@@ -452,3 +452,25 @@ body:not(.admin-page) .leaderboard-tab{border-radius:2px}
 #arenaReferralStatus{display:block;font-size:.68rem;line-height:1.5;color:#aeb9a8;margin-top:5px}
 @media(max-width:760px){.hall-of-fame-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.hall-of-fame-grid{grid-template-columns:1fr}.hall-of-fame-copy{padding:14px}.referral-code-record{flex-direction:column}.referral-code-record>button{width:100%}}
+
+
+/* FIELDZERO V27 — Monthly MVP and evidence-based retention metrics */
+body:not(.admin-page) .monthly-mvp-section{
+  background:radial-gradient(circle at 85% 12%,rgba(215,180,90,.12),transparent 34%),linear-gradient(145deg,#172018,#0b120d);
+  border-top:1px solid rgba(215,180,90,.24);border-bottom:1px solid rgba(200,243,106,.14)
+}
+body:not(.admin-page) .monthly-mvp-grid{max-width:920px;margin:0 auto}
+body:not(.admin-page) .monthly-mvp-card{
+  display:grid;grid-template-columns:minmax(220px,.8fr) 1.2fr;overflow:hidden;
+  border:1px solid rgba(215,180,90,.42);background:linear-gradient(120deg,#22291d,#101811);
+  box-shadow:0 24px 58px rgba(0,0,0,.28)
+}
+body:not(.admin-page) .monthly-mvp-photo{min-height:280px;background:#101810;display:grid;place-items:center;overflow:hidden}
+body:not(.admin-page) .monthly-mvp-photo img{width:100%;height:100%;min-height:280px;object-fit:cover;display:block}
+body:not(.admin-page) .monthly-mvp-monogram{font:900 90px/1 'Barlow Condensed',sans-serif;color:#d7b45a;text-shadow:0 0 30px rgba(215,180,90,.2)}
+body:not(.admin-page) .monthly-mvp-copy{padding:clamp(24px,4vw,42px);display:flex;flex-direction:column;justify-content:center}
+body:not(.admin-page) .monthly-mvp-copy>span{font-size:9px;letter-spacing:2px;color:#d7b45a;font-weight:900}
+body:not(.admin-page) .monthly-mvp-copy h3{margin:18px 0 12px;font:900 clamp(36px,5vw,60px)/.9 'Barlow Condensed',sans-serif;color:#f2f5ed}
+body:not(.admin-page) .monthly-mvp-copy p{color:#bdc8b8;line-height:1.8;font-size:13px}
+body:not(.admin-page) .monthly-mvp-copy small{margin-top:14px;color:#d7b45a;font-size:9px;letter-spacing:1.5px;font-weight:800}
+@media(max-width:620px){body:not(.admin-page) .monthly-mvp-card{grid-template-columns:1fr}body:not(.admin-page) .monthly-mvp-photo,body:not(.admin-page) .monthly-mvp-photo img{min-height:210px;max-height:260px}}

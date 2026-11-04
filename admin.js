@@ -273,7 +273,7 @@
  }
  async function loadOpsDashboard(){
   const today=opsToday(),[year,month]=today.slice(0,7).split('-').map(Number),nextMonth=month===12?`${year+1}-01-01`:`${year}-${String(month+1).padStart(2,'0')}-01`,monthStart=`${year}-${String(month).padStart(2,'0')}-01`;
-  const [players,assets,incidents,sessions,bookings,attendance,invoices,referralBookings,referralPoints,cashbook]=await Promise.all([
+  const [players,assets,incidents,sessions,bookings,attendance,invoices,referralBookings,referralPoints,cashbook,marketingArena,marketingEvents]=await Promise.all([
    db.from('players').select('id',{count:'exact',head:true}).eq('active',true),
    db.from('fz_equipment').select('id',{count:'exact',head:true}).eq('availability_status','available'),
    db.from('fz_incidents').select('id',{count:'exact',head:true}).neq('status','closed'),
@@ -283,7 +283,9 @@
    db.from('fz_invoices').select('balance_due,currency').gt('balance_due',0),
    db.from('arena_bookings').select('id',{count:'exact',head:true}).not('referral_code','is',null).gte('created_at',monthStart+'T00:00:00+05:30').lt('created_at',nextMonth+'T00:00:00+05:30'),
    db.from('fz_point_ledger').select('points').eq('category','referral').gte('created_at',monthStart+'T00:00:00+05:30').lt('created_at',nextMonth+'T00:00:00+05:30'),
-   financeFetchPaged(()=>db.from('fz_cashbook').select('entry_type,amount').gte('entry_date',monthStart).lt('entry_date',nextMonth).order('entry_date',{ascending:false}))
+   financeFetchPaged(()=>db.from('fz_cashbook').select('entry_type,amount').gte('entry_date',monthStart).lt('entry_date',nextMonth).order('entry_date',{ascending:false})),
+   financeFetchPaged(()=>db.from('arena_bookings').select('marketing_source,status').gte('created_at',monthStart+'T00:00:00+05:30').lt('created_at',nextMonth+'T00:00:00+05:30')),
+   financeFetchPaged(()=>db.from('event_bookings').select('marketing_source,status').gte('created_at',monthStart+'T00:00:00+05:30').lt('created_at',nextMonth+'T00:00:00+05:30'))
   ]);
   $('#opsActivePlayers').textContent=players.error?'—':String(players.count||0);
   $('#opsAvailableAssets').textContent=assets.error?'—':String(assets.count||0);
@@ -311,7 +313,16 @@
   $('#opsMonthIncome').textContent=cashbook.error?'—':financeFmt(monthIncome);
   $('#opsMonthExpenses').textContent=cashbook.error?'—':financeFmt(monthExpenses);
   $('#opsMonthNet').textContent=cashbook.error?'—':financeFmt(monthIncome-monthExpenses);
-  const all=[players,assets,incidents,sessions,bookings,attendance,invoices,referralBookings,referralPoints,cashbook],firstErr=all.find(x=>x.error);
+  const marketingRows=[...(marketingArena.data||[]),...(marketingEvents.data||[])];
+  const channelNames={tiktok:'TikTok',instagram:'Instagram',facebook:'Facebook',google:'Google / Search',whatsapp:'WhatsApp',friend:'Friend / referral',walk_in:'Walk-in',other:'Other',unknown:'Unknown / older bookings'};
+  const channelStats=new Map();
+  marketingRows.forEach(row=>{const key=channelNames[row.marketing_source]?row.marketing_source:'unknown';const item=channelStats.get(key)||{total:0,approved:0};item.total++;if(['approved','confirmed','completed'].includes(String(row.status||'').toLowerCase()))item.approved++;channelStats.set(key,item);});
+  const marketingHost=$('#opsMarketingAttribution');
+  if(marketingHost){
+   const ordered=[...channelStats.entries()].sort((a,b)=>b[1].total-a[1].total);
+   marketingHost.innerHTML=ordered.length?'<div class="fz-marketing-table"><div class="fz-marketing-row fz-marketing-head"><span>CHANNEL</span><span>REQUESTS</span><span>APPROVED</span><span>APPROVAL RATE</span></div>'+ordered.map(([key,v])=>'<div class="fz-marketing-row"><b>'+esc(channelNames[key])+'</b><span>'+v.total+'</span><span>'+v.approved+'</span><span>'+(v.total?Math.round(v.approved/v.total*100)+'%':'—')+'</span></div>').join('')+'</div>':'<div class="empty-state">No booking-source data for this month yet. New requests will appear here.</div>';
+  }
+  const all=[players,assets,incidents,sessions,bookings,attendance,invoices,referralBookings,referralPoints,cashbook,marketingArena,marketingEvents],firstErr=all.find(x=>x.error);
   if(firstErr)msg($('#opsConsoleStatus'),'Some business metrics could not load. Check the relevant table permissions and operations migrations. '+(firstErr.error.message||''),'error');
   else msg($('#opsConsoleStatus'),'Operations & business metrics updated · '+today+' (Sri Lanka time).','success');
  }

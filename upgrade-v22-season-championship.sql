@@ -16,8 +16,10 @@ create table public.fz_competition_seasons (
 );
 create index fz_competition_seasons_public_idx on public.fz_competition_seasons (active, starts_on desc, ends_on desc);
 alter table public.fz_competition_seasons enable row level security;
-create policy "fz_seasons_public_read_active" on public.fz_competition_seasons for select to anon, authenticated using (active = true);
-create policy "fz_seasons_field_admin_manage" on public.fz_competition_seasons for all to authenticated using (public.fz_can_manage_field(field_id)) with check (public.fz_can_manage_field(field_id));
+create policy "fz_seasons_public_read_active" on public.fz_competition_seasons for select to anon using (active = true);
+create policy "fz_seasons_authenticated_read" on public.fz_competition_seasons for select to authenticated using (active = true or public.fz_can_manage_field(field_id));
+create policy "fz_seasons_field_admin_insert" on public.fz_competition_seasons for insert to authenticated with check (public.fz_can_manage_field(field_id));
+create policy "fz_seasons_field_admin_update" on public.fz_competition_seasons for update to authenticated using (public.fz_can_manage_field(field_id)) with check (public.fz_can_manage_field(field_id));
 grant select on public.fz_competition_seasons to anon, authenticated;
 grant insert, update on public.fz_competition_seasons to authenticated;
 create or replace view public.public_fz_season_leaderboard with (security_barrier = true, security_invoker = false) as

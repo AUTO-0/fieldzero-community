@@ -279,7 +279,7 @@
    db.from('fz_incidents').select('id',{count:'exact',head:true}).neq('status','closed'),
    db.from('fz_sessions').select('id',{count:'exact',head:true}).gte('session_date',today).neq('status','cancelled').neq('status','completed'),
    db.from('arena_bookings').select('id',{count:'exact',head:true}).gte('created_at',monthStart+'T00:00:00+05:30').lt('created_at',nextMonth+'T00:00:00+05:30'),
-   db.from('players').select('id',{count:'exact',head:true}).eq('active',true).gte('matches_played',2),
+   db.from('fz_session_attendance').select('player_id,checked_in_at').eq('checked_in',true).limit(10000),
    db.from('fz_invoices').select('balance_due,currency').gt('balance_due',0),
    db.from('arena_bookings').select('id',{count:'exact',head:true}).not('referral_code','is',null).gte('created_at',monthStart+'T00:00:00+05:30').lt('created_at',nextMonth+'T00:00:00+05:30'),
    db.from('fz_point_ledger').select('points').eq('category','referral').gte('created_at',monthStart+'T00:00:00+05:30').lt('created_at',nextMonth+'T00:00:00+05:30')
@@ -289,7 +289,17 @@
   $('#opsOpenIncidents').textContent=incidents.error?'—':String(incidents.count||0);
   $('#opsUpcomingSessions').textContent=sessions.error?'—':String(sessions.count||0);
   $('#opsMonthlyBookings').textContent=bookings.error?'—':String(bookings.count||0);
-  $('#opsRepeatOperators').textContent=attendance.error?'—':String(attendance.count||0);
+  const attendanceRows=attendance.data||[];
+  const visitCounts=new Map();
+  attendanceRows.forEach(row=>{if(row.player_id)visitCounts.set(row.player_id,(visitCounts.get(row.player_id)||0)+1);});
+  const uniqueVisitors=visitCounts.size;
+  const repeatVisitors=[...visitCounts.values()].filter(count=>count>=2).length;
+  const monthStartMs=Date.parse(monthStart+'T00:00:00+05:30');
+  const nextMonthMs=Date.parse(nextMonth+'T00:00:00+05:30');
+  const monthAttendance=attendanceRows.filter(row=>{const t=Date.parse(row.checked_in_at||'');return Number.isFinite(t)&&t>=monthStartMs&&t<nextMonthMs;});
+  $('#opsRepeatOperators').textContent=attendance.error?'—':String(repeatVisitors);
+  $('#opsMonthlyCheckins').textContent=attendance.error?'—':String(monthAttendance.length);
+  $('#opsReturnRate').textContent=attendance.error?'—':(uniqueVisitors?Math.round(repeatVisitors/uniqueVisitors*100)+'%':'0%');
   const balances={};(invoices.data||[]).forEach(row=>{const currency=String(row.currency||'LKR').toUpperCase();balances[currency]=(balances[currency]||0)+Number(row.balance_due||0);});
   const moneyText=Object.entries(balances).filter(([,amount])=>amount>0).map(([currency,amount])=>currency+' '+new Intl.NumberFormat('en-LK',{maximumFractionDigits:0}).format(amount)).join(' · ');
   $('#opsOutstandingInvoices').textContent=invoices.error?'—':(moneyText||'0');

@@ -238,3 +238,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .fz-member-top-actions{display:flex;gap:8px;flex-wrap:wrap}
 .fz-password-update{margin-top:14px;padding:14px;background:#f1f4ec;border:1px solid #dce3d6;display:grid;gap:10px}
 .fz-password-update[hidden]{display:none!important}
+
+/* V20 — unified OPERATOR ACCOUNT registration/login */
+.fz-operator-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 auto 18px;max-width:760px;border-bottom:1px solid #dce3d6;padding-bottom:12px}
+.fz-operator-tab{appearance:none;border:1px solid #cbd5c3;background:#f7f9f4;color:#263322;padding:12px 18px;font:800 11px/1.2 inherit;letter-spacing:1px;cursor:pointer;flex:1;min-width:180px}
+.fz-operator-tab.active{background:#192418;color:#c6f45b;border-color:#192418}
+.fz-operator-registration,.fz-operator-login{max-width:760px;margin:0 auto 18px}
+.fz-operator-registration[hidden],.fz-operator-login[hidden]{display:none!important}
+.fz-member-shell{max-width:900px}
+@media(max-width:520px){.fz-operator-tabs{display:grid;grid-template-columns:1fr}.fz-operator-tab{width:100%}}

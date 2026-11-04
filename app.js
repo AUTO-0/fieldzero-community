@@ -89,7 +89,7 @@
   }
   function campaignCta(campaign) {
     const target = campaign?.cta_target || "none";
-    if (target === "join") return {href:"#join", label:campaign.cta_label || "JOIN THE COMMUNITY ↗"};
+    if (target === "join") return {href:"#memberArea", label:campaign.cta_label || "OPERATOR ACCOUNT ↗"};
     if (target === "events") return {href:"#events", label:campaign.cta_label || "VIEW EVENTS ↗"};
     if (target === "gallery") return {href:"#gallery", label:campaign.cta_label || "VIEW GALLERY ↗"};
     return null;
@@ -162,7 +162,7 @@
     const info=$("#announcementEventInfo"), primary=$("#announcementPrimary"), secondary=$("#announcementSecondary");
     const media=$("#announcementMedia"), image=$("#announcementImage");
     info.hidden = true; media.hidden = true; secondary.hidden = true; primary.hidden = false;
-    primary.href = "#join"; primary.textContent = "JOIN THE ROSTER ↗";
+    primary.href = "#memberArea"; primary.textContent = "OPERATOR ACCOUNT ↗";
     if (type === "opening") {
       kicker.textContent = "FIELDZERO / COMMUNITY NOTICE";
       title.textContent = siteSettings?.opening_soon_title || "OPENING SOON";
@@ -257,7 +257,7 @@
   function renderRoster(rows) {
     const q = ($("#rosterSearch").value || "").trim().toLowerCase();
     const filtered = rows.filter(p => (p.callsign || "").toLowerCase().includes(q));
-    $("#rosterCount").textContent = `${filtered.length} ACTIVE MEMBER${filtered.length === 1 ? "" : "S"}`;
+    $("#rosterCount").textContent = `${filtered.length} ACTIVE OPERATOR${filtered.length === 1 ? "" : "S"}`;
     $("#rosterGrid").innerHTML = filtered.length ? filtered.map((p, i) => `<article class="operator-card"><div class="operator-top"><span>OPERATOR / ${String(i+1).padStart(3,"0")}</span><span>● ACTIVE</span></div><div class="operator-call">${p.avatar_url?`<img class="operator-avatar" src="${escapeAttr(p.avatar_url)}" alt="${escapeAttr(p.callsign)} profile photo" loading="lazy">`:''}${escapeHtml(p.callsign)}</div><div class="operator-team">${escapeHtml(p.team_name || "INDEPENDENT")} · ${escapeHtml(p.player_rank || "ROOKIE")}</div></article>`).join("") : '<div class="empty-state">No approved callsigns match that search yet.</div>';
   }
   $("#rosterSearch").addEventListener("input", () => { if (db) loadRoster(); });
@@ -387,7 +387,7 @@
     if (fd.get("consent") !== "on" || realName.length < 2 || !/^[A-Za-z0-9_-]{3,24}$/.test(callsign) || mobile.length < 7 || !email || password.length < 8) {
       status(statusEl, "Check your details. Username must be 3–24 letters, numbers or underscores; password must be at least 8 characters.", "error"); return;
     }
-    submit.disabled = true; submit.textContent = "CREATING MEMBER ACCOUNT…";
+    submit.disabled = true; submit.textContent = "CREATING OPERATOR ACCOUNT…";
     const { data, error } = await db.auth.signUp({
       email, password,
       options: { data: {
@@ -396,7 +396,7 @@
         play_style: fd.get("playStyle")
       }, emailRedirectTo: `${location.origin}${location.pathname}#memberArea` }
     });
-    submit.disabled = false; submit.innerHTML = "CREATE MEMBER ACCOUNT <span>↗</span>";
+    submit.disabled = false; submit.innerHTML = "CREATE OPERATOR ACCOUNT <span>↗</span>";
     if (error || (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0)) {
       const message = error?.message?.toLowerCase().includes("already registered") || data?.user?.identities?.length === 0
         ? "This email may already have an account. Try signing in or use password reset."
@@ -408,7 +408,7 @@
       status(statusEl, "Account created and player application submitted. Check your email if verification is requested. Your public profile will appear after admin approval.", "success");
       await loadMemberAccount();
     } else {
-      status(statusEl, "Account created. Check your email to verify it, then sign in from the MEMBER ACCOUNT section. Your application has been sent for admin review.", "success");
+      status(statusEl, "Account created. Check your email to verify it, then sign in from the OPERATOR ACCOUNT section. Your application has been sent for admin review.", "success");
     }
   });
 
@@ -517,7 +517,7 @@
     const help=$('#challengeTeamHelp');if(help)help.textContent=rows.length>=2?'Choose two different active squads. Squads with 1–5 players can be challenged.':`Currently ${rows.length} public squad${rows.length===1?'':'s'}. At least two squads with approved members are needed for a challenge.`;
   }
   if(db)loadChallengeTeams();
-  const leaderForm=$('#leaderForm');if(leaderForm){leaderForm.innerHTML='<div class="empty-state">Squad members can request captain status from their FIELDZERO Member Account. The central admin will organise a YES / NO WhatsApp group poll before approval.</div>'; }
+  const leaderForm=$('#leaderForm');if(leaderForm){leaderForm.innerHTML='<div class="empty-state">Squad members can request captain status from their FIELDZERO Operator Account. The central admin will organise a YES / NO WhatsApp group poll before approval.</div>'; }
   $('#challengingTeam')?.addEventListener('change',()=>{const own=$('#challengingTeam').value,opponent=$('#challengedTeam');if(opponent&&opponent.value===own)opponent.value='';if(opponent)Array.from(opponent.options).forEach(o=>{o.disabled=!!own&&o.value===own;});});
   const challengeForm=$('#challengeForm');if(challengeForm)challengeForm.addEventListener('submit',async e=>{e.preventDefault();const fd=new FormData(challengeForm),el=$('#challengeStatus');if(!db){status(el,'Database is not configured.','error');return}if(fd.get('challengingTeam')===fd.get('challengedTeam')){status(el,'Choose two different squads.','error');return}const {error}=await db.from('team_challenges').insert({challenging_team_id:fd.get('challengingTeam'),challenged_team_id:fd.get('challengedTeam'),leader_callsign:String(fd.get('leaderCallsign')).trim(),leader_mobile:String(fd.get('leaderMobile')).trim(),proposed_format:fd.get('format'),proposed_date:fd.get('proposedDate')||null,message:String(fd.get('message')||'').trim()});status(el,error?'Could not submit challenge. Check V2 migration and choose an active squad.':'Challenge sent to FIELDZERO admin for review. The admin must contact the challenged team leader; this starter does not send automatic WhatsApp/push alerts.',error?'error':'success');if(!error)challengeForm.reset();});
 
@@ -606,6 +606,17 @@
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(lightbox&&!lightbox.hidden)closeLightbox();if(!$('#featuredPopup').hidden)closeFeaturedPopup();if(announcementPopup&&!announcementPopup.hidden)closeAnnouncement();}else if(lightbox&&!lightbox.hidden&&e.key==='ArrowRight')openLightbox(lightboxIndex+1);else if(lightbox&&!lightbox.hidden&&e.key==='ArrowLeft')openLightbox(lightboxIndex-1)});
 
   // V18 — member account, profile, squad discovery and captain workflow.
+  // Unified OPERATOR ACCOUNT: registration and login are tabs in one section.
+  const operatorRegistrationForm = $('#registrationForm');
+  const operatorLoginForm = $('#memberLoginForm');
+  const operatorTabs = document.querySelector('.fz-operator-tabs');
+  document.querySelectorAll('[data-operator-tab]').forEach(tab=>tab.addEventListener('click',()=>{
+    const mode=tab.dataset.operatorTab;
+    document.querySelectorAll('[data-operator-tab]').forEach(b=>{const active=b===tab;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));});
+    if(operatorRegistrationForm) operatorRegistrationForm.hidden=mode!=='register';
+    if(operatorLoginForm) operatorLoginForm.hidden=mode!=='login';
+  }));
+
   const memberLoginForm = $('#memberLoginForm');
   let memberContext = null, memberSquads = [];
   const memberMsg = (el, text, kind='') => { if(el) status(el,text,kind); };
@@ -613,14 +624,14 @@
   async function loadMemberAccount(){
     if(!db || !$('#memberDashboard')) return;
     const {data:{session}} = await db.auth.getSession();
-    if(!session){$('#memberLoginForm').hidden=false;$('#memberDashboard').hidden=true;memberContext=null;return;}
-    $('#memberLoginForm').hidden=true;$('#memberDashboard').hidden=false;
+    if(!session){$('#memberLoginForm').hidden=false;$('#registrationForm').hidden=true;if(operatorTabs)operatorTabs.hidden=false;$('#memberDashboard').hidden=true;memberContext=null;return;}
+    $('#memberLoginForm').hidden=true;$('#registrationForm').hidden=true;if(operatorTabs)operatorTabs.hidden=true;$('#memberDashboard').hidden=false;
     const {data,error}=await db.rpc('fz_member_get_context');
-    if(error){memberMsg($('#memberLoginStatus'),'Member account service is unavailable. Ask the FIELDZERO admin to apply V18 SQL.','error');return;}
+    if(error){memberMsg($('#memberLoginStatus'),'Operator account service is unavailable. Ask the FIELDZERO admin to apply V18 SQL.','error');return;}
     memberContext=data;
     if(data?.state==='not_linked'){
       $('#memberWelcome').textContent='ACCOUNT LINK REQUEST';$('#memberAccountStatus').textContent='Your old player record is waiting for admin verification. If this is a new application, wait for approval.';
-      $('#memberStats').innerHTML='<p class="empty-state">Your member profile and results will unlock after your application is approved or your existing profile is linked by an admin.</p>';
+      $('#memberStats').innerHTML='<p class="empty-state">Your operator profile and results will unlock after your application is approved or your existing profile is linked by an admin.</p>';
       $('#memberTeamInfo').textContent='Available after account approval.';$('#memberTeamActions').innerHTML='';$('#memberSquadResults').innerHTML='';return;
     }
     if(data?.state!=='active'){
@@ -628,12 +639,12 @@
     }
     const p=data.player||{}, a=data.account||{}, team=data.team;
     $('#memberWelcome').textContent=(a.display_name||p.callsign||'MEMBER').toUpperCase();
-    $('#memberAccountStatus').textContent=team?`Active member · ${team.name}${team.is_leader?' · Squad captain':''}`:'Active member · Independent player';
+    $('#memberAccountStatus').textContent=team?`Active operator · ${team.name}${team.is_leader?' · Squad captain':''}`:'Active operator · Independent player';
     $('#memberCallsign').value=p.callsign||'';$('#memberDisplayName').value=a.display_name||'';
     const img=$('#memberAvatarPreview'), fallback=$('#memberAvatarFallback');
     if(a.avatar_url){img.src=a.avatar_url;img.hidden=false;fallback.hidden=true;}else{img.removeAttribute('src');img.hidden=true;fallback.hidden=false;fallback.textContent=(p.callsign||'FZ').slice(0,2).toUpperCase();}
     $('#memberStats').innerHTML=[memberStat('PLAYER POINTS',Number(p.player_points||0).toLocaleString()),memberStat('MATCHES',p.matches_played||0),memberStat('WINS',p.wins||0),memberStat('PLAY HOURS',Number(p.playing_hours||0).toFixed(1))].join('');
-    $('#memberTeamInfo').innerHTML=team?`<b>${escapeHtml(team.name)}</b><p>${Number(team.member_count||0)}/5 members ${team.is_leader?'· YOU ARE CAPTAIN':''}</p>`:(data.pending_join?`<p>Join request pending for <b>${escapeHtml(data.pending_join.team_name||'a squad')}</b>. The squad captain must approve it.</p>`:'<p>You are currently an independent player.</p>');
+    $('#memberTeamInfo').innerHTML=team?`<b>${escapeHtml(team.name)}</b><p>${Number(team.member_count||0)}/5 members ${team.is_leader?'· YOU ARE CAPTAIN':''}</p>`:(data.pending_join?`<p>Join request pending for <b>${escapeHtml(data.pending_join.team_name||'a squad')}</b>. The squad captain must approve it.</p>`:'<p>You are currently an independent operator.</p>');
     $('#memberTeamActions').innerHTML=team?`<button class="button button-ghost" type="button" id="memberLeaveTeam">LEAVE SQUAD</button>${team.is_leader?'':` <button class="button button-ghost" type="button" id="memberRequestLeader">REQUEST CAPTAIN STATUS</button>`}`:'';
     $('#memberLeaveTeam')?.addEventListener('click',async()=>{if(!confirm('Leave your current squad? Your player results will remain.'))return;const {error}=await db.rpc('fz_member_leave_team');if(error){memberMsg($('#memberProfileStatus'),error.message,'error');return;}await loadMemberAccount();await loadTeams();});
     $('#memberRequestLeader')?.addEventListener('click',async()=>{const {data:{session}}=await db.auth.getSession();const mobile=prompt('Confirm your WhatsApp/mobile number for admin verification:');if(!mobile)return;const {error}=await db.rpc('fz_member_request_leader',{p_team_id:team.id,p_mobile:mobile,p_email:session?.user?.email||''});memberMsg($('#memberProfileStatus'),error?error.message:'Captain request sent to FIELDZERO admin. A YES / NO poll will be arranged in the community WhatsApp group.','success');});

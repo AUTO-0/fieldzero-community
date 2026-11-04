@@ -615,20 +615,20 @@
     ${needsAdvance?'<button class="button button-lime" id="fzRecord500Advance">RECORD LKR 500 ADVANCE & CONFIRM</button>':''}
     ${b.status==='pending_payment'&&inv&&Number(inv.amount_paid||0)>=500&&!b.advance_verified_at?'<button class="button button-lime" id="fzConfirmAfterAdvance">CONFIRM AFTER ADVANCE</button>':''}
     ${isConfirmed?'<button class="button button-ghost" id="fzReprintPass">DOWNLOAD BOOKING PASS</button>':''}
-    ${b.invoice_id?`<button class="button button-ghost" id="fzOpenBookingInvoice">${fullyPaid?'DOWNLOAD FINAL PAID INVOICE':checkoutReady?'PREVIEW FINAL BILL PDF':'DOWNLOAD ADVANCE INVOICE'}</button>`:''}
     ${b.invoice_id&&isConfirmed?`<button class="button button-lime" id="fzCheckoutEdit">${checkoutReady?'EDIT FINAL BILL / EXTRAS':'ADD SESSION FEE & EXTRAS'}</button>`:''}
     ${b.invoice_id&&checkoutReady&&balance>0.005?'<button class="button button-lime" id="fzRecordBookingPayment">RECORD PAYMENT / MARK AS PAID</button>':''}
     ${b.invoice_id&&fullyPaid?'<button class="button button-lime" id="fzShareBookingInvoice">SEND FINAL PAID INVOICE VIA WHATSAPP</button>':''}
     ${!b.advance_verified_at?'<button class="button button-ghost" id="fzRequestPdf">DOWNLOAD LKR 500 REQUEST</button>':''}
-  </div><div id="fzCheckoutEditor"></div><div id="fzBookingPaymentPanel"></div></article>`;
+  </div><section class="fz-document-centre"><div class="fz-document-centre-heading"><div><b>INVOICES &amp; RECEIPTS</b><small>Every document for this booking, available individually. Downloading a document does not record or change a payment.</small></div><button type="button" class="button button-ghost" id="fzRefreshBookingDocuments">REFRESH</button></div><div id="fzBookingDocuments"><div class="empty-state">Loading booking documents…</div></div></section><div id="fzCheckoutEditor"></div><div id="fzBookingPaymentPanel"></div></article>`;
   $('#fzReprintPass')?.addEventListener('click',()=>fzGenerateAdminPass(b));
   $('#fzRecord500Advance')?.addEventListener('click',()=>fzRecordBookingAdvance(b));
   $('#fzConfirmAfterAdvance')?.addEventListener('click',()=>fzConfirmExistingAdvance(b));
-  $('#fzOpenBookingInvoice')?.addEventListener('click',e=>fzDownloadBookingInvoice(b,e.currentTarget,fullyPaid,checkoutReady));
   $('#fzRecordBookingPayment')?.addEventListener('click',()=>fzPrepareBookingPayment(b));
   $('#fzCheckoutEdit')?.addEventListener('click',()=>fzOpenCheckoutEditor(b));
   $('#fzShareBookingInvoice')?.addEventListener('click',()=>fzShareBookingInvoice(b));
   $('#fzRequestPdf')?.addEventListener('click',()=>fzGenerateAdvanceRequestPdf(b));
+  $('#fzRefreshBookingDocuments')?.addEventListener('click',()=>fzLoadBookingDocuments(b,inv));
+  fzLoadBookingDocuments(b,inv);
  }
  function fzDownloadBlob(blob,filename){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
  function fzDeliverBookingPdf(blob,filename,popup){
@@ -673,6 +673,60 @@
     if(popup&&!popup.closed)popup.close();
     msg($('#adminStatus'),'Could not prepare the booking PDF: '+(error.message||'Unknown error')+'. No payment was taken or changed.','error');
   }finally{if(button&&button.isConnected)button.disabled=false;}
+ }
+ let fzBookingDocumentUrls=[];
+ function fzClearBookingDocumentUrls(){
+  fzBookingDocumentUrls.forEach(url=>{try{URL.revokeObjectURL(url)}catch(_){}});
+  fzBookingDocumentUrls=[];
+ }
+ async function fzLoadBookingDocuments(b,invoiceSnapshot=null){
+  const host=$('#fzBookingDocuments');if(!host)return;
+  fzClearBookingDocumentUrls();
+  if(!b.invoice_id){host.innerHTML='<div class="empty-state">No invoice has been issued yet. Record the advance payment to create the booking invoice.</div>';return;}
+  host.innerHTML='<div class="empty-state">Loading invoices and receipts…</div>';
+  const [invoiceQ,paymentsQ]=await Promise.all([
+   db.from('fz_invoices').select('id,invoice_number,total_amount,amount_paid,balance_due,status,invoice_date').eq('id',b.invoice_id).maybeSingle(),
+   db.from('fz_invoice_payments').select('id,receipt_number,payment_date,amount,payment_method,reference,pdf_path').eq('invoice_id',b.invoice_id).order('payment_date',{ascending:true})
+  ]);
+  if(invoiceQ.error){host.innerHTML=`<p class="admin-error">Could not load the booking invoice: ${esc(invoiceQ.error.message)}</p>`;return;}
+  if(!invoiceQ.data){host.innerHTML='<div class="empty-state">Invoice record not found for this booking.</div>';return;}
+  const inv=invoiceQ.data;
+  const checkoutDone=!!b.checkout_finalized_at;
+  const invoiceMode=checkoutDone?'final':'advance';
+  const invoiceTitle=checkoutDone?(Number(inv.balance_due)<=0.005?'FINAL PAID INVOICE':'FINAL BILL'):'ADVANCE PAID INVOICE';
+  const firstPayment=(paymentsQ.data||[])[0];
+  const invoiceRow=`<article class="fz-document-row"><div class="fz-document-meta"><b>${invoiceTitle}</b><small>${esc(inv.invoice_number||'Invoice')} · ${financeDate(inv.invoice_date)} · ${esc(String(inv.status||'issued').replaceAll('_',' ').toUpperCase())}</small><p>Total ${financeFmt(inv.total_amount)} · Received ${financeFmt(inv.amount_paid)} · Balance ${financeFmt(inv.balance_due)}</p></div><div class="fz-document-controls"><button type="button" class="button button-lime" data-fz-doc-download="invoice" data-mode="${invoiceMode}" data-payment-id="${firstPayment?.id||''}">PREPARE PDF</button><div class="fz-document-result" aria-live="polite"></div></div></article>`;
+  let receiptRows='';
+  if(paymentsQ.error){receiptRows=`<p class="admin-error">Invoice loaded, but payment receipts could not be listed: ${esc(paymentsQ.error.message)}</p>`;}
+  else if((paymentsQ.data||[]).length){
+   receiptRows=(paymentsQ.data||[]).map(p=>`<article class="fz-document-row"><div class="fz-document-meta"><b>PAYMENT RECEIPT · ${esc(p.receipt_number||'Receipt')}</b><small>${financeDate(p.payment_date)} · ${esc(String(p.payment_method||'').replaceAll('_',' ').toUpperCase())}${p.reference?' · Ref '+esc(p.reference):''}</small><p>Received ${financeFmt(p.amount)}</p></div><div class="fz-document-controls"><button type="button" class="button button-ghost" data-fz-doc-download="receipt" data-payment-id="${p.id}" data-pdf-path="${esc(p.pdf_path||'')}">PREPARE RECEIPT PDF</button><div class="fz-document-result" aria-live="polite"></div></div></article>`).join('');
+  }else{receiptRows='<div class="empty-state">No payment receipts recorded for this invoice yet.</div>';}
+  host.innerHTML=invoiceRow+`<div class="fz-document-subheading">PAYMENT RECEIPTS</div>${receiptRows}`;
+  host.querySelectorAll('[data-fz-doc-download]').forEach(button=>button.addEventListener('click',async()=>{
+   const row=button.closest('.fz-document-row');const resultHost=row?.querySelector('.fz-document-result');
+   const kind=button.dataset.fzDocDownload;const oldLabel=button.textContent;
+   button.disabled=true;button.textContent='PREPARING…';if(resultHost)resultHost.innerHTML='<small>Building PDF from the saved invoice and payment records…</small>';
+   try{
+    const paymentId=kind==='receipt'?button.dataset.paymentId:(button.dataset.paymentId||null);
+    const mode=kind==='receipt'?'receipt':button.dataset.mode;
+    let result;
+    // Use the archived receipt first when one exists, preserving the exact document
+    // originally generated for that payment. Fall back to regeneration for older rows.
+    if(kind==='receipt'&&button.dataset.pdfPath){
+     const archived=await db.storage.from('fz-finance-documents').download(button.dataset.pdfPath);
+     if(!archived.error&&archived.data){result={blob:archived.data,filename:`${financeFileSafe(button.closest('.fz-document-row')?.querySelector('.fz-document-meta b')?.textContent||'FIELDZERO-RECEIPT')}.pdf`};}
+    }
+    if(!result)result=await generateInvoicePdf(b.invoice_id,paymentId||null,false,mode);
+    if(!result?.blob||result.blob.size<100)throw new Error('The PDF generator returned an empty file.');
+    const url=URL.createObjectURL(result.blob);fzBookingDocumentUrls.push(url);
+    const safeName=esc(result.filename||'FIELDZERO-document.pdf');
+    if(resultHost)resultHost.innerHTML=`<span class="fz-document-ready">PDF READY · ${(result.blob.size/1024).toFixed(0)} KB</span><div class="fz-document-links"><a class="button button-lime" href="${url}" download="${safeName}">DOWNLOAD PDF</a><a class="button button-ghost" href="${url}" target="_blank" rel="noopener">OPEN / PRINT</a></div>${result.archiveMessage?`<small class="fz-document-note">${esc(result.archiveMessage)}</small>`:''}`;
+    button.textContent='PREPARE AGAIN';
+   }catch(error){
+    if(resultHost)resultHost.innerHTML=`<span class="admin-error">PDF preparation failed: ${esc(error.message||'Unknown error')}</span>`;
+    button.textContent=oldLabel;
+   }finally{button.disabled=false;}
+  }));
  }
  async function fzSharePdfWhatsApp(phone,message,pdfResult,popup){
   if(!pdfResult?.blob)throw new Error('PDF could not be prepared');

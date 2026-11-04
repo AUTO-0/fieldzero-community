@@ -141,3 +141,33 @@
  .finance-growth-month small{font-size:8px}
  .fz-checkout-estimate{font-size:12px;line-height:1.5}
 }
+
+/* V21.3.2 — booking document centre */
+.fz-document-centre{margin:20px 0 4px;padding:16px;border:1px solid rgba(185,255,64,.3);border-radius:12px;background:#10180f}
+.fz-document-centre-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.fz-document-centre-heading b{display:block;color:var(--lime);font:800 20px 'Barlow Condensed',sans-serif;letter-spacing:.07em}
+.fz-document-centre-heading small{display:block;max-width:650px;margin-top:4px;color:#aebaa6;font-size:10px;line-height:1.5}
+.fz-document-centre-heading .button{flex:0 0 auto;min-height:34px}
+.fz-document-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(210px,auto);gap:14px;align-items:center;padding:13px 0;border-top:1px solid #34412f}
+.fz-document-meta{min-width:0}
+.fz-document-meta>b{display:block;color:#f0f5ec;font:800 16px 'Barlow Condensed',sans-serif;letter-spacing:.04em;overflow-wrap:anywhere}
+.fz-document-meta small{display:block;margin-top:3px;color:#aab7a1;font-size:9px;line-height:1.5;overflow-wrap:anywhere}
+.fz-document-meta p{margin:6px 0 0;color:#d1dcc9;font-size:10px}
+.fz-document-controls{display:grid;justify-items:end;gap:7px;min-width:0}
+.fz-document-controls>.button{min-height:38px;white-space:nowrap}
+.fz-document-result{display:grid;justify-items:end;gap:6px;max-width:100%;text-align:right}
+.fz-document-ready{color:var(--lime);font-size:9px;font-weight:900;letter-spacing:.08em}
+.fz-document-links{display:flex;justify-content:flex-end;gap:7px;flex-wrap:wrap}
+.fz-document-links .button{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:9px 12px;text-decoration:none;font-size:9px}
+.fz-document-note{max-width:280px;color:#b5c0ac;font-size:9px;line-height:1.4}
+.fz-document-subheading{margin:12px 0 0;padding-top:10px;border-top:1px dashed #3e4b38;color:#b9ff40;font:800 12px 'Barlow Condensed',sans-serif;letter-spacing:.1em}
+@media(max-width:650px){
+ .fz-document-centre{padding:12px}
+ .fz-document-centre-heading{flex-direction:column}
+ .fz-document-row{grid-template-columns:1fr;gap:9px}
+ .fz-document-controls{justify-items:stretch}
+ .fz-document-controls>.button{width:100%}
+ .fz-document-result{justify-items:start;text-align:left}
+ .fz-document-links{justify-content:flex-start;width:100%}
+ .fz-document-links .button{flex:1 1 auto}
+}

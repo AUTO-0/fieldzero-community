@@ -273,7 +273,7 @@
  }
  async function loadOpsDashboard(){
   const today=opsToday(),[year,month]=today.slice(0,7).split('-').map(Number),nextMonth=month===12?`${year+1}-01-01`:`${year}-${String(month+1).padStart(2,'0')}-01`,monthStart=`${year}-${String(month).padStart(2,'0')}-01`;
-  const [players,assets,incidents,sessions,bookings,attendance,invoices,referralBookings,referralPoints]=await Promise.all([
+  const [players,assets,incidents,sessions,bookings,attendance,invoices,referralBookings,referralPoints,cashbook]=await Promise.all([
    db.from('players').select('id',{count:'exact',head:true}).eq('active',true),
    db.from('fz_equipment').select('id',{count:'exact',head:true}).eq('availability_status','available'),
    db.from('fz_incidents').select('id',{count:'exact',head:true}).neq('status','closed'),
@@ -282,7 +282,8 @@
    db.from('fz_session_attendance').select('player_id,checked_in_at').eq('checked_in',true).limit(10000),
    db.from('fz_invoices').select('balance_due,currency').gt('balance_due',0),
    db.from('arena_bookings').select('id',{count:'exact',head:true}).not('referral_code','is',null).gte('created_at',monthStart+'T00:00:00+05:30').lt('created_at',nextMonth+'T00:00:00+05:30'),
-   db.from('fz_point_ledger').select('points').eq('category','referral').gte('created_at',monthStart+'T00:00:00+05:30').lt('created_at',nextMonth+'T00:00:00+05:30')
+   db.from('fz_point_ledger').select('points').eq('category','referral').gte('created_at',monthStart+'T00:00:00+05:30').lt('created_at',nextMonth+'T00:00:00+05:30'),
+   financeFetchPaged(()=>db.from('fz_cashbook').select('entry_type,amount').gte('entry_date',monthStart).lt('entry_date',nextMonth).order('entry_date',{ascending:false}))
   ]);
   $('#opsActivePlayers').textContent=players.error?'—':String(players.count||0);
   $('#opsAvailableAssets').textContent=assets.error?'—':String(assets.count||0);
@@ -290,22 +291,27 @@
   $('#opsUpcomingSessions').textContent=sessions.error?'—':String(sessions.count||0);
   $('#opsMonthlyBookings').textContent=bookings.error?'—':String(bookings.count||0);
   const attendanceRows=attendance.data||[];
-  const visitCounts=new Map();
-  attendanceRows.forEach(row=>{if(row.player_id)visitCounts.set(row.player_id,(visitCounts.get(row.player_id)||0)+1);});
-  const uniqueVisitors=visitCounts.size;
-  const repeatVisitors=[...visitCounts.values()].filter(count=>count>=2).length;
   const monthStartMs=Date.parse(monthStart+'T00:00:00+05:30');
   const nextMonthMs=Date.parse(nextMonth+'T00:00:00+05:30');
   const monthAttendance=attendanceRows.filter(row=>{const t=Date.parse(row.checked_in_at||'');return Number.isFinite(t)&&t>=monthStartMs&&t<nextMonthMs;});
-  $('#opsRepeatOperators').textContent=attendance.error?'—':String(repeatVisitors);
+  const priorVisitors=new Set(attendanceRows.filter(row=>{const t=Date.parse(row.checked_in_at||'');return row.player_id&&Number.isFinite(t)&&t<monthStartMs;}).map(row=>row.player_id));
+  const monthlyVisitors=new Set(monthAttendance.map(row=>row.player_id).filter(Boolean));
+  const returningThisMonth=[...monthlyVisitors].filter(id=>priorVisitors.has(id)).length;
+  $('#opsRepeatOperators').textContent=attendance.error?'—':String(returningThisMonth);
   $('#opsMonthlyCheckins').textContent=attendance.error?'—':String(monthAttendance.length);
-  $('#opsReturnRate').textContent=attendance.error?'—':(uniqueVisitors?Math.round(repeatVisitors/uniqueVisitors*100)+'%':'—');
+  $('#opsReturnRate').textContent=attendance.error?'—':(monthlyVisitors.size?Math.round(returningThisMonth/monthlyVisitors.size*100)+'%':'—');
   const balances={};(invoices.data||[]).forEach(row=>{const currency=String(row.currency||'LKR').toUpperCase();balances[currency]=(balances[currency]||0)+Number(row.balance_due||0);});
   const moneyText=Object.entries(balances).filter(([,amount])=>amount>0).map(([currency,amount])=>currency+' '+new Intl.NumberFormat('en-LK',{maximumFractionDigits:0}).format(amount)).join(' · ');
   $('#opsOutstandingInvoices').textContent=invoices.error?'—':(moneyText||'0');
   $('#opsReferralBookings').textContent=referralBookings.error?'—':String(referralBookings.count||0);
   $('#opsReferralXp').textContent=referralPoints.error?'—':String((referralPoints.data||[]).reduce((sum,row)=>sum+Number(row.points||0),0));
-  const all=[players,assets,incidents,sessions,bookings,attendance,invoices,referralBookings,referralPoints],firstErr=all.find(x=>x.error);
+  const cashRows=cashbook.data||[];
+  const monthIncome=cashRows.filter(row=>row.entry_type==='income').reduce((sum,row)=>sum+Number(row.amount||0),0);
+  const monthExpenses=cashRows.filter(row=>row.entry_type==='expense').reduce((sum,row)=>sum+Number(row.amount||0),0);
+  $('#opsMonthIncome').textContent=cashbook.error?'—':financeFmt(monthIncome);
+  $('#opsMonthExpenses').textContent=cashbook.error?'—':financeFmt(monthExpenses);
+  $('#opsMonthNet').textContent=cashbook.error?'—':financeFmt(monthIncome-monthExpenses);
+  const all=[players,assets,incidents,sessions,bookings,attendance,invoices,referralBookings,referralPoints,cashbook],firstErr=all.find(x=>x.error);
   if(firstErr)msg($('#opsConsoleStatus'),'Some business metrics could not load. Check the relevant table permissions and operations migrations. '+(firstErr.error.message||''),'error');
   else msg($('#opsConsoleStatus'),'Operations & business metrics updated · '+today+' (Sri Lanka time).','success');
  }

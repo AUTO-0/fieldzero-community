@@ -520,7 +520,7 @@
   const boxY=y,boxH=54;doc.setFillColor(...dark);doc.roundedRect(14,boxY,182,boxH,2,2,'F');
   doc.setTextColor(...lime);doc.setFont('helvetica','bold');doc.setFontSize(7);doc.text(documentMode==='receipt'?'PAYMENT SUMMARY':isAdvance?'ADVANCE PAYMENT SUMMARY':isFinal?'FINAL PAYMENT SUMMARY':'INVOICE SUMMARY',20,boxY+9);
   const totalRows=[['SUBTOTAL',fmt(inv.subtotal_amount)],...(Number(inv.discount_amount)>0?[['DISCOUNT','-'+fmt(inv.discount_amount)]]:[]),...(Number(inv.tax_amount)>0?[[String(settings.tax_label||'TAX').toUpperCase(),fmt(inv.tax_amount)]]:[]),['INVOICE TOTAL',fmt(inv.total_amount)],['TOTAL RECEIVED',fmt(inv.amount_paid)],['BALANCE DUE',fmt(inv.balance_due)]];
-  let ty=boxY+17;totalRows.forEach((r,i)=>{const strong=i>=totalRows.length-2;doc.setFont('helvetica',strong?'bold':'normal');doc.setFontSize(strong?8.5:6.5);doc.setTextColor(strong?lime:white);doc.text(r[0],20,ty);doc.text(`LKR ${r[1]}`,190,ty,{align:'right'});ty+=6.2;});
+  let ty=boxY+17;totalRows.forEach((r,i)=>{const strong=i>=totalRows.length-2;doc.setFont('helvetica',strong?'bold':'normal');doc.setFontSize(strong?8.5:6.5);doc.setTextColor(...(strong?lime:white));doc.text(r[0],20,ty);doc.text(`LKR ${r[1]}`,190,ty,{align:'right'});ty+=6.2;});
   y=boxY+boxH+7;
   if(pay){
     if(y>257){pageFooter();doc.addPage();drawHeader();y=69;}

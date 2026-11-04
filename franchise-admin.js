@@ -3,7 +3,7 @@
   'use strict';
   const cfg=window.FIELDZERO_CONFIG||{};
   const ready=!!(window.supabase&&cfg.SUPABASE_URL&&cfg.SUPABASE_ANON_KEY&&!String(cfg.SUPABASE_URL).includes('YOUR-PROJECT')&&!String(cfg.SUPABASE_ANON_KEY).includes('YOUR_SUPABASE'));
-  const db=ready?window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY):null;
+  const db=ready?(window.FIELDZERO_DB||(window.FIELDZERO_DB=window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY))):null;
   const $=s=>document.querySelector(s);
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const money=v=>`LKR ${Number(v||0).toLocaleString('en-LK',{minimumFractionDigits:2,maximumFractionDigits:2})}`;

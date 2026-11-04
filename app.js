@@ -403,13 +403,24 @@
         : (error?.message || "We could not create your account. Check the details and try again.");
       status(statusEl, message, "error"); return;
     }
+    pendingOperatorEmail = email;
     form.reset();
     if (data.session) {
       status(statusEl, "Account created and player application submitted. Check your email if verification is requested. Your public profile will appear after admin approval.", "success");
       await loadMemberAccount();
     } else {
-      status(statusEl, "Account created. Check your email to verify it, then sign in from the OPERATOR ACCOUNT section. Your application has been sent for admin review.", "success");
+      status(statusEl, "REGISTRATION RECEIVED. Open the verification email sent to " + email + ". After confirming your email, return here and sign in. Your application is waiting for admin review.", "success");
     }
+  });
+
+
+  $("#resendOperatorConfirmation")?.addEventListener("click", async () => {
+    const email = pendingOperatorEmail || String(prompt("Enter the private email address used during OPERATOR REGISTRATION:") || "").trim();
+    if (!email) { status($("#formStatus"), "Enter the email address used during registration.", "error"); return; }
+    const button = $("#resendOperatorConfirmation"); button.disabled = true; button.textContent = "SENDING…";
+    const { error } = await db.auth.resend({ type: "signup", email, options: { emailRedirectTo: `${location.origin}${location.pathname}#memberArea` } });
+    button.disabled = false; button.textContent = "RESEND VERIFICATION EMAIL ↗";
+    status($("#formStatus"), error ? `Could not resend verification email: ${error.message}` : `A new verification email has been requested for ${email}. Check Spam/Junk too.`, error ? "error" : "success");
   });
 
 
@@ -618,7 +629,7 @@
   }));
 
   const memberLoginForm = $('#memberLoginForm');
-  let memberContext = null, memberSquads = [];
+  let memberContext = null, memberSquads = [], pendingOperatorEmail = "";
   const memberMsg = (el, text, kind='') => { if(el) status(el,text,kind); };
   function memberStat(label,value){return `<div><b>${escapeHtml(value ?? '0')}</b><small>${escapeHtml(label)}</small></div>`;}
   async function loadMemberAccount(){
@@ -627,10 +638,14 @@
     if(!session){$('#memberLoginForm').hidden=false;$('#registrationForm').hidden=true;if(operatorTabs)operatorTabs.hidden=false;$('#memberDashboard').hidden=true;memberContext=null;return;}
     $('#memberLoginForm').hidden=true;$('#registrationForm').hidden=true;if(operatorTabs)operatorTabs.hidden=true;$('#memberDashboard').hidden=false;
     const {data,error}=await db.rpc('fz_member_get_context');
-    if(error){memberMsg($('#memberLoginStatus'),'Operator account service is unavailable. Ask the FIELDZERO admin to apply V18 SQL.','error');return;}
+    if(error){memberMsg($('#memberLoginStatus'),`Operator profile service error: ${error.message||'Unknown database error'}. Ask admin to check V18/V21 migrations and RPC permissions.`,'error');return;}
     memberContext=data;
+    if(data?.state==='pending'){
+      const op=data.operator||{}; $('#memberWelcome').textContent=(op.callsign||'OPERATOR').toUpperCase(); $('#memberAccountStatus').textContent='APPLICATION RECEIVED · WAITING FOR EMAIL VERIFICATION / ADMIN REVIEW'; $('#memberRealName').textContent=(op.real_name||'NAME NOT AVAILABLE').toUpperCase(); $('#memberCallsignTag').textContent='CALLSIGN / '+(op.callsign||'—'); $('#memberRankTag').textContent='STATUS / PENDING'; $('#memberOperatorStatusTag').textContent='PENDING REVIEW'; $('#memberPrivateEmail').textContent=op.contact_email||'—'; $('#memberPrivateMobile').textContent=op.mobile||'—'; $('#memberBlaster').textContent=op.primary_blaster||'—'; $('#memberPlayStyle').textContent=op.play_style||'—'; $('#memberApplicationState').textContent='PENDING ADMIN REVIEW'; $('#memberStats').innerHTML='<p class="empty-state">Your operator application is in the FIELDZERO queue. Confirm your email, then wait for admin approval before your player statistics and squad access are activated.</p>'; $('#memberTeamInfo').textContent='Squad access unlocks after approval.'; $('#memberTeamActions').innerHTML=''; $('#memberSquadResults').innerHTML=''; return;
+    }
+    if(data?.state==='rejected'){const op=data.operator||{};$('#memberWelcome').textContent=(op.callsign||'OPERATOR').toUpperCase();$('#memberAccountStatus').textContent='APPLICATION NOT APPROVED · CONTACT FIELDZERO ADMIN';$('#memberRealName').textContent=(op.real_name||'OPERATOR').toUpperCase();$('#memberCallsignTag').textContent='CALLSIGN / '+(op.callsign||'—');$('#memberRankTag').textContent='STATUS / REVIEW REQUIRED';$('#memberOperatorStatusTag').textContent='REVIEW REQUIRED';$('#memberPrivateEmail').textContent=op.contact_email||'—';$('#memberApplicationState').textContent='REJECTED';$('#memberStats').innerHTML='<p class="empty-state">Your application was not approved. Contact FIELDZERO admin for clarification before submitting another application.</p>';$('#memberTeamInfo').textContent='Squad access is not active.';$('#memberTeamActions').innerHTML='';return;}
     if(data?.state==='not_linked'){
-      $('#memberWelcome').textContent='ACCOUNT LINK REQUEST';$('#memberAccountStatus').textContent='Your old player record is waiting for admin verification. If this is a new application, wait for approval.';
+      $('#memberWelcome').textContent='ACCOUNT LINK REQUEST';$('#memberAccountStatus').textContent='Your existing player record is waiting for admin verification.';
       $('#memberStats').innerHTML='<p class="empty-state">Your operator profile and results will unlock after your application is approved or your existing profile is linked by an admin.</p>';
       $('#memberTeamInfo').textContent='Available after account approval.';$('#memberTeamActions').innerHTML='';$('#memberSquadResults').innerHTML='';return;
     }
@@ -638,7 +653,9 @@
       $('#memberWelcome').textContent='PROFILE INACTIVE';$('#memberAccountStatus').textContent='This account does not currently have an active FIELDZERO player profile. Contact the admin.';$('#memberStats').innerHTML='';return;
     }
     const p=data.player||{}, a=data.account||{}, team=data.team;
-    $('#memberWelcome').textContent=(a.display_name||p.callsign||'MEMBER').toUpperCase();
+    const operator=data.operator||{};
+    $('#memberWelcome').textContent=(a.display_name||p.callsign||'OPERATOR').toUpperCase();
+    $('#memberRealName').textContent=(operator.real_name||a.display_name||'OPERATOR').toUpperCase(); $('#memberCallsignTag').textContent='CALLSIGN / '+(p.callsign||'—'); $('#memberRankTag').textContent='RANK / '+(p.player_rank||'ROOKIE'); $('#memberOperatorStatusTag').textContent='ACTIVE OPERATOR'; $('#memberPrivateEmail').textContent=operator.contact_email||'—'; $('#memberPrivateMobile').textContent=operator.mobile||'—'; $('#memberBlaster').textContent=operator.primary_blaster||'—'; $('#memberPlayStyle').textContent=operator.play_style||'—'; $('#memberApplicationState').textContent=operator.application_status||'APPROVED';
     $('#memberAccountStatus').textContent=team?`Active operator · ${team.name}${team.is_leader?' · Squad captain':''}`:'Active operator · Independent player';
     $('#memberCallsign').value=p.callsign||'';$('#memberDisplayName').value=a.display_name||'';
     const img=$('#memberAvatarPreview'), fallback=$('#memberAvatarFallback');
@@ -678,7 +695,7 @@
   $('#memberProfileForm')?.addEventListener('submit',async e=>{e.preventDefault();if(!db)return;const btn=e.currentTarget.querySelector('button[type=submit]');btn.disabled=true;let avatarUrl=memberContext?.account?.avatar_url||'';const file=$('#memberAvatarFile').files[0];if(file){if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>5*1024*1024){memberMsg($('#memberProfileStatus'),'Choose a JPG, PNG or WEBP image up to 5 MB.','error');btn.disabled=false;return;}const {data:{user}}=await db.auth.getUser();const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';const path=`${user.id}/${crypto.randomUUID()}.${ext}`;const {error:uploadError}=await db.storage.from('fz-member-avatars').upload(path,file,{contentType:file.type,upsert:false});if(uploadError){memberMsg($('#memberProfileStatus'),uploadError.message,'error');btn.disabled=false;return;}avatarUrl=db.storage.from('fz-member-avatars').getPublicUrl(path).data.publicUrl;}
     const {error}=await db.rpc('fz_member_update_profile',{p_callsign:$('#memberCallsign').value.trim(),p_display_name:$('#memberDisplayName').value.trim(),p_avatar_url:avatarUrl});btn.disabled=false;if(error){memberMsg($('#memberProfileStatus'),error.message,'error');return;}memberMsg($('#memberProfileStatus'),'Profile saved.','success');await loadMemberAccount();await loadRoster();await loadTeams();});
   $('#memberDeleteProfile')?.addEventListener('click',async()=>{if(!confirm('Delete your public FIELDZERO profile and leave all squads? Historical verified match results will be retained.'))return;const {error}=await db.rpc('fz_member_delete_profile');if(error){memberMsg($('#memberProfileStatus'),error.message,'error');return;}await db.auth.signOut();memberMsg($('#memberLoginStatus'),'Your FIELDZERO profile has been deactivated. Historical results are retained.','success');await loadMemberAccount();await loadRoster();await loadTeams();});
-  db?.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY' && $('#memberPasswordUpdate'))$('#memberPasswordUpdate').hidden=false;if($('#memberDashboard'))setTimeout(loadMemberAccount,0);});
+  db?.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY' && $('#memberPasswordUpdate'))$('#memberPasswordUpdate').hidden=false;if(event==='SIGNED_IN' && session && location.hash.includes('memberArea')){memberMsg($('#memberLoginStatus'),'Email verified / session restored. Loading your operator dossier…','success');}if($('#memberDashboard'))setTimeout(()=>loadMemberAccount(),0);});
 
   loadSessionPrices();
   loadSiteSettings();

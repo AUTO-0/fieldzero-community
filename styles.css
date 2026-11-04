@@ -290,3 +290,99 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .footer-social .social-icon-link svg{width:16px;height:16px}
 @media(max-width:900px){.header-social{margin-left:auto;margin-right:10px;gap:5px}.header-social .social-icon-link{width:34px;height:34px}.header-social .social-icon-link svg{width:16px;height:16px}}
 @media(max-width:640px){.site-header{gap:8px}.header-social{margin-left:auto;margin-right:0}.header-social .social-icon-link{width:32px;height:32px}.header-social .social-icon-link svg{width:15px;height:15px}.social-profiles .social-icon-link{flex:0 1 auto}}
+
+
+/* FIELDZERO V22 — cinematic field experience refresh
+   Original FIELDZERO styling inspired by modern tactical game campaign pages. */
+:root{--lime:#c8f36a;--fz-acid:#c8f36a;--fz-night:#0a100c;--fz-panel:#141d16;--fz-muted:#aeb9a8}
+body{background:#0c120d;color:#edf1e9}
+.site-header{background:rgba(8,14,9,.94);border-bottom:1px solid rgba(200,243,106,.2);backdrop-filter:blur(18px)}
+.brand-mark{box-shadow:inset 0 0 0 3px rgba(200,243,106,.07),0 0 24px rgba(200,243,106,.08)}
+.site-header nav a:not(.nav-cta){color:#d0d8ca}
+.site-header nav a:hover{color:var(--fz-acid)}
+.nav-cta{box-shadow:0 7px 24px rgba(200,243,106,.14)}
+.hero{min-height:740px;height:min(880px,calc(100svh - 78px));background:#080d09}
+.hero-image{background-image:url("https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=2400&q=90");background-position:center 52%;filter:saturate(.42) contrast(1.13);transform:scale(1.025)}
+.hero-shade{background:linear-gradient(90deg,rgba(5,10,6,.97) 0%,rgba(5,10,6,.83) 38%,rgba(5,10,6,.28) 78%,rgba(5,10,6,.48) 100%),linear-gradient(0deg,rgba(5,10,6,.96),transparent 36%),linear-gradient(180deg,rgba(5,10,6,.35),transparent 24%)}
+.hero:after{content:"";position:absolute;inset:18px;border:1px solid rgba(200,243,106,.13);pointer-events:none;z-index:1;clip-path:polygon(0 0,150px 0,150px 1px,1px 1px,1px 150px,0 150px,0 0,100% 0,100% 150px,calc(100% - 1px) 150px,calc(100% - 1px) 1px,calc(100% - 150px) 1px,calc(100% - 150px) 0,100% 0,100% 100%,calc(100% - 150px) 100%,calc(100% - 150px) calc(100% - 1px),calc(100% - 1px) calc(100% - 1px),calc(100% - 1px) calc(100% - 150px),100% calc(100% - 150px),100% 100%,0 100%)}
+.hero-content{width:min(900px,86%);padding-left:clamp(28px,10vw,160px)}
+.hero h1{font-size:clamp(88px,14vw,190px);text-shadow:0 8px 38px rgba(0,0,0,.38);letter-spacing:-.055em}
+.hero-copy{color:#d0d8cc;max-width:490px}
+.hero-note{color:#d0d8cc}
+.hero-stamp{border-color:rgba(200,243,106,.6);background:rgba(7,13,8,.2);backdrop-filter:blur(6px)}
+.hero-bottom{z-index:2;color:#d3dccd}
+.ticker{background:#c8f36a;color:#0b120c;letter-spacing:2.5px}
+.section{background:#0d150f;color:#edf2e9}
+.section-kicker{color:#c8f36a}
+.section-heading h2,.join-copy h2{color:#f1f4ed}
+.section-heading h2 em{color:#c8f36a}
+.section-heading>p{color:#aab6a5}
+#packages,#fields,#gallery,#leaderboard,#roster,#teams,#how-it-works,#safety,#faq{background:#111a13;color:#edf2e9}
+.mode-grid{gap:14px}
+.mode-card,.mode-featured{min-height:320px;padding:25px;background:linear-gradient(145deg,#1c291e,#111a13);border:1px solid rgba(200,243,106,.18);color:#f1f4ed;box-shadow:0 16px 38px rgba(0,0,0,.18)}
+.mode-card:hover,.mode-featured:hover{background:linear-gradient(145deg,#263725,#152016);border-color:rgba(200,243,106,.55);transform:translateY(-6px)}
+.mode-number{color:#a5b39e}
+.mode-symbol{color:#c8f36a}
+.mode-card h3{color:#f2f5ee;font-size:clamp(29px,3vw,39px)}
+.mode-card p,.mode-featured p{color:#aeb9a8}
+.mode-tag,.mode-featured .mode-tag{border-color:rgba(255,255,255,.15);color:#c8f36a}
+.mode-guide{background:#0b120d;color:#e9eee5;border-top:1px solid rgba(200,243,106,.2)}
+.mode-guide p{color:#b4c0ae}
+.inline-cta,.booking-panel,.pass-panel{border:1px solid rgba(200,243,106,.2);background:linear-gradient(110deg,#1a281b,#101811);color:#f1f5ed}
+.inline-cta p,.pass-panel p{color:#b4c0ae}
+.package-card{background:linear-gradient(155deg,#1b281c,#111912);border:1px solid rgba(200,243,106,.17);color:#f0f4eb;box-shadow:0 16px 38px rgba(0,0,0,.2)}
+.package-card h3{color:#f6f8f2}
+.package-card p,.package-card li{color:#b5c0ae}
+.package-card li{border-color:rgba(255,255,255,.12)}
+.package-tag{color:#c8f36a}
+.package-price{color:#f2f5ed;border-color:rgba(255,255,255,.15)}
+.package-price small,.package-disclaimer{color:#a7b3a1}
+.package-card .button-ghost{border-color:rgba(200,243,106,.45);color:#eaf2e5}
+.package-featured{border-color:#c8f36a;box-shadow:0 0 0 1px rgba(200,243,106,.2),0 20px 48px rgba(0,0,0,.25)}
+.process-grid article,.event-card,.team-card{background:linear-gradient(145deg,#1a261b,#111912);border:1px solid rgba(200,243,106,.16);color:#eef2e9}
+.process-grid article p,.event-card p,.team-title p,.team-player{color:#b1bca9}
+.events-section{background:#0d150f;color:#edf2e9}
+.event-type,.event-meta{color:#c8f36a}
+.event-meta{border-color:rgba(255,255,255,.15)}
+.booking-panel{background:linear-gradient(110deg,#1a281b,#0b120d)}
+.dark-section,.join-section{background:#080f0a;color:#edf2e9}
+.join-copy>p,.join-points li{color:#b4c0ae}
+.registration-form,.calendar-panel,.fz-member-shell{box-shadow:0 22px 60px rgba(0,0,0,.28)}
+.calendar-panel{background:#172219;border:1px solid rgba(200,243,106,.2);color:#edf2e9}
+.calendar-panel .field{color:#dce6d5}
+.site-footer{background:#070c08;border-top:1px solid rgba(200,243,106,.18)}
+.social-icon-link{border-color:rgba(200,243,106,.45)}
+.gallery-card,.operator-card{border-color:rgba(200,243,106,.18)}
+@media(max-width:900px){
+ .hero{min-height:690px}
+ .hero-stamp{top:auto;bottom:105px;width:84px;height:110px;right:7%}
+ .hero-stamp>span{font-size:36px}
+}
+@media(max-width:640px){
+ .site-header{height:68px;padding-inline:13px;gap:6px}
+ .brand{gap:8px;min-width:0}
+ .brand-mark{width:35px;height:35px;font-size:17px}
+ .brand b{font-size:20px}
+ .brand small{font-size:7px;letter-spacing:1.2px}
+ .header-social{gap:4px}
+ .header-social .social-icon-link{width:29px;height:29px}
+ .header-social .social-icon-link svg{width:14px;height:14px}
+ .menu-toggle{padding:7px 9px}
+ .hero{height:calc(100svh - 68px);min-height:660px}
+ .hero-content{width:100%;padding:25px 26px 85px}
+ .hero h1{font-size:clamp(76px,19vw,120px);margin:27px 0 22px}
+ .hero-copy{font-size:13px;max-width:340px}
+ .hero-stamp{display:none}
+ .hero-bottom{left:26px;right:26px;bottom:16px;font-size:7px;gap:10px}
+ .hero:after{inset:8px}
+ .section{padding:76px 20px}
+ .mode-grid{grid-template-columns:1fr 1fr;gap:9px}
+ .mode-card{min-height:285px;padding:17px}
+ .mode-card h3{font-size:27px}
+ .package-grid{grid-template-columns:1fr}
+}
+@media(max-width:390px){
+ .header-social .social-icon-link{width:26px;height:26px}
+ .brand small{letter-spacing:.7px}
+ .mode-grid{grid-template-columns:1fr}
+}

@@ -931,7 +931,7 @@
  async function fzLoadReferralManager(){
   const codeHost=$('#fzReferralCodeList'),bookingHost=$('#fzReferralBookingList');if(!codeHost||!bookingHost)return;
   const [fields,players,codes,bookings]=await Promise.all([
-   db.from('arena_fields').select('id,name').eq('active',true).order('name'),
+   db.from('arena_fields').select('id,name').eq('active',true).eq('network_status','active').order('name'),
    db.from('players').select('id,callsign').eq('active',true).order('callsign'),
    db.from('fz_referral_codes').select('id,code,reward_points,active,field_id,player_id,players(callsign),arena_fields(name)').order('created_at',{ascending:false}),
    db.from('arena_bookings').select('id,booking_reference,callsign,booking_start,referral_code,referral_reward_status,status').not('referral_code','is',null).order('created_at',{ascending:false}).limit(80)

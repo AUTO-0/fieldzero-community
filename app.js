@@ -643,7 +643,7 @@
     const picker=$('#seasonPicker'),host=$('#seasonLeaderboard'),meta=$('#seasonMeta'),status=$('#seasonStatus');
     if(!picker||!host||!db)return;
     const {data:seasons,error}=await db.from('fz_competition_seasons')
-      .select('id,title,season_code,description,starts_on,ends_on,field_id')
+      .select('id,title,season_code,description,starts_on,ends_on,field_id,arena_fields(name)')
       .eq('active',true).order('starts_on',{ascending:false});
     if(error){picker.innerHTML='<option value="">Season list unavailable</option>';host.innerHTML='<div class="empty-state">Season standings are temporarily unavailable. Please try again later.</div>';console.warn('[FIELDZERO] Season list unavailable:',error.message);return;}
     fieldzeroSeasons=seasons||[];
@@ -653,16 +653,16 @@
     const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Colombo'}).format(new Date());
     const state=today<chosen.starts_on?'UPCOMING':today>chosen.ends_on?'COMPLETED':'LIVE SEASON';
     status.textContent=state;
-    meta.innerHTML=`<div><span>COMPETITION</span><b>${escapeHtml(chosen.title)}</b></div><div><span>FIELD</span><b>FIELDZERO ARENA</b></div><div><span>DATES · SRI LANKA</span><b>${escapeHtml(chosen.starts_on)} — ${escapeHtml(chosen.ends_on)}</b></div>${chosen.description?`<p>${escapeHtml(chosen.description)}</p>`:''}`;
+    meta.innerHTML=`<div><span>COMPETITION</span><b>${escapeHtml(chosen.title)}</b></div><div><span>FIELD</span><b>${escapeHtml(chosen.arena_fields?.name||'FIELDZERO ARENA')}</b></div><div><span>DATES · SRI LANKA</span><b>${escapeHtml(chosen.starts_on)} — ${escapeHtml(chosen.ends_on)}</b></div>${chosen.description?`<p>${escapeHtml(chosen.description)}</p>`:''}`;
     host.innerHTML='<div class="empty-state">Calculating verified season points…</div>';
     const {data:rows,error:rankError}=await db.from('public_fz_season_leaderboard')
       .select('callsign,season_points,season_rank')
-      .eq('season_id',chosen.id).order('season_rank',{ascending:true}).limit(10);
+      .eq('season_id',chosen.id).order('season_rank',{ascending:true}).order('season_points',{ascending:false}).order('callsign',{ascending:true}).limit(10);
     if(rankError){host.innerHTML='<div class="empty-state">Season rankings could not be loaded. Please contact FIELDZERO admin.</div>';console.warn('[FIELDZERO] Season leaderboard unavailable:',rankError.message);return;}
     if(!rows?.length){host.innerHTML='<div class="empty-state">No season points have been recorded yet. The standings will appear after the first verified session.</div>';return;}
     const cards=rows.map((r,i)=>{const rank=Number(r.season_rank)||i+1,points=Number(r.season_points)||0,name=escapeHtml(r.callsign||'OPERATOR');return `<article class="season-rank-row season-rank-${rank<=3?rank:'other'}"><span class="season-rank-number">${String(rank).padStart(2,'0')}</span><div><b>${name}</b><small>${rank===1?'SEASON LEADER':rank===2?'RUNNER-UP':rank===3?'THIRD PLACE':'FIELD OPERATOR'}</small></div><strong>${points.toLocaleString()}<small>XP</small></strong><button type="button" class="season-share" data-season-share="${escapeAttr(r.callsign||'OPERATOR')}" data-season-rank="${rank}" data-season-points="${points}">↗</button></article>`;}).join('');
     host.innerHTML=cards;
-    host.querySelectorAll('[data-season-share]').forEach(btn=>btn.addEventListener('click',async()=>{const text=`FIELDZERO SEASON CHAMPIONSHIP\\n#${btn.dataset.seasonRank} · ${btn.dataset.seasonShare}\\n${Number(btn.dataset.seasonPoints).toLocaleString()} SEASON XP\\nOWN THE FIELD. BUILD YOUR SQUAD.\\nhttps://auto-0.github.io/fieldzero-community/#seasonChampionship`;try{if(navigator.share)await navigator.share({title:'FIELDZERO Season Championship',text});else if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);btn.textContent='✓';}}catch(e){if(e?.name!=='AbortError')console.warn('[FIELDZERO] Season share unavailable:',e);}}));
+    host.querySelectorAll('[data-season-share]').forEach(btn=>btn.addEventListener('click',async()=>{const text=`FIELDZERO SEASON CHAMPIONSHIP\n#${btn.dataset.seasonRank} · ${btn.dataset.seasonShare}\\n${Number(btn.dataset.seasonPoints).toLocaleString()} SEASON XP\\nOWN THE FIELD. BUILD YOUR SQUAD.\\nhttps://auto-0.github.io/fieldzero-community/#seasonChampionship`;try{if(navigator.share)await navigator.share({title:'FIELDZERO Season Championship',text});else if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);btn.textContent='✓';}}catch(e){if(e?.name!=='AbortError')console.warn('[FIELDZERO] Season share unavailable:',e);}}));
   }
   $('#seasonPicker')?.addEventListener('change',e=>loadSeasonChampionships(e.target.value));
   loadSeasonChampionships();

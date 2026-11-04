@@ -586,19 +586,46 @@
         return;
       }
 
-      target.innerHTML = data.map((row, index) => {
+      const rankCard = (row, index, podium = false) => {
         const name = isTeams ? row.name : row.callsign;
         const points = Number(isTeams ? row.points : row.player_points) || 0;
+        const safeName = escapeHtml(name || (isTeams ? "UNNAMED SQUAD" : "UNKNOWN OPERATOR"));
         const subtitle = isTeams
           ? `${Number(row.member_count) || 0}/5 ACTIVE OPERATORS · SQUAD RANK #${Number(row.team_rank) || index + 1}`
           : `${escapeHtml(row.player_rank || "ROOKIE")} · ${Number(row.matches_played) || 0} MATCHES · ${Number(row.wins) || 0} WINS`;
-        return `<div class="leaderboard-row">
-          <div class="leaderboard-rank">${String(index + 1).padStart(2, "0")}</div>
-          <div><div class="leaderboard-name">${escapeHtml(name || (isTeams ? "UNNAMED SQUAD" : "UNKNOWN OPERATOR"))}</div>
-          <span class="leaderboard-sub">${subtitle}</span></div>
-          <div class="leaderboard-points">${points.toLocaleString()}<small>POINTS</small></div>
-        </div>`;
-      }).join("");
+        const rank = index + 1;
+        const medal = rank === 1 ? "CHAMPION" : rank === 2 ? "RUNNER-UP" : "THIRD PLACE";
+        return podium
+          ? `<article class="leaderboard-podium-card podium-place-${rank}">
+              <div class="podium-card-top"><span class="podium-medal" aria-label="${medal}">${rank === 1 ? "★" : rank === 2 ? "◆" : "▲"}</span><span class="podium-position">0${rank} / ${medal}</span></div>
+              <div class="leaderboard-name">${safeName}</div><span class="leaderboard-sub">${subtitle}</span>
+              <div class="podium-score">${points.toLocaleString()}<small>POINTS</small></div>
+              <button class="leaderboard-share" type="button" data-share-rank="${rank}" data-share-name="${escapeAttr(name || "FIELDZERO PLAYER")}" data-share-points="${points}" data-share-board="${isTeams ? "squad" : "operator"}">SHARE RESULT ↗</button>
+            </article>`
+          : `<div class="leaderboard-row">
+              <div class="leaderboard-rank">${String(rank).padStart(2, "0")}</div>
+              <div><div class="leaderboard-name">${safeName}</div><span class="leaderboard-sub">${subtitle}</span></div>
+              <div class="leaderboard-points">${points.toLocaleString()}<small>POINTS</small></div>
+              <button class="leaderboard-share" type="button" data-share-rank="${rank}" data-share-name="${escapeAttr(name || "FIELDZERO PLAYER")}" data-share-points="${points}" data-share-board="${isTeams ? "squad" : "operator"}" aria-label="Share ranking for ${safeName}">↗</button>
+            </div>`;
+      };
+      const podium = data.slice(0, 3).map((row, index) => rankCard(row, index, true)).join("");
+      const remaining = data.slice(3).map((row, index) => rankCard(row, index + 3, false)).join("");
+      target.innerHTML = `<div class="leaderboard-podium">${podium}</div>${remaining ? `<div class="leaderboard-rest">${remaining}</div>` : ""}`;
+      target.querySelectorAll("[data-share-rank]").forEach(button => {
+        button.addEventListener("click", async () => {
+          const shareText = `FIELDZERO ${button.dataset.shareBoard.toUpperCase()} RANKING\\n#${button.dataset.shareRank} — ${button.dataset.shareName}\\n${Number(button.dataset.sharePoints).toLocaleString()} POINTS\\nOWN THE FIELD. BUILD YOUR SQUAD.\\nhttps://auto-0.github.io/fieldzero-community/#leaderboards`;
+          try {
+            if (navigator.share) await navigator.share({ title: "FIELDZERO Field Records", text: shareText });
+            else if (navigator.clipboard?.writeText) {
+              await navigator.clipboard.writeText(shareText);
+              button.textContent = "COPIED ✓";
+            }
+          } catch (shareError) {
+            if (shareError?.name !== "AbortError") console.warn("[FIELDZERO] Share action unavailable:", shareError);
+          }
+        });
+      });
     } catch (error) {
       console.error("[FIELDZERO] Unexpected leaderboard error:", error);
       target.innerHTML = '<div class="empty-state">Rankings could not be loaded right now. Please refresh the page.</div>';

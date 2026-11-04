@@ -375,3 +375,30 @@ body:not(.admin-page) .leaderboard-tab{border-radius:2px}
  body:not(.admin-page) .leaderboard-rest .leaderboard-sub{font-size:8px}
  body:not(.admin-page) .leaderboard-principles{padding:18px}
 }
+
+
+/* FIELDZERO V26 — verified operator achievements */
+.profile-card{position:relative;overflow:hidden;border-color:rgba(200,243,106,.24);background:linear-gradient(145deg,rgba(27,37,25,.98),rgba(13,19,14,.98))}
+.profile-card:before{content:"";position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(90deg,#c8f36a,rgba(200,243,106,0))}
+.profile-card-topline,.profile-card-footer,.profile-achievement-head>div{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.profile-card-topline{font-size:.62rem;letter-spacing:.15em;color:#aab59f;font-weight:800}
+.profile-card-topline span:last-child{color:#c8f36a}
+.profile-call{margin-top:18px}
+.profile-achievement-head{margin:26px 0 12px;padding-top:18px;border-top:1px solid rgba(200,243,106,.16)}
+.profile-achievement-head>div span{font-size:.68rem;letter-spacing:.14em;color:#c8f36a;font-weight:800}
+.profile-achievement-head>div b{font-size:.68rem;color:#e6eadd}
+.profile-achievement-head p{font-size:.78rem;color:#9ca696;margin:7px 0 0}
+.profile-achievements{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.profile-achievement{display:flex;align-items:center;gap:10px;min-width:0;padding:12px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.025)}
+.profile-achievement.earned{border-color:rgba(200,243,106,.28);background:rgba(200,243,106,.055)}
+.achievement-mark{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:50%;background:rgba(200,243,106,.12);color:#c8f36a;font-size:1.05rem}
+.profile-achievement.locked .achievement-mark{background:rgba(255,255,255,.055);color:#798174}
+.profile-achievement>div{display:grid;gap:3px;min-width:0}
+.profile-achievement>div b{font-size:.7rem;letter-spacing:.06em;color:#e9eee2}
+.profile-achievement>div small{font-size:.66rem;line-height:1.35;color:#98a18f}
+.achievement-state{margin-left:auto;white-space:nowrap;font-size:.55rem;font-weight:800;letter-spacing:.08em;color:#84907d}
+.profile-achievement.earned .achievement-state{color:#c8f36a}
+.profile-card-footer{margin-top:18px;flex-wrap:wrap}
+.profile-card-footer>small{color:#929d8b;font-size:.68rem;line-height:1.5}
+.profile-card-footer .button{font-size:.68rem}
+@media(max-width:620px){.profile-achievements{grid-template-columns:1fr}.profile-card-topline{font-size:.55rem}.profile-achievement{padding:10px}.profile-card-footer{align-items:stretch}.profile-card-footer .button{width:100%}.profile-achievement-head>div{align-items:flex-start;flex-direction:column;gap:5px}}

@@ -350,6 +350,7 @@
  const financeFmt=n=>'LKR '+Number(n||0).toLocaleString('en-LK',{minimumFractionDigits:2,maximumFractionDigits:2});
  const financeDate=d=>d?new Date(String(d).length===10?String(d)+'T00:00:00':d).toLocaleDateString('en-GB',{timeZone:'Asia/Colombo'}):'—';
  function financeMonthStart(){return opsToday().slice(0,7)+'-01'}
+ function financeGrowthStart(){const d=new Date(opsToday()+'T12:00:00');d.setDate(1);d.setMonth(d.getMonth()-5);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`;}
  async function financeFetchPaged(queryFactory){let all=[],offset=0;while(true){const {data,error}=await queryFactory().range(offset,offset+999);if(error)return {data:null,error};const batch=data||[];all=all.concat(batch);if(batch.length<1000)break;offset+=1000;}return {data:all,error:null}}
  function financeFileSafe(v){return String(v||'file').replace(/[^A-Za-z0-9._-]+/g,'-').replace(/-+/g,'-').slice(0,90)}
  async function uploadFinanceDocument(file,folder){
@@ -385,7 +386,7 @@
   opsSetOptions($('#finInvoiceSession'),sessions.data||[],s=>`${s.session_date} · ${s.session_name}`,'id','Not linked to a session');
  }
  async function loadFinanceDashboard(){
-  const start=$('#finReportFrom')?.value||financeMonthStart(),end=$('#finReportTo')?.value||opsToday();
+  const start=$('#finReportFrom')?.value||financeGrowthStart(),end=$('#finReportTo')?.value||opsToday();
   if(end<start){$('#finCategoryReport').innerHTML='<p class="admin-error">Report end date must be on or after the start date.</p>';return}
   const [cash,invoices,receivable]=await Promise.all([
    financeFetchPaged(()=>scopeFinanceQuery(db.from('fz_cashbook').select('id,field_id,entry_date,entry_type,category,description,amount,payment_method,reference,account_id,vendor_name,receipt_path')).gte('entry_date',start).lte('entry_date',end).order('entry_date',{ascending:false})),
@@ -402,6 +403,13 @@
   kpis.innerHTML=`<article><span>INCOME RECEIVED</span><b>${financeFmt(income)}</b></article><article><span>OPERATING EXPENSES</span><b>${financeFmt(expenses)}</b></article><article><span>CASH OPERATING RESULT*</span><b class="${income-expenses<0?'negative':''}">${financeFmt(income-expenses)}</b></article><article><span>OUTSTANDING INVOICES</span><b>${financeFmt(ar)}</b></article><article><span>INVOICED SALES</span><b>${financeFmt(invoiced)}</b></article>`;
   const groups=new Map();rows.forEach(r=>{const key=`${r.entry_type} · ${r.category}`;groups.set(key,(groups.get(key)||0)+Number(r.amount))});
   const sorted=[...groups.entries()].sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const monthMap=new Map();
+  const monthCursor=new Date(start+'T12:00:00');monthCursor.setDate(1);
+  const lastMonth=new Date(end+'T12:00:00');lastMonth.setDate(1);
+  for(let d=new Date(monthCursor);d<=lastMonth;d.setMonth(d.getMonth()+1)){const key=d.toLocaleDateString('en-CA',{timeZone:'Asia/Colombo'}).slice(0,7);monthMap.set(key,{income:0,expenses:0});}
+  rows.forEach(r=>{const key=String(r.entry_date||'').slice(0,7);const g=monthMap.get(key);if(g){if(r.entry_type==='income')g.income+=Number(r.amount);else g.expenses+=Number(r.amount);}});
+  const monthRows=[...monthMap.entries()];const maxValue=Math.max(1,...monthRows.flatMap(([,v])=>[v.income,v.expenses]));
+  $('#finGrowthReport').innerHTML=`<div class="finance-report-title"><b>MONTHLY CASH PERFORMANCE</b><span>Income vs operating expenses</span></div><div class="finance-growth-legend"><span><i class="income"></i> INCOME</span><span><i class="expense"></i> EXPENSES</span></div><div class="finance-growth-bars">${monthRows.map(([month,v])=>`<div class="finance-growth-month"><div class="finance-growth-pair"><span class="income" style="height:${Math.max(2,v.income/maxValue*100)}%" title="Income ${financeFmt(v.income)}"></span><span class="expense" style="height:${Math.max(2,v.expenses/maxValue*100)}%" title="Expenses ${financeFmt(v.expenses)}"></span></div><small>${esc(new Date(month+'-01T12:00:00').toLocaleDateString('en-GB',{month:'short',year:'2-digit'}))}</small></div>`).join('')}</div>`;
   $('#finCategoryReport').innerHTML=`<div class="finance-report-title"><b>TRANSACTION BREAKDOWN</b><span>${esc(start)} → ${esc(end)}</span></div>`+(sorted.length?sorted.map(([name,value])=>`<div class="finance-category-row"><span>${esc(name)}</span><b>${financeFmt(value)}</b></div>`).join(''):'<div class="empty-state">No transactions in this report period.</div>');
  }
  async function loadFinanceInvoices(){
@@ -581,7 +589,7 @@
  $('#opsCashbookForm')?.addEventListener('submit',async e=>{e.preventDefault();const form=e.currentTarget,fd=new FormData(form);let receiptPath='';const file=fd.get('receipt_file');if(file instanceof File&&file.size){const upload=await uploadFinanceDocument(file,'cashbook-receipts');if(upload.error){msg($('#opsCashbookStatus'),upload.error,'error');return}receiptPath=upload.path}const cashField=fd.get('field_id')||'';const account=financeAccountCache.find(a=>a.id===fd.get('account_id'));if(!cashField||!account||account.field_id!==cashField){if(receiptPath)await db.storage.from('fz-finance-documents').remove([receiptPath]);msg($('#opsCashbookStatus'),'Choose a payment account belonging to the selected field.','error');return;}const payload={field_id:cashField,entry_date:fd.get('entry_date'),entry_type:fd.get('entry_type'),category:fd.get('category').trim(),description:fd.get('description').trim(),amount:Number(fd.get('amount')),payment_method:fd.get('payment_method'),reference:fd.get('reference')||'',account_id:fd.get('account_id')||null,vendor_name:fd.get('vendor_name')||'',receipt_path:receiptPath,created_by:(await db.auth.getUser()).data.user?.id||null};const {error}=await db.from('fz_cashbook').insert(payload);if(error){if(receiptPath)await db.storage.from('fz-finance-documents').remove([receiptPath]);msg($('#opsCashbookStatus'),error.message,'error');return;}msg($('#opsCashbookStatus'),'Cashbook entry saved. Supporting receipt stored privately. Do not manually add invoice payments here.','success');form.reset();$('#opsCashDate').value=opsToday();await Promise.all([loadOpsCashbook(),loadFinanceDashboard()])});
  $('#opsSocialForm')?.addEventListener('submit',async e=>{e.preventDefault();const fd=new FormData(e.currentTarget),payload={field_id:fd.get('field_id')||null,scheduled_date:fd.get('scheduled_date')||null,platform:fd.get('platform'),format:fd.get('format'),content_pillar:fd.get('content_pillar'),caption:fd.get('caption')||'',media_url:fd.get('media_url')||'',status:fd.get('status'),published_url:fd.get('published_url')||'',owner_name:fd.get('owner_name')||'',notes:fd.get('notes')||'',created_by:(await db.auth.getUser()).data.user?.id||null};const {error}=await db.from('fz_social_posts').insert(payload);if(error){msg($('#opsSocialStatus'),error.message,'error');return;}msg($('#opsSocialStatus'),'Post added to the content planner.','success');e.currentTarget.reset();await loadOpsSocial()});
  $('#refreshOpsButton')?.addEventListener('click',loadOpsAll);
- $('#opsChecklistDate').value=opsToday();$('#opsSessionDate').value=opsToday();$('#opsCashDate').value=opsToday();$('#opsSocialDate').value=opsToday();$('#opsIncidentWhen').value=opsNowLocal();$('#finInvoiceDate').value=opsToday();$('#finPaymentDate').value=opsToday();$('#finAccountOpeningDate').value=opsToday();$('#finReportFrom').value=financeMonthStart();$('#finReportTo').value=opsToday();$('#finReconStart').value=financeMonthStart();$('#finReconEnd').value=opsToday();
+ $('#opsChecklistDate').value=opsToday();$('#opsSessionDate').value=opsToday();$('#opsCashDate').value=opsToday();$('#opsSocialDate').value=opsToday();$('#opsIncidentWhen').value=opsNowLocal();$('#finInvoiceDate').value=opsToday();$('#finPaymentDate').value=opsToday();$('#finAccountOpeningDate').value=opsToday();$('#finReportFrom').value=financeGrowthStart();$('#finReportTo').value=opsToday();$('#finReconStart').value=financeMonthStart();$('#finReconEnd').value=opsToday();
 
  // V14 Booking Command Centre
  let fzBookingCache=[],fzSelectedBooking=null;
@@ -591,29 +599,32 @@
  async function fzSelectBooking(id){
   const b=fzBookingCache.find(x=>x.id===id);if(!b)return;fzSelectedBooking=b;
   let inv=financeInvoiceCache.find(i=>i.id===b.invoice_id)||null;
-  if(b.invoice_id&&!inv){const q=await db.from('fz_invoices').select('id,invoice_number,total_amount,amount_paid,balance_due,status').eq('id',b.invoice_id).maybeSingle();inv=q.data||null;}
+  if(b.invoice_id){const q=await db.from('fz_invoices').select('id,invoice_number,total_amount,amount_paid,balance_due,status').eq('id',b.invoice_id).maybeSingle();if(q.data)inv=q.data;}
   const held=b.booking_hold_expires_at?new Date(b.booking_hold_expires_at).toLocaleString('en-GB',{timeZone:'Asia/Colombo'}):'No active hold';
   const isConfirmed=b.status==='approved';
   const needsAdvance=!b.invoice_id&&['pending_payment','approved'].includes(b.status);
-  const advancePaid=Number(inv?.amount_paid||0)>=500&&b.advance_verified_at;
+  const checkoutReady=!!b.checkout_finalized_at;
+  const balance=Math.max(0,Number(inv?.balance_due||0));
+  const fullyPaid=checkoutReady&&!!inv&&balance<=0.005;
+  const progress=`<div class="fz-booking-progress"><div class="${b.advance_verified_at?'done':'current'}"><b>01</b><span>ADVANCE</span><small>${b.advance_verified_at?'Verified':'Awaiting'}</small></div><div class="${checkoutReady?'done':(b.advance_verified_at?'current':'')} "><b>02</b><span>FINAL BILL</span><small>${checkoutReady?'Saved':'Not prepared'}</small></div><div class="${fullyPaid?'done':(checkoutReady?'current':'')}"><b>03</b><span>PAYMENT</span><small>${fullyPaid?'Paid in full':checkoutReady?financeFmt(balance)+' due':'Pending'}</small></div><div class="${fullyPaid?'done':''}"><b>04</b><span>INVOICE</span><small>${fullyPaid?'Ready to send':'After payment'}</small></div></div>`;
   const host=$('#fzBookingDetail');
-  host.innerHTML=`<article class="application-card"><div class="application-heading"><div><span class="application-label">${b.special_request?'SPECIAL REQUEST':'STANDARD BOOKING'}</span><h3>${esc(b.booking_reference||'Legacy booking')} · ${esc(b.callsign)}</h3></div><span class="pending-pill">${esc(b.status.toUpperCase())}</span></div><div class="application-details"><span><b>Customer</b>${esc(b.real_name)}</span><span><b>Mobile</b>${esc(b.mobile)}</span><span><b>Email</b>${esc(b.customer_email||'—')}</span><span><b>Field</b>${esc(b.arena_fields?.name||'FIELDZERO')}</span><span><b>Start</b>${new Date(b.booking_start).toLocaleString('en-GB',{timeZone:'Asia/Colombo'})}</span><span><b>End</b>${new Date(b.booking_end).toLocaleString('en-GB',{timeZone:'Asia/Colombo'})}</span><span><b>Players</b>${b.player_count}</span><span><b>Experience</b>${esc(b.experience||'—')}</span><span><b>Advance required</b>${financeFmt(b.deposit_required_amount||500)}</span><span><b>Total received</b>${financeFmt(inv?.amount_paid||0)}</span><span><b>Invoice total</b>${financeFmt(inv?.total_amount||0)}</span><span><b>Remaining balance</b>${financeFmt(inv?.balance_due||0)}</span><span><b>Payment status</b>${esc((b.payment_status||'not_invoiced').replaceAll('_',' ').toUpperCase())}</span><span><b>Temporary hold</b>${esc(held)}</span><span><b>Invoice</b>${esc(inv?.invoice_number||'Not issued')}</span><span><b>Advance verified</b>${b.advance_verified_at?esc(new Date(b.advance_verified_at).toLocaleString('en-GB',{timeZone:'Asia/Colombo'})):'Not yet'}</span><span><b>Checkout bill</b>${b.checkout_finalized_at?'Prepared':'Not prepared'}</span><span><b>Notes</b>${esc(b.notes||'—')}</span></div>
+  host.innerHTML=`<article class="application-card fz-booking-detail-card"><div class="application-heading"><div><span class="application-label">${b.special_request?'SPECIAL REQUEST':'BOOKING'}</span><h3>${esc(b.booking_reference||'Legacy booking')} · ${esc(b.callsign)}</h3></div><span class="pending-pill">${esc(b.status.toUpperCase())}</span></div>${progress}<div class="application-details"><span><b>Customer</b>${esc(b.real_name)}</span><span><b>WhatsApp</b>${esc(b.mobile)}</span><span><b>Email</b>${esc(b.customer_email||'—')}</span><span><b>Field</b>${esc(b.arena_fields?.name||'FIELDZERO')}</span><span><b>Start</b>${new Date(b.booking_start).toLocaleString('en-GB',{timeZone:'Asia/Colombo'})}</span><span><b>End</b>${new Date(b.booking_end).toLocaleString('en-GB',{timeZone:'Asia/Colombo'})}</span><span><b>Players</b>${b.player_count}</span><span><b>Experience</b>${esc(b.experience||'—')}</span><span><b>Advance received</b>${financeFmt(b.advance_verified_at?500:0)}</span><span><b>Invoice total</b>${financeFmt(inv?.total_amount||0)}</span><span><b>Total received</b>${financeFmt(inv?.amount_paid||0)}</span><span><b>Balance due</b>${financeFmt(balance)}</span><span><b>Payment status</b>${esc((b.payment_status||'not_invoiced').replaceAll('_',' ').toUpperCase())}</span><span><b>Temporary hold</b>${esc(held)}</span><span><b>Invoice</b>${esc(inv?.invoice_number||'Not issued')}</span><span><b>Notes</b>${esc(b.notes||'—')}</span></div>
   ${b.status==='pending_payment'&&b.booking_hold_expires_at&&new Date(b.booking_hold_expires_at)<new Date()?'<p class="admin-warning">The temporary hold has expired. The system will check the slot again before confirming the booking.</p>':''}
-  <div class="application-actions">
+  <div class="application-actions fz-booking-actions">
     ${b.status==='pending'&&b.special_request?'<span class="admin-warning">Review this special request first. After approval, record its LKR 500 advance.</span>':''}
     ${needsAdvance?'<button class="button button-lime" id="fzRecord500Advance">RECORD LKR 500 ADVANCE & CONFIRM</button>':''}
     ${b.status==='pending_payment'&&inv&&Number(inv.amount_paid||0)>=500&&!b.advance_verified_at?'<button class="button button-lime" id="fzConfirmAfterAdvance">CONFIRM AFTER ADVANCE</button>':''}
-    ${isConfirmed?'<button class="button button-ghost" id="fzReprintPass">DOWNLOAD CONFIRMED PASS PDF</button>':''}
-    ${b.invoice_id?'<button class="button button-ghost" id="fzOpenBookingInvoice">DOWNLOAD ADVANCE / CURRENT INVOICE</button>':''}
-    ${b.invoice_id&&isConfirmed?'<button class="button button-lime" id="fzCheckoutEdit">SET FINAL BILL / ADD EXTRAS</button>':''}
-    ${b.invoice_id&&Number(inv?.balance_due||0)>0?'<button class="button button-lime" id="fzRecordBookingPayment">RECORD REMAINING PAYMENT</button>':''}
-    ${b.invoice_id&&isConfirmed?'<button class="button button-ghost" id="fzShareBookingInvoice">SEND INVOICE VIA WHATSAPP</button>':''}
-    ${!b.advance_verified_at?'<button class="button button-ghost" id="fzRequestPdf">DOWNLOAD LKR 500 REQUEST PDF</button>':''}
-  </div><div id="fzCheckoutEditor"></div></article>`;
+    ${isConfirmed?'<button class="button button-ghost" id="fzReprintPass">DOWNLOAD BOOKING PASS</button>':''}
+    ${b.invoice_id?`<button class="button button-ghost" id="fzOpenBookingInvoice">${fullyPaid?'DOWNLOAD FINAL PAID INVOICE':checkoutReady?'PREVIEW FINAL BILL PDF':'DOWNLOAD ADVANCE INVOICE'}</button>`:''}
+    ${b.invoice_id&&isConfirmed?`<button class="button button-lime" id="fzCheckoutEdit">${checkoutReady?'EDIT FINAL BILL / EXTRAS':'ADD SESSION FEE & EXTRAS'}</button>`:''}
+    ${b.invoice_id&&checkoutReady&&balance>0.005?'<button class="button button-lime" id="fzRecordBookingPayment">RECORD PAYMENT / MARK AS PAID</button>':''}
+    ${b.invoice_id&&fullyPaid?'<button class="button button-lime" id="fzShareBookingInvoice">SEND FINAL PAID INVOICE VIA WHATSAPP</button>':''}
+    ${!b.advance_verified_at?'<button class="button button-ghost" id="fzRequestPdf">DOWNLOAD LKR 500 REQUEST</button>':''}
+  </div><div id="fzCheckoutEditor"></div><div id="fzBookingPaymentPanel"></div></article>`;
   $('#fzReprintPass')?.addEventListener('click',()=>fzGenerateAdminPass(b));
   $('#fzRecord500Advance')?.addEventListener('click',()=>fzRecordBookingAdvance(b));
   $('#fzConfirmAfterAdvance')?.addEventListener('click',()=>fzConfirmExistingAdvance(b));
-  $('#fzOpenBookingInvoice')?.addEventListener('click',()=>generateInvoicePdf(b.invoice_id,null,true,b.checkout_finalized_at?'final':'advance'));
+  $('#fzOpenBookingInvoice')?.addEventListener('click',()=>generateInvoicePdf(b.invoice_id,null,true,fullyPaid?'final':checkoutReady?'final':'advance'));
   $('#fzRecordBookingPayment')?.addEventListener('click',()=>fzPrepareBookingPayment(b));
   $('#fzCheckoutEdit')?.addEventListener('click',()=>fzOpenCheckoutEditor(b));
   $('#fzShareBookingInvoice')?.addEventListener('click',()=>fzShareBookingInvoice(b));
@@ -644,47 +655,147 @@
   [['BOOKING REFERENCE',b.booking_reference],['CUSTOMER',`${b.real_name} · ${b.callsign}`],['WHATSAPP',b.mobile],['FIELD',b.arena_fields?.name||b.field_name||'FIELDZERO'],['DATE / TIME',fmt(b.booking_start)],['PLAYERS',String(b.player_count||1)],['TYPE',b.special_request?'SPECIAL REQUEST':'STANDARD BOOKING']].forEach((r,i)=>{if(i%2===0){doc.setFillColor(...light);doc.roundedRect(14,y-6,182,12,1,1,'F')}doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...muted);doc.text(r[0],19,y+1);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...dark);doc.text(String(r[1]||'—'),78,y+1);y+=15});
   doc.setFillColor(...dark);doc.roundedRect(14,244,182,29,2,2,'F');doc.setTextColor(...lime);doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text('HOW TO PAY THE LKR 500 ADVANCE',20,254);doc.setTextColor(255,255,255);doc.setFont('helvetica','normal');doc.setFontSize(6.8);const instructions=(b.special_request&&b.status==='pending')?'SPECIAL REQUEST: Wait for the field admin to approve availability. The LKR 500 advance becomes due only after acceptance; payment instructions will be confirmed by the field.':(String(paymentInfo.payment_instructions||'').trim()||'Payment instructions have not been published. Contact the selected field and quote your booking reference before paying.');doc.text(doc.splitTextToSize(instructions.slice(0,360),168).slice(0,3),20,263);if(paymentInfo.contact_phone){doc.setTextColor(...lime);doc.setFont('helvetica','bold');doc.setFontSize(6.3);doc.text(`FIELD CONTACT: ${String(paymentInfo.contact_phone).slice(0,32)}`,20,271);}doc.setTextColor(...muted);doc.setFontSize(6);doc.text('FIELDZERO · PAYMENT REQUEST · NOT A RECEIPT',14,286);doc.save(`${b.booking_reference||'FIELDZERO'}-ADVANCE-REQUEST.pdf`);
  }
- async function fzRecordBookingAdvance(b){
-  const popup=window.open('about:blank','_blank');
-  const accounts=financeAccountCache.filter(a=>a.active&&a.field_id===b.field_id);
-  if(!accounts.length){if(popup&&!popup.closed)popup.close();alert('No active receiving account exists for this field. Add a cash or bank account in Finance first.');return;}
-  const methodText=prompt('Confirm the LKR 500 advance is already received. Payment method: cash, bank, card, online or other','bank');
-  if(methodText===null){if(popup&&!popup.closed)popup.close();return;}
-  const method=methodText.trim().toLowerCase();if(!['cash','bank','card','online','other'].includes(method)){if(popup&&!popup.closed)popup.close();alert('Choose cash, bank, card, online or other.');return;}
-  const accountList=accounts.map((a,i)=>`${i+1}. ${a.account_name}`).join('\n');const n=prompt(`Select the field account where LKR 500 was received:\n${accountList}`,'1');if(n===null){if(popup&&!popup.closed)popup.close();return;}const account=accounts[Number(n)-1];if(!account){if(popup&&!popup.closed)popup.close();alert('Select a valid account.');return;}
-  const reference=prompt('Bank / transfer reference (optional):','')||'';
-  const receivedBy=prompt('Received / verified by:',(await db.auth.getUser()).data.user?.email||'')||'';
-  const {data,error}=await db.rpc('fz_admin_record_booking_advance',{p_booking_id:b.id,p_payment_method:method,p_account_id:account.id,p_reference:reference,p_payment_date:opsToday(),p_received_by:receivedBy});
-  if(error){if(popup&&!popup.closed)popup.close();msg($('#adminStatus'),error.message,'error');return;}
-  const result=Array.isArray(data)?data[0]:data;if(!result?.invoice_id||!result?.payment_id){if(popup&&!popup.closed)popup.close();alert('Advance was recorded but invoice details could not be returned. Refresh the booking and finance lists.');return;}
-  await Promise.all([loadFinanceInvoices(),loadFinancePayments(),loadFinanceDashboard(),loadOpsCashbook(),fzLoadBookingDays()]);
-  const pdf=await generateInvoicePdf(result.invoice_id,result.payment_id,false,'advance');
-  const fresh=await db.from('arena_bookings').select('id,booking_reference,status,booking_start,booking_end,real_name,callsign,mobile,player_count,experience,invoice_id,quoted_amount,advance_verified_at,arena_fields(name)').eq('id',b.id).single();
-  if(fresh.data){await fzGenerateAdminPass({...fresh.data,status:'approved'});}
-  const message=`FIELDZERO booking ${b.booking_reference} is CONFIRMED. We have verified your LKR 500 advance. Please find your advance paid invoice attached. Please keep your booking reference for check-in.`;
-  try{const share=await fzSharePdfWhatsApp(b.mobile,message,pdf,popup);msg($('#adminStatus'),share==='SHARED'?'Advance invoice shared using your device share sheet.':'Advance invoice downloaded and WhatsApp opened. Attach the downloaded PDF and send the message.','success');}
-  catch(e){if(popup&&!popup.closed)popup.close();msg($('#adminStatus'),'Booking confirmed and advance invoice generated, but WhatsApp could not be opened: '+e.message,'error');}
-  await fzLoadBookingDays();fzSelectBooking(b.id);
- }
+ async function fzRecordBookingAdvance(b){return fzOpenBookingPaymentPanel(b,'advance');}
  async function fzConfirmExistingAdvance(b){
-  const {data:inv}=await db.from('fz_invoices').select('amount_paid').eq('id',b.invoice_id).maybeSingle();if(Number(inv?.amount_paid||0)<500){alert('The recorded advance is below LKR 500.');return;}
-  const {error}=await db.rpc('fz_admin_confirm_booking_after_advance',{p_booking_id:b.id});if(error){alert(error.message);return;}
-  const fresh={...b,status:'approved'};await fzGenerateAdminPass(fresh);await fzLoadBookingDays();fzSelectBooking(b.id);
+  const {data:inv}=await db.from('fz_invoices').select('amount_paid').eq('id',b.invoice_id).maybeSingle();
+  if(Number(inv?.amount_paid||0)<500){alert('The recorded advance is below LKR 500.');return;}
+  const {error}=await db.rpc('fz_admin_confirm_booking_after_advance',{p_booking_id:b.id});
+  if(error){alert(error.message);return;}
+  const fresh={...b,status:'approved'};await fzGenerateAdminPass(fresh);await fzLoadBookingDays();await fzSelectBooking(b.id);
  }
- async function fzPrepareBookingPayment(b){if(!b.invoice_id){alert('Record the LKR 500 advance first.');return;}await loadFinanceInvoices();const inv=financeInvoiceCache.find(x=>x.id===b.invoice_id);if(!inv){alert('This booking invoice is not visible in the current field scope.');return;}const sel=$('#finPaymentInvoice');if(sel){sel.value=inv.id;sel.dispatchEvent(new Event('change'));}const form=$('#finPaymentForm');form?.scrollIntoView({behavior:'smooth',block:'center'});$('#finPaymentForm')?.elements.namedItem('amount')?.focus();}
+ async function fzPrepareBookingPayment(b){return fzOpenBookingPaymentPanel(b,'final');}
+ async function fzOpenBookingPaymentPanel(b,mode='final'){
+  const host=$('#fzBookingPaymentPanel');if(!host)return;
+  const accountQuery=await db.from('fz_financial_accounts').select('id,field_id,account_name,account_type,active').eq('field_id',b.field_id).eq('active',true).order('account_name');
+  const accounts=accountQuery.data||[];
+  if(accountQuery.error){host.innerHTML=`<div class="fz-booking-payment"><p class="admin-error">Could not load receiving accounts: ${esc(accountQuery.error.message)}</p></div>`;return;}
+  if(!accounts.length){host.innerHTML=`<div class="fz-booking-payment"><div class="fz-payment-heading"><b>PAYMENT SETUP REQUIRED</b><small>No active receiving account is configured for this field.</small></div><button type="button" class="button button-lime" id="fzOpenBillingSetup">OPEN ACCOUNT SETUP</button></div>`;$('#fzOpenBillingSetup')?.addEventListener('click',()=>{const panel=$('#fzBillingSetup');if(panel){panel.open=true;panel.scrollIntoView({behavior:'smooth',block:'center'});}});return;}
+  let inv=null;
+  if(mode==='final'){
+    const q=await db.from('fz_invoices').select('id,invoice_number,total_amount,amount_paid,balance_due,status').eq('id',b.invoice_id).maybeSingle();
+    if(q.error||!q.data){msg($('#adminStatus'),q.error?.message||'Booking invoice could not be loaded.','error');return;}
+    inv=q.data;
+    if(Number(inv.balance_due)<=0.005){msg($('#adminStatus'),'This booking is already paid in full. Use SEND FINAL PAID INVOICE.','success');await fzSelectBooking(b.id);return;}
+  }
+  const userResult=await db.auth.getUser();
+  const adminLabel=userResult.data?.user?.user_metadata?.full_name||userResult.data?.user?.user_metadata?.name||userResult.data?.user?.email||'';
+  const accountOptions=accounts.map((a,i)=>`<option value="${a.id}" ${i===0?'selected':''}>${esc(a.account_name)} · ${esc(a.account_type.toUpperCase())}</option>`).join('');
+  const balance=Number(inv?.balance_due||0);
+  host.innerHTML=`<section class="fz-booking-payment"><div class="fz-payment-heading"><div><b>${mode==='advance'?'RECORD BOOKING ADVANCE':'COLLECT FINAL BALANCE'}</b><small>${mode==='advance'?'Confirm only after the LKR 500 has actually reached your cash or bank account.':'Enter the amount you have actually received. The suggested amount pays the full outstanding balance.'}</small></div><button type="button" class="button button-ghost" id="fzBookingPaymentCancel">CLOSE</button></div>
+  <form id="fzBookingPaymentForm" class="fz-booking-payment-form" data-mode="${mode}" data-invoice-id="${esc(inv?.id||'')}">
+    ${mode==='advance'?'<div class="fz-payment-amount-lock"><span>ADVANCE TO RECORD</span><b>LKR 500.00</b></div>':`<div class="fz-payment-amount-lock"><span>OUTSTANDING BALANCE</span><b>${financeFmt(balance)}</b><small>Final invoice: ${esc(inv.invoice_number||'')}</small></div>`}
+    ${mode==='final'?`<label>Amount received (LKR)<input name="amount" id="fzBookingPaymentAmount" type="number" min="0.01" max="${balance.toFixed(2)}" step="0.01" value="${balance.toFixed(2)}" required><small>Enter less than the balance only for a genuine part-payment.</small></label>`:''}
+    <label>Payment date<input name="payment_date" type="date" value="${opsToday()}" required></label>
+    <label>Payment method<select name="payment_method"><option value="cash">Cash</option><option value="bank">Bank transfer</option><option value="card">Card</option><option value="online">Online / wallet</option><option value="other">Other</option></select></label>
+    <label>Received into<select name="account_id" required>${accountOptions}</select></label>
+    <label>Bank / transaction reference (optional)<input name="reference" maxlength="160" placeholder="Receipt or transaction ID"></label>
+    <label>Received / verified by<input name="received_by" maxlength="100" value="${esc(adminLabel)}" required placeholder="Staff name"></label>
+    <label class="fz-share-toggle"><input type="checkbox" name="share_whatsapp" checked><span><b>Prepare PDF and open WhatsApp</b><small>On a phone, use the share sheet and choose WhatsApp. On a computer, the PDF downloads and WhatsApp opens; attach the file and press Send.</small></span></label>
+    <button class="button button-lime" type="submit" id="fzBookingPaymentSubmit">${mode==='advance'?'RECORD LKR 500 & CONFIRM BOOKING':'MARK AS PAID & SEND FINAL INVOICE'}</button>
+    <div class="form-status" id="fzBookingPaymentStatus" role="status"></div>
+  </form></section>`;
+  $('#fzBookingPaymentCancel')?.addEventListener('click',()=>{host.innerHTML='';});
+  const amountInput=$('#fzBookingPaymentAmount'),submit=$('#fzBookingPaymentSubmit');
+  amountInput?.addEventListener('input',()=>{const v=Number(amountInput.value||0);const full=Math.abs(v-balance)<0.005;submit.textContent=full?'MARK AS PAID & SEND FINAL INVOICE':'RECORD PART-PAYMENT & SEND RECEIPT';});
+  $('#fzBookingPaymentForm')?.addEventListener('submit',e=>{e.preventDefault();fzSubmitBookingPayment(b,mode,e.currentTarget);});
+  host.scrollIntoView({behavior:'smooth',block:'center'});
+ }
+ async function fzSubmitBookingPayment(b,mode,form){
+  const fd=new FormData(form),btn=$('#fzBookingPaymentSubmit'),shareWhatsApp=fd.get('share_whatsapp')==='on';
+  // Reserve a WhatsApp tab synchronously from this button click before any async database work.
+  const popup=shareWhatsApp?window.open('about:blank','_blank'):null;
+  const accountCheck=await db.from('fz_financial_accounts').select('id,field_id,active').eq('id',fd.get('account_id')).maybeSingle();
+  const account=accountCheck.data;
+  if(accountCheck.error||!account||!account.active||account.field_id!==b.field_id){if(popup&&!popup.closed)popup.close();msg($('#fzBookingPaymentStatus'),accountCheck.error?.message||'Choose an active receiving account belonging to this booking field.','error');return;}
+  const receivedBy=String(fd.get('received_by')||'').trim();if(receivedBy.length<2){if(popup&&!popup.closed)popup.close();msg($('#fzBookingPaymentStatus'),'Enter the name of the person who received or verified the payment.','error');return;}
+  let amount=0,invoiceId=b.invoice_id;
+  if(mode==='final'){
+    amount=Number(fd.get('amount'));
+    const fresh=await db.from('fz_invoices').select('balance_due').eq('id',invoiceId).maybeSingle();
+    if(fresh.error||!fresh.data){if(popup&&!popup.closed)popup.close();msg($('#fzBookingPaymentStatus'),fresh.error?.message||'Could not verify the current invoice balance.','error');return;}
+    if(!Number.isFinite(amount)||amount<=0||amount>Number(fresh.data.balance_due)+0.001){if(popup&&!popup.closed)popup.close();msg($('#fzBookingPaymentStatus'),'Enter an amount greater than zero and no higher than the current balance.','error');return;}
+  }
+  btn.disabled=true;msg($('#fzBookingPaymentStatus'),'Saving payment securely…','');
+  let paymentCommitted=false;
+  try{
+    let pdf=null,message='',shareResult='';
+    if(mode==='advance'){
+      const {data,error}=await db.rpc('fz_admin_record_booking_advance',{p_booking_id:b.id,p_payment_method:fd.get('payment_method'),p_account_id:account.id,p_reference:String(fd.get('reference')||''),p_payment_date:fd.get('payment_date'),p_received_by:receivedBy});
+      if(error)throw error;
+      paymentCommitted=true;
+      const result=Array.isArray(data)?data[0]:data;
+      if(!result?.invoice_id||!result?.payment_id)throw new Error('The advance was saved but the invoice/receipt reference was not returned. Refresh the booking before trying again.');
+      invoiceId=result.invoice_id;
+      await Promise.all([loadFinanceInvoices(),loadFinancePayments(),loadFinanceDashboard(),loadOpsCashbook(),fzLoadBookingDays()]);
+      pdf=await generateInvoicePdf(invoiceId,result.payment_id,false,'advance');
+      const freshBooking=await db.from('arena_bookings').select('id,booking_reference,booking_start,booking_end,real_name,callsign,mobile,player_count,experience,invoice_id,quoted_amount,advance_verified_at,arena_fields(name)').eq('id',b.id).single();
+      if(freshBooking.data)await fzGenerateAdminPass({...freshBooking.data,status:'approved'});
+      message=`FIELDZERO booking ${b.booking_reference} is confirmed. We have received and verified your LKR 500 advance. Please keep your booking reference for check-in.`;
+    }else{
+      const {data,error}=await db.rpc('fz_admin_record_invoice_payment',{p_invoice_id:invoiceId,p_amount:amount,p_payment_date:fd.get('payment_date'),p_payment_method:fd.get('payment_method'),p_account_id:account.id,p_reference:String(fd.get('reference')||''),p_received_by:receivedBy,p_request_key:crypto.randomUUID()});
+      if(error)throw error;
+      paymentCommitted=true;
+      await Promise.all([loadFinanceInvoices(),loadFinancePayments(),loadFinanceDashboard(),loadOpsCashbook()]);
+      const latest=await db.from('fz_invoices').select('total_amount,amount_paid,balance_due,status,invoice_number').eq('id',invoiceId).single();
+      if(latest.error)throw new Error('Payment was saved, but invoice status could not be refreshed: '+latest.error.message);
+      const fullyPaid=Number(latest.data.balance_due)<=0.005;
+      pdf=fullyPaid?await generateInvoicePdf(invoiceId,null,false,'final'):await generateInvoicePdf(invoiceId,data,false,'receipt');
+      message=fullyPaid
+        ?`FIELDZERO booking ${b.booking_reference}: your final invoice ${latest.data.invoice_number} is now PAID IN FULL. Thank you for choosing FIELDZERO.`
+        :`FIELDZERO booking ${b.booking_reference}: we have received ${financeFmt(amount)}. Remaining balance: ${financeFmt(latest.data.balance_due)}. Please find your payment receipt attached.`;
+    }
+    if(shareWhatsApp){shareResult=await fzSharePdfWhatsApp(b.mobile,message,pdf,popup);}
+    else{if(popup&&!popup.closed)popup.close();fzDownloadBlob(pdf.blob,pdf.filename);}
+    await Promise.all([loadFinanceInvoices(),loadFinancePayments(),loadFinanceDashboard(),loadOpsCashbook(),fzLoadBookingDays()]);
+    await fzSelectBooking(b.id);
+    const outcome=shareWhatsApp
+      ?(shareResult==='SHARED'?'Payment saved. The PDF is ready in your device share sheet; select WhatsApp and the customer.':shareResult==='CANCELLED'?'Payment saved. WhatsApp sharing was cancelled; you can resend the PDF from this booking.':'Payment saved. The PDF was downloaded and WhatsApp opened. Attach the downloaded PDF and press Send.')
+      :'Payment saved and PDF downloaded. You can send it to the customer from your WhatsApp account.';
+    msg($('#adminStatus'),outcome,'success');
+  }catch(error){
+    if(popup&&!popup.closed)popup.close();
+    if(paymentCommitted){
+      await Promise.all([loadFinanceInvoices(),loadFinancePayments(),loadFinanceDashboard(),loadOpsCashbook(),fzLoadBookingDays()]);
+      await fzSelectBooking(b.id);
+      msg($('#adminStatus'),'Payment was saved, but the PDF / WhatsApp step needs attention: '+(error.message||'Unknown error')+'. Do not record the same payment again. Use the invoice download action to retry.','error');
+    }else{msg($('#fzBookingPaymentStatus'),error.message||'Payment could not be saved.','error');if(btn.isConnected)btn.disabled=false;}
+  }
+ }
  async function fzOpenCheckoutEditor(b){
-  const host=$('#fzCheckoutEditor');if(!host)return;const {data,error}=await db.from('fz_invoice_items').select('description,quantity,unit_price').eq('invoice_id',b.invoice_id).order('line_number');if(error){alert(error.message);return;}
+  const host=$('#fzCheckoutEditor');if(!host)return;
+  const {data,error}=await db.from('fz_invoice_items').select('description,quantity,unit_price').eq('invoice_id',b.invoice_id).order('line_number');
+  if(error){alert(error.message);return;}
+  const invoiceState=await db.from('fz_invoices').select('amount_paid,discount_amount,tax_rate').eq('id',b.invoice_id).maybeSingle();if(invoiceState.error){alert('Could not load the current invoice before editing: '+invoiceState.error.message);return;}const alreadyPaid=Number(invoiceState.data?.amount_paid??0),currentDiscount=Number(invoiceState.data?.discount_amount??0),currentTax=Number(invoiceState.data?.tax_rate??0);
   let rows=(data||[]).filter(x=>!String(x.description||'').toLowerCase().includes('booking advance / reservation deposit'));
   if(!rows.length)rows=[{description:b.experience||'Field session / package',quantity:1,unit_price:0}];
   const rowHtml=(r={description:'Additional item',quantity:1,unit_price:0})=>`<div class="fz-checkout-row"><input data-checkout-description maxlength="180" aria-label="Item description" value="${esc(r.description)}" placeholder="Session fee / item"><input data-checkout-quantity type="number" min="0.01" step="0.01" aria-label="Quantity" value="${Number(r.quantity||1)}"><input data-checkout-price type="number" min="0" step="0.01" aria-label="Unit price in LKR" value="${Number(r.unit_price||0)}"><button type="button" class="button button-danger" data-checkout-remove>REMOVE</button></div>`;
-  host.innerHTML=`<section class="fz-checkout-editor"><div class="fz-checkout-title"><div><b>FINAL CHECKOUT BILL</b><small>Enter the actual session / package fee, then add rentals, drinks, merchandise or other extras. The LKR 500 advance remains credited.</small></div><button type="button" class="button button-ghost" id="fzCheckoutClose">CLOSE</button></div><div class="fz-checkout-head"><span>DESCRIPTION</span><span>QTY</span><span>UNIT PRICE (LKR)</span><span></span></div><div id="fzCheckoutRows">${rows.map(rowHtml).join('')}</div><div class="fz-checkout-controls"><button type="button" class="button button-ghost" id="fzCheckoutAdd">+ ADD ITEM</button><label>DISCOUNT (LKR)<input id="fzCheckoutDiscount" type="number" min="0" step="0.01" value="0"></label><label>TAX (%)<input id="fzCheckoutTax" type="number" min="0" max="100" step="0.01" value="0"></label></div><div class="fz-checkout-footer"><span>The total must be at least the LKR 500 already received.</span><button type="button" class="button button-lime" id="fzCheckoutSave">SAVE FINAL BILL</button></div><div class="form-status" id="fzCheckoutStatus" role="status"></div></section>`;
-  const rowsHost=$('#fzCheckoutRows');$('#fzCheckoutAdd').addEventListener('click',()=>rowsHost.insertAdjacentHTML('beforeend',rowHtml()));rowsHost.addEventListener('click',e=>{if(e.target.closest('[data-checkout-remove]')){const all=rowsHost.querySelectorAll('.fz-checkout-row');if(all.length>1)e.target.closest('.fz-checkout-row').remove();}});$('#fzCheckoutClose').addEventListener('click',()=>host.innerHTML='');
-  $('#fzCheckoutSave').addEventListener('click',async()=>{const items=[...rowsHost.querySelectorAll('.fz-checkout-row')].map(row=>({description:row.querySelector('[data-checkout-description]').value.trim(),quantity:Number(row.querySelector('[data-checkout-quantity]').value),unit_price:Number(row.querySelector('[data-checkout-price]').value)}));if(!items.length||items.some(x=>x.description.length<2||!Number.isFinite(x.quantity)||x.quantity<=0||!Number.isFinite(x.unit_price)||x.unit_price<0)){msg($('#fzCheckoutStatus'),'Complete every item with a description, positive quantity and valid price.','error');return;}const btn=$('#fzCheckoutSave');btn.disabled=true;const {data,error}=await db.rpc('fz_admin_update_booking_final_bill',{p_booking_id:b.id,p_items:items,p_discount_amount:Number($('#fzCheckoutDiscount').value||0),p_tax_rate:Number($('#fzCheckoutTax').value||0)});btn.disabled=false;if(error){msg($('#fzCheckoutStatus'),error.message,'error');return;}host.innerHTML='';await Promise.all([loadFinanceInvoices(),loadFinanceDashboard(),fzLoadBookingDays()]);await generateInvoicePdf(b.invoice_id,null,true,'final');msg($('#adminStatus'),`Final bill saved. Total ${financeFmt(data?.[0]?.total_amount||0)} · Advance retained · Balance due ${financeFmt(data?.[0]?.balance_due||0)}.`,'success');fzSelectBooking(b.id);});
+  host.innerHTML=`<section class="fz-checkout-editor"><div class="fz-checkout-title"><div><b>FINAL CHECKOUT BILL</b><small>Add the actual session/package fee and any rentals, drinks or other extras. The LKR 500 advance stays credited to this invoice.</small></div><button type="button" class="button button-ghost" id="fzCheckoutClose">CLOSE</button></div><div class="fz-checkout-head"><span>DESCRIPTION</span><span>QTY</span><span>UNIT PRICE (LKR)</span><span></span></div><div id="fzCheckoutRows">${rows.map(rowHtml).join('')}</div><div class="fz-checkout-controls"><button type="button" class="button button-ghost" id="fzCheckoutAdd">+ ADD ITEM</button><label>DISCOUNT (LKR)<input id="fzCheckoutDiscount" type="number" min="0" step="0.01" value="${currentDiscount.toFixed(2)}"></label><label>TAX (%)<input id="fzCheckoutTax" type="number" min="0" max="100" step="0.01" value="${currentTax.toFixed(2)}"></label></div><div class="fz-checkout-estimate" id="fzCheckoutEstimate">ESTIMATED TOTAL · LKR 0.00</div><div class="fz-checkout-footer"><span>After saving, the payment form opens here. A final paid invoice is prepared when the remaining balance is received.</span><button type="button" class="button button-lime" id="fzCheckoutSave">SAVE BILL & CONTINUE TO PAYMENT</button></div><div class="form-status" id="fzCheckoutStatus" role="status"></div></section>`;
+  const rowsHost=$('#fzCheckoutRows');
+  const updateEstimate=()=>{const subtotal=[...rowsHost.querySelectorAll('.fz-checkout-row')].reduce((sum,row)=>sum+Number(row.querySelector('[data-checkout-quantity]').value||0)*Number(row.querySelector('[data-checkout-price]').value||0),0);const discount=Number($('#fzCheckoutDiscount').value||0),tax=Number($('#fzCheckoutTax').value||0),total=Math.max(0,subtotal-discount)+Math.round(Math.max(0,subtotal-discount)*tax)/100;$('#fzCheckoutEstimate').textContent=`ESTIMATED TOTAL · ${financeFmt(total)} · ALREADY RECEIVED ${financeFmt(alreadyPaid)} · ESTIMATED BALANCE ${financeFmt(Math.max(0,total-alreadyPaid))}`;};
+  $('#fzCheckoutAdd').addEventListener('click',()=>{rowsHost.insertAdjacentHTML('beforeend',rowHtml());updateEstimate();});
+  rowsHost.addEventListener('input',updateEstimate);$('#fzCheckoutDiscount').addEventListener('input',updateEstimate);$('#fzCheckoutTax').addEventListener('input',updateEstimate);
+  rowsHost.addEventListener('click',e=>{if(e.target.closest('[data-checkout-remove]')){const all=rowsHost.querySelectorAll('.fz-checkout-row');if(all.length>1){e.target.closest('.fz-checkout-row').remove();updateEstimate();}}});
+  $('#fzCheckoutClose').addEventListener('click',()=>{host.innerHTML='';});updateEstimate();
+  $('#fzCheckoutSave').addEventListener('click',async()=>{
+    const items=[...rowsHost.querySelectorAll('.fz-checkout-row')].map(row=>({description:row.querySelector('[data-checkout-description]').value.trim(),quantity:Number(row.querySelector('[data-checkout-quantity]').value),unit_price:Number(row.querySelector('[data-checkout-price]').value)}));
+    if(!items.length||items.some(x=>x.description.length<2||!Number.isFinite(x.quantity)||x.quantity<=0||!Number.isFinite(x.unit_price)||x.unit_price<0)){msg($('#fzCheckoutStatus'),'Complete every item with a description, positive quantity and valid price.','error');return;}
+    const btn=$('#fzCheckoutSave');btn.disabled=true;msg($('#fzCheckoutStatus'),'Saving the final bill…','');
+    const {data,error}=await db.rpc('fz_admin_update_booking_final_bill',{p_booking_id:b.id,p_items:items,p_discount_amount:Number($('#fzCheckoutDiscount').value||0),p_tax_rate:Number($('#fzCheckoutTax').value||0)});
+    if(error){btn.disabled=false;msg($('#fzCheckoutStatus'),error.message,'error');return;}
+    await Promise.all([loadFinanceInvoices(),loadFinanceDashboard(),fzLoadBookingDays()]);
+    await fzSelectBooking(b.id);
+    const fresh=fzBookingCache.find(x=>x.id===b.id);
+    if(fresh){const invoice=await db.from('fz_invoices').select('balance_due').eq('id',fresh.invoice_id).maybeSingle();if(Number(invoice.data?.balance_due||0)>0.005){await fzOpenBookingPaymentPanel(fresh,'final');}else{msg($('#adminStatus'),'Final bill saved and fully covered by the advance. Download or send the final paid invoice from this booking.','success');}}
+    msg($('#adminStatus'),`Final bill saved. Total ${financeFmt(Array.isArray(data)?data[0]?.total_amount:data?.total_amount||0)}. The next payment step is now available in this booking.`,'success');
+  });
  }
  async function fzShareBookingInvoice(b){
-  const inv=financeInvoiceCache.find(x=>x.id===b.invoice_id);const paid=Number(inv?.amount_paid||0);if(paid<500){alert('Record and verify the LKR 500 advance before sending an advance invoice.');return;}
   const popup=window.open('about:blank','_blank');
-  try{const mode=b.checkout_finalized_at?'final':'advance';const pdf=await generateInvoicePdf(b.invoice_id,null,false,mode);const msgText=b.checkout_finalized_at?`FIELDZERO final invoice for booking ${b.booking_reference}. Total paid: ${financeFmt(inv?.amount_paid||0)}. Please find the itemised invoice attached.`:`FIELDZERO booking ${b.booking_reference} is confirmed. LKR 500 advance received. Please find the advance paid invoice attached.`;const result=await fzSharePdfWhatsApp(b.mobile,msgText,pdf,popup);msg($('#adminStatus'),result==='SHARED'?'Invoice shared using the device share sheet.':'Invoice downloaded and WhatsApp opened. Attach the downloaded PDF and send.','success');}catch(e){if(popup&&!popup.closed)popup.close();alert(e.message||'Could not prepare WhatsApp invoice.');}
+  const q=await db.from('fz_invoices').select('id,invoice_number,total_amount,amount_paid,balance_due,status').eq('id',b.invoice_id).maybeSingle();
+  if(q.error||!q.data){if(popup&&!popup.closed)popup.close();alert(q.error?.message||'Invoice not found.');return;}
+  if(Number(q.data.balance_due)>0.005){if(popup&&!popup.closed)popup.close();alert('The invoice is not fully paid yet. Record the remaining balance from this booking first.');return;}
+  try{const pdf=await generateInvoicePdf(b.invoice_id,null,false,'final');const message=`FIELDZERO booking ${b.booking_reference}: your final invoice ${q.data.invoice_number} is paid in full. Thank you for choosing FIELDZERO.`;const result=await fzSharePdfWhatsApp(b.mobile,message,pdf,popup);msg($('#adminStatus'),result==='SHARED'?'Final invoice is ready in the device share sheet. Select WhatsApp and the customer.':result==='CANCELLED'?'WhatsApp sharing cancelled. You can try again from this booking.':'Final invoice downloaded and WhatsApp opened. Attach the PDF and press Send.','success');}
+  catch(e){if(popup&&!popup.closed)popup.close();alert(e.message||'Could not prepare WhatsApp invoice.');}
  }
  async function fzGenerateAdminPass(b){if(b.status!=='approved'){alert('A confirmed pass is available only after the LKR 500 advance is recorded and confirmed.');return}if(!window.jspdf?.jsPDF){alert('PDF library unavailable');return}const inv=b.invoice_id?await db.from('fz_invoices').select('total_amount,amount_paid,balance_due').eq('id',b.invoice_id).maybeSingle():{data:null};const v=inv.data||{};const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'});doc.setFillColor(14,21,16);doc.rect(0,0,210,66,'F');doc.setFillColor(185,255,64);doc.rect(0,0,4,66,'F');doc.setTextColor(185,255,64);doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text('FIELDZERO',15,24);doc.setTextColor(255,255,255);doc.setFontSize(20);doc.text('CONFIRMED BOOKING PASS',15,49);doc.setTextColor(20,30,20);doc.setFontSize(16);doc.text(String(b.booking_reference||'LEGACY BOOKING'),15,86);const rows=[['PLAYER',b.real_name+' / '+b.callsign],['CONTACT',b.mobile],['FIELD',b.arena_fields?.name||'FIELDZERO FIELD'],['START',new Date(b.booking_start).toLocaleString('en-GB',{timeZone:'Asia/Colombo'})],['END',new Date(b.booking_end).toLocaleString('en-GB',{timeZone:'Asia/Colombo'})],['PLAYERS',String(b.player_count)],['ADVANCE RECEIVED',financeFmt(v.amount_paid||500)],['BALANCE AT CHECKOUT',b.checkout_finalized_at?financeFmt(v.balance_due||0):'FINAL BILL AT CHECKOUT'],['STATUS','CONFIRMED — ADVANCE VERIFIED']];rows.forEach((r,i)=>{let y=107+i*15;doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text(r[0],15,y);doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text(String(r[1]),70,y)});doc.setFontSize(8);doc.text('Present this booking reference at field check-in. The advance is credited against your final bill. Additional items are charged at checkout.',15,270,{maxWidth:180});doc.save(`${b.booking_reference||'FIELDZERO-BOOKING'}-CONFIRMED.pdf`)}
  async function fzLoadSpecialRequests(){const host=$('#fzSpecialRequests');if(!host)return;let specialQuery=db.from('arena_bookings').select('id,booking_reference,real_name,callsign,mobile,customer_email,booking_start,booking_end,player_count,experience,notes,status,field_id,arena_fields(name)').eq('special_request',true).eq('status','pending');const specialField=$('#fzBookingFieldFilter')?.value||'all';if(specialField!=='all')specialQuery=specialQuery.eq('field_id',specialField);const {data,error}=await specialQuery.order('created_at',{ascending:true});if(error){host.innerHTML=`<p class="admin-error">${esc(error.message)}</p>`;return}host.innerHTML=(data||[]).length?data.map(b=>`<article class="application-card fz-special-alert"><div class="application-heading"><div><span class="application-label">OWNER DECISION REQUIRED</span><h3>${esc(b.booking_reference||'SPECIAL')} · ${esc(b.callsign)}</h3></div><span class="pending-pill">ACTION</span></div><div class="application-details"><span><b>Field</b>${esc(b.arena_fields?.name||'Field')}</span><span><b>Name</b>${esc(b.real_name)}</span><span><b>WhatsApp</b>${esc(b.mobile)}</span><span><b>When</b>${new Date(b.booking_start).toLocaleString()}</span><span><b>Players</b>${b.player_count}</span><span><b>Experience</b>${esc(b.experience||'—')}</span><span><b>Request</b>${esc(b.notes||'—')}</span></div><div class="application-actions"><button class="button button-lime" data-fz-special="approve" data-id="${b.id}">APPROVE</button><button class="button button-danger" data-fz-special="reject" data-id="${b.id}">DECLINE</button><a class="button button-ghost" target="_blank" rel="noopener" href="${adminWhatsAppUrl(b.mobile)}?text=${encodeURIComponent(`FIELDZERO booking ${b.booking_reference}: your special booking request has been reviewed. We will confirm the final details with you.`)}">MESSAGE CUSTOMER</a></div></article>`).join(''):'<div class="empty-state">No special requests awaiting your decision.</div>';host.querySelectorAll('[data-fz-special]').forEach(btn=>btn.addEventListener('click',async()=>{const message=prompt('Optional message / reason to store in booking history:','');if(message===null)return;const {error}=await db.rpc('fz_admin_review_special_booking',{p_booking_id:btn.dataset.id,p_decision:btn.dataset.fzSpecial,p_message:message});if(error){alert(error.message);return}await Promise.all([fzLoadBookingDays(),fzLoadSpecialRequests(),loadArenaBookings()]);msg($('#adminStatus'),btn.dataset.fzSpecial==='approve'?'Special request approved. The customer must now pay LKR 500. Record the advance from the selected booking before confirming. Use MESSAGE CUSTOMER to send the update.':'Special booking request declined.','success')}))}

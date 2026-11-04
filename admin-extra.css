@@ -77,3 +77,67 @@
 
 /* V19: simplify seasonal campaign advanced controls */
 .fz-seasonal-advanced{grid-column:1/-1;border:1px solid var(--line,rgba(255,255,255,.14));border-radius:12px;padding:12px;margin:4px 0 10px}.fz-seasonal-advanced summary{cursor:pointer;font-weight:800;letter-spacing:.08em;color:var(--lime,#c6f36a);padding:4px}.fz-seasonal-advanced[open] summary{margin-bottom:12px}
+
+/* V21.3 — simplified booking-to-payment workflow */
+.fz-booking-workflow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:18px 0 22px}
+.fz-booking-workflow>div{display:grid;gap:5px;padding:13px 14px;background:#11190f;border:1px solid #3a4734;border-radius:9px}
+.fz-booking-workflow b{font:800 13px 'Barlow Condensed',sans-serif;letter-spacing:.08em;color:var(--lime)}
+.fz-booking-workflow span{font-size:10px;line-height:1.45;color:#c5d0bd}
+.fz-booking-detail-card{border-color:#59674f}
+.fz-booking-progress{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:18px 0;padding:12px;background:#11190f;border:1px solid #34412f;border-radius:10px}
+.fz-booking-progress>div{display:grid;grid-template-columns:29px minmax(0,1fr);align-items:center;gap:2px 8px;min-width:0}
+.fz-booking-progress b{grid-row:span 2;display:grid;place-items:center;width:27px;height:27px;border:1px solid #65715d;border-radius:50%;color:#b5c0ac;font:800 12px 'Barlow Condensed',sans-serif}
+.fz-booking-progress span{font-size:8px;font-weight:900;letter-spacing:.08em;color:#dce6d5}
+.fz-booking-progress small{font-size:9px;color:#9eaa96;overflow-wrap:anywhere}
+.fz-booking-progress .done b{background:var(--lime);border-color:var(--lime);color:#11190f}
+.fz-booking-progress .done span{color:var(--lime)}
+.fz-booking-progress .current b{border-color:var(--lime);color:var(--lime)}
+.fz-booking-progress .current span{color:var(--lime)}
+.fz-booking-actions{flex-wrap:wrap;align-items:center;margin-top:12px}
+.fz-booking-actions .button{min-height:40px}
+.fz-booking-payment{margin:18px 0 3px;padding:18px;border:1px solid rgba(185,255,64,.35);border-radius:13px;background:linear-gradient(145deg,#eef4e8,#e2eadb);color:#172016}
+.fz-payment-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:13px}
+.fz-payment-heading b{display:block;font:800 23px 'Barlow Condensed',sans-serif;letter-spacing:.04em}
+.fz-payment-heading small{display:block;margin-top:4px;max-width:600px;color:#53624d;font-size:10px;line-height:1.5}
+.fz-booking-payment-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.fz-booking-payment-form>label{display:grid;gap:6px;min-width:0;color:#455540;font-size:9px;font-weight:900;letter-spacing:.08em}
+.fz-booking-payment-form input:not([type=checkbox]),.fz-booking-payment-form select{width:100%;min-width:0;min-height:41px;padding:10px 11px;border:1px solid #bac8b2;border-radius:7px;background:#fff;color:#172016;font:600 12px 'DM Sans',sans-serif;letter-spacing:0}
+.fz-booking-payment-form input:focus,.fz-booking-payment-form select:focus{outline:2px solid rgba(100,137,64,.28);border-color:#6f8a5d}
+.fz-booking-payment-form label small{color:#687761;font-size:9px;font-weight:500;letter-spacing:0;line-height:1.4}
+.fz-payment-amount-lock{grid-column:1/-1;display:grid;gap:3px;padding:13px 15px;border-radius:8px;background:#172016;color:#edf4e8}
+.fz-payment-amount-lock span{font-size:8px;font-weight:900;letter-spacing:.12em;color:#b9ff40}
+.fz-payment-amount-lock b{font:800 25px 'Barlow Condensed',sans-serif;color:#fff}
+.fz-payment-amount-lock small{font-size:9px;color:#b7c3ae}
+.fz-booking-payment-form .fz-share-toggle{grid-column:1/-1;display:flex;flex-direction:row;align-items:flex-start;gap:10px;padding:12px;border:1px solid #c5d2bd;border-radius:8px;background:rgba(255,255,255,.55);letter-spacing:0}
+.fz-share-toggle input{flex:0 0 17px;width:17px;height:17px;margin:1px 0 0;accent-color:#6f943d}
+.fz-share-toggle b{display:block;color:#253222;font-size:10px;letter-spacing:.02em}
+.fz-share-toggle small{display:block;margin-top:4px;color:#5d6c55;font-size:9px;font-weight:500;line-height:1.5}
+.fz-booking-payment-form>.button,.fz-booking-payment-form>.form-status{grid-column:1/-1}
+.fz-booking-payment-form>.button{min-height:46px;font-size:11px;letter-spacing:.06em}
+.fz-booking-payment .form-status{color:#253222;font-size:11px}
+.fz-checkout-estimate{margin-top:12px;padding:12px 14px;background:#172016;border-radius:8px;color:#eaf3e4;font:800 15px 'Barlow Condensed',sans-serif;letter-spacing:.04em}
+.finance-growth-report{margin:18px 0;padding:18px;border:1px solid rgba(180,255,65,.18);border-radius:12px;background:#121a11}
+.finance-growth-legend{display:flex;gap:14px;margin:10px 0 14px;color:#adb9a5;font-size:8px;font-weight:900;letter-spacing:.08em}
+.finance-growth-legend span{display:flex;align-items:center;gap:6px}
+.finance-growth-legend i{display:inline-block;width:9px;height:9px;border-radius:2px}
+.finance-growth-legend i.income{background:#b9ff40}.finance-growth-legend i.expense{background:#d58b73}
+.finance-growth-bars{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;min-height:150px;padding:12px 4px 0;border-bottom:1px solid #3b4934}
+.finance-growth-month{display:grid;grid-template-rows:1fr 22px;min-width:0;justify-items:center;gap:7px}
+.finance-growth-pair{display:flex;align-items:flex-end;justify-content:center;gap:5px;width:100%;height:118px;border-bottom:1px solid #52604a}
+.finance-growth-pair span{display:block;width:min(23px,35%);min-height:2px;border-radius:4px 4px 0 0}
+.finance-growth-pair .income{background:linear-gradient(180deg,#d5ff8d,#84b93e)}
+.finance-growth-pair .expense{background:linear-gradient(180deg,#e9b09c,#a86450)}
+.finance-growth-month small{color:#aab6a2;font-size:9px;text-align:center;white-space:nowrap}
+#fzBillingSetup{margin-top:18px;border-top:1px solid #3a4734}
+@media(max-width:760px){
+ .fz-booking-workflow{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .fz-booking-progress{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+ .fz-booking-payment-form{grid-template-columns:1fr}
+ .fz-booking-payment-form>.button,.fz-booking-payment-form>.form-status,.fz-payment-amount-lock,.fz-booking-payment-form .fz-share-toggle{grid-column:1}
+ .fz-payment-heading{align-items:stretch;flex-direction:column}
+ .finance-growth-bars{gap:5px;padding-left:0;padding-right:0}
+ .finance-growth-pair{gap:3px;height:95px}
+ .finance-growth-month{grid-template-rows:1fr 20px}
+ .finance-growth-month small{font-size:8px}
+ .fz-checkout-estimate{font-size:12px;line-height:1.5}
+}

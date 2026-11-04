@@ -624,18 +624,61 @@
   $('#fzReprintPass')?.addEventListener('click',()=>fzGenerateAdminPass(b));
   $('#fzRecord500Advance')?.addEventListener('click',()=>fzRecordBookingAdvance(b));
   $('#fzConfirmAfterAdvance')?.addEventListener('click',()=>fzConfirmExistingAdvance(b));
-  $('#fzOpenBookingInvoice')?.addEventListener('click',()=>generateInvoicePdf(b.invoice_id,null,true,fullyPaid?'final':checkoutReady?'final':'advance'));
+  $('#fzOpenBookingInvoice')?.addEventListener('click',e=>fzDownloadBookingInvoice(b,e.currentTarget,fullyPaid,checkoutReady));
   $('#fzRecordBookingPayment')?.addEventListener('click',()=>fzPrepareBookingPayment(b));
   $('#fzCheckoutEdit')?.addEventListener('click',()=>fzOpenCheckoutEditor(b));
   $('#fzShareBookingInvoice')?.addEventListener('click',()=>fzShareBookingInvoice(b));
   $('#fzRequestPdf')?.addEventListener('click',()=>fzGenerateAdvanceRequestPdf(b));
  }
  function fzDownloadBlob(blob,filename){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
+ function fzDeliverBookingPdf(blob,filename,popup){
+  const ua=navigator.userAgent||'';
+  const safari=/Safari/i.test(ua)&&!/(Chrome|Chromium|CriOS|Edg|OPR|Firefox|FxiOS|Android)/i.test(ua);
+  const url=URL.createObjectURL(blob);
+  if(safari&&popup&&!popup.closed){
+    // Safari may suppress downloads initiated after asynchronous database reads.
+    // The tab was opened directly in the user's click handler, so show the PDF in
+    // Safari's native viewer where its Download control is available.
+    popup.location.replace(url);
+    setTimeout(()=>URL.revokeObjectURL(url),10*60*1000);
+    return 'OPENED_IN_VIEWER';
+  }
+  if(popup&&!popup.closed)popup.close();
+  const a=document.createElement('a');a.href=url;a.download=filename||'FIELDZERO-invoice.pdf';a.style.display='none';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),10*60*1000);
+  return 'DOWNLOAD_STARTED';
+ }
+ async function fzDownloadBookingInvoice(b,button,fullyPaid,checkoutReady){
+  const popup=window.open('about:blank','_blank');
+  if(button)button.disabled=true;
+  msg($('#adminStatus'),'Preparing your FIELDZERO invoice PDF…','');
+  try{
+    if(!b.invoice_id)throw new Error('This booking does not have an invoice yet.');
+    const q=await db.from('fz_invoices').select('id,invoice_number,total_amount,amount_paid,balance_due,status').eq('id',b.invoice_id).maybeSingle();
+    if(q.error)throw q.error;
+    if(!q.data)throw new Error('The invoice could not be found. Refresh the booking and try again.');
+    const serverFullyPaid=Number(q.data.balance_due)<=0.005;
+    if(fullyPaid&&!serverFullyPaid)throw new Error('The latest invoice still has a balance. Refresh this booking before downloading a paid invoice.');
+    const mode=checkoutReady?'final':'advance';
+    const result=await generateInvoicePdf(b.invoice_id,null,false,mode);
+    if(!result?.blob)throw new Error('The PDF generator did not return a file.');
+    const delivery=fzDeliverBookingPdf(result.blob,result.filename,popup);
+    const status=serverFullyPaid
+      ?(delivery==='OPENED_IN_VIEWER'?'Final paid invoice opened in a new Safari tab. Use the Download icon in the PDF viewer to save it.':'Final paid invoice download started.')
+      :mode==='final'
+        ?(delivery==='OPENED_IN_VIEWER'?'Final bill PDF opened in a new Safari tab. Use the Download icon in the PDF viewer to save it.':'Final bill PDF download started.')
+        :(delivery==='OPENED_IN_VIEWER'?'Advance invoice opened in a new Safari tab. Use the Download icon in the PDF viewer to save it.':'Advance invoice download started.');
+    msg($('#adminStatus'),status+(result.archiveMessage||''),'success');
+  }catch(error){
+    if(popup&&!popup.closed)popup.close();
+    msg($('#adminStatus'),'Could not prepare the booking PDF: '+(error.message||'Unknown error')+'. No payment was taken or changed.','error');
+  }finally{if(button&&button.isConnected)button.disabled=false;}
+ }
  async function fzSharePdfWhatsApp(phone,message,pdfResult,popup){
   if(!pdfResult?.blob)throw new Error('PDF could not be prepared');
   const file=new File([pdfResult.blob],pdfResult.filename||'FIELDZERO-document.pdf',{type:'application/pdf'});
   if(navigator.canShare?.({files:[file]})&&navigator.share){
-    try{await navigator.share({files:[file],title:'FIELDZERO booking document',text:message});if(popup&&!popup.closed)popup.close();return 'SHARED';}catch(e){if(e?.name==='AbortError'){if(popup&&!popup.closed)popup.close();return 'CANCELLED';}}
+    try{await navigator.share({files:[file],title:'FIELDZERO booking document',text:message});if(popup&&!popup.closed)popup.close();return 'SHARED';}catch(e){if(e?.name==='AbortError'){const fallback=fzDeliverBookingPdf(pdfResult.blob,pdfResult.filename,popup);return fallback==='OPENED_IN_VIEWER'?'CANCELLED_DOWNLOADED_VIEWER':'CANCELLED_DOWNLOADED';}}
   }
   fzDownloadBlob(pdfResult.blob,pdfResult.filename||'FIELDZERO-document.pdf');
   const digits=String(phone||'').replace(/\D/g,'').replace(/^0/,'94');
@@ -702,8 +745,8 @@
  }
  async function fzSubmitBookingPayment(b,mode,form){
   const fd=new FormData(form),btn=$('#fzBookingPaymentSubmit'),shareWhatsApp=fd.get('share_whatsapp')==='on';
-  // Reserve a WhatsApp tab synchronously from this button click before any async database work.
-  const popup=shareWhatsApp?window.open('about:blank','_blank'):null;
+  // Reserve a browser tab synchronously for Safari's PDF viewer / WhatsApp handoff.
+  const popup=window.open('about:blank','_blank');
   const accountCheck=await db.from('fz_financial_accounts').select('id,field_id,active').eq('id',fd.get('account_id')).maybeSingle();
   const account=accountCheck.data;
   if(accountCheck.error||!account||!account.active||account.field_id!==b.field_id){if(popup&&!popup.closed)popup.close();msg($('#fzBookingPaymentStatus'),accountCheck.error?.message||'Choose an active receiving account belonging to this booking field.','error');return;}
@@ -745,12 +788,12 @@
         :`FIELDZERO booking ${b.booking_reference}: we have received ${financeFmt(amount)}. Remaining balance: ${financeFmt(latest.data.balance_due)}. Please find your payment receipt attached.`;
     }
     if(shareWhatsApp){shareResult=await fzSharePdfWhatsApp(b.mobile,message,pdf,popup);}
-    else{if(popup&&!popup.closed)popup.close();fzDownloadBlob(pdf.blob,pdf.filename);}
+    else{shareResult=fzDeliverBookingPdf(pdf.blob,pdf.filename,popup);}
     await Promise.all([loadFinanceInvoices(),loadFinancePayments(),loadFinanceDashboard(),loadOpsCashbook(),fzLoadBookingDays()]);
     await fzSelectBooking(b.id);
     const outcome=shareWhatsApp
-      ?(shareResult==='SHARED'?'Payment saved. The PDF is ready in your device share sheet; select WhatsApp and the customer.':shareResult==='CANCELLED'?'Payment saved. WhatsApp sharing was cancelled; you can resend the PDF from this booking.':'Payment saved. The PDF was downloaded and WhatsApp opened. Attach the downloaded PDF and press Send.')
-      :'Payment saved and PDF downloaded. You can send it to the customer from your WhatsApp account.';
+      ?(shareResult==='SHARED'?'Payment saved. The PDF is ready in your device share sheet; select WhatsApp and the customer.':shareResult==='CANCELLED_DOWNLOADED_VIEWER'?'WhatsApp sharing was cancelled. The PDF is open in a new Safari tab; use its Download icon to save it.':shareResult==='CANCELLED_DOWNLOADED'?'WhatsApp sharing was cancelled. A copy of the PDF download has been started.':'Payment saved. The PDF was downloaded and WhatsApp opened. Attach the downloaded PDF and press Send.')
+      :(shareResult==='OPENED_IN_VIEWER'?'Payment saved. The PDF is open in a new Safari tab; use its Download icon to save it.':'Payment saved and PDF download started. You can send it to the customer from your WhatsApp account.');
     msg($('#adminStatus'),outcome,'success');
   }catch(error){
     if(popup&&!popup.closed)popup.close();
@@ -794,7 +837,7 @@
   const q=await db.from('fz_invoices').select('id,invoice_number,total_amount,amount_paid,balance_due,status').eq('id',b.invoice_id).maybeSingle();
   if(q.error||!q.data){if(popup&&!popup.closed)popup.close();alert(q.error?.message||'Invoice not found.');return;}
   if(Number(q.data.balance_due)>0.005){if(popup&&!popup.closed)popup.close();alert('The invoice is not fully paid yet. Record the remaining balance from this booking first.');return;}
-  try{const pdf=await generateInvoicePdf(b.invoice_id,null,false,'final');const message=`FIELDZERO booking ${b.booking_reference}: your final invoice ${q.data.invoice_number} is paid in full. Thank you for choosing FIELDZERO.`;const result=await fzSharePdfWhatsApp(b.mobile,message,pdf,popup);msg($('#adminStatus'),result==='SHARED'?'Final invoice is ready in the device share sheet. Select WhatsApp and the customer.':result==='CANCELLED'?'WhatsApp sharing cancelled. You can try again from this booking.':'Final invoice downloaded and WhatsApp opened. Attach the PDF and press Send.','success');}
+  try{const pdf=await generateInvoicePdf(b.invoice_id,null,false,'final');const message=`FIELDZERO booking ${b.booking_reference}: your final invoice ${q.data.invoice_number} is paid in full. Thank you for choosing FIELDZERO.`;const result=await fzSharePdfWhatsApp(b.mobile,message,pdf,popup);msg($('#adminStatus'),result==='SHARED'?'Final invoice is ready in the device share sheet. Select WhatsApp and the customer.':result==='CANCELLED_DOWNLOADED_VIEWER'?'WhatsApp sharing cancelled. The final invoice is open in a new Safari tab; use its Download icon to save it.':result==='CANCELLED_DOWNLOADED'?'WhatsApp sharing cancelled. A copy of the final invoice download has been started.':'Final invoice downloaded and WhatsApp opened. Attach the PDF and press Send.','success');}
   catch(e){if(popup&&!popup.closed)popup.close();alert(e.message||'Could not prepare WhatsApp invoice.');}
  }
  async function fzGenerateAdminPass(b){if(b.status!=='approved'){alert('A confirmed pass is available only after the LKR 500 advance is recorded and confirmed.');return}if(!window.jspdf?.jsPDF){alert('PDF library unavailable');return}const inv=b.invoice_id?await db.from('fz_invoices').select('total_amount,amount_paid,balance_due').eq('id',b.invoice_id).maybeSingle():{data:null};const v=inv.data||{};const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'});doc.setFillColor(14,21,16);doc.rect(0,0,210,66,'F');doc.setFillColor(185,255,64);doc.rect(0,0,4,66,'F');doc.setTextColor(185,255,64);doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text('FIELDZERO',15,24);doc.setTextColor(255,255,255);doc.setFontSize(20);doc.text('CONFIRMED BOOKING PASS',15,49);doc.setTextColor(20,30,20);doc.setFontSize(16);doc.text(String(b.booking_reference||'LEGACY BOOKING'),15,86);const rows=[['PLAYER',b.real_name+' / '+b.callsign],['CONTACT',b.mobile],['FIELD',b.arena_fields?.name||'FIELDZERO FIELD'],['START',new Date(b.booking_start).toLocaleString('en-GB',{timeZone:'Asia/Colombo'})],['END',new Date(b.booking_end).toLocaleString('en-GB',{timeZone:'Asia/Colombo'})],['PLAYERS',String(b.player_count)],['ADVANCE RECEIVED',financeFmt(v.amount_paid||500)],['BALANCE AT CHECKOUT',b.checkout_finalized_at?financeFmt(v.balance_due||0):'FINAL BILL AT CHECKOUT'],['STATUS','CONFIRMED — ADVANCE VERIFIED']];rows.forEach((r,i)=>{let y=107+i*15;doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text(r[0],15,y);doc.setFont('helvetica','normal');doc.setFontSize(10);doc.text(String(r[1]),70,y)});doc.setFontSize(8);doc.text('Present this booking reference at field check-in. The advance is credited against your final bill. Additional items are charged at checkout.',15,270,{maxWidth:180});doc.save(`${b.booking_reference||'FIELDZERO-BOOKING'}-CONFIRMED.pdf`)}

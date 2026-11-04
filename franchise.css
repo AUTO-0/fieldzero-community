@@ -315,3 +315,63 @@ body:not(.admin-page) ::selection{background:var(--fz-acid);color:#0b120c}
 @media(prefers-reduced-motion:reduce){
  body:not(.admin-page) *,body:not(.admin-page) *:before,body:not(.admin-page) *:after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
+
+
+/* FIELDZERO V25 — competitive recognition, healthy motivation and shareable field records */
+body:not(.admin-page) .leaderboard-principles{
+  margin:0 0 22px;padding:22px 24px;border:1px solid rgba(200,243,106,.2);
+  background:linear-gradient(110deg,rgba(200,243,106,.075),rgba(255,255,255,.018));
+  display:grid;gap:8px
+}
+body:not(.admin-page) .leaderboard-principles-kicker{font-size:8px;letter-spacing:2px;color:var(--fz-acid);font-weight:800}
+body:not(.admin-page) .leaderboard-principles>b{font:800 clamp(25px,3vw,34px)/.95 'Barlow Condensed',sans-serif;color:#f1f5ed;letter-spacing:.03em}
+body:not(.admin-page) .leaderboard-principles p{margin:0;max-width:760px;color:#bdc8b8;font-size:12px;line-height:1.8}
+body:not(.admin-page) .leaderboard-colour-key{display:flex;flex-wrap:wrap;gap:12px 20px;margin-top:7px}
+body:not(.admin-page) .leaderboard-colour-key span{display:inline-flex;align-items:center;gap:7px;font-size:8px;letter-spacing:1px;color:#d4ddcf;font-weight:800}
+body:not(.admin-page) .leaderboard-colour-key i{width:8px;height:8px;display:inline-block;border-radius:50%}
+body:not(.admin-page) .key-gold{background:#d7b45a;box-shadow:0 0 12px #d7b45a55}
+body:not(.admin-page) .key-silver{background:#aeb8b5}
+body:not(.admin-page) .key-bronze{background:#b87952}
+body:not(.admin-page) .key-red{background:#b84a43}
+body:not(.admin-page) .leaderboard-podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:12px;align-items:stretch}
+body:not(.admin-page) .leaderboard-podium-card{
+  min-width:0;position:relative;overflow:hidden;padding:22px 20px 18px;
+  border:1px solid rgba(200,243,106,.18);background:linear-gradient(150deg,#1b291e,#101811);
+  box-shadow:0 16px 38px rgba(0,0,0,.2);display:flex;flex-direction:column;min-height:190px
+}
+body:not(.admin-page) .leaderboard-podium-card:before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:#b87952}
+body:not(.admin-page) .leaderboard-podium-card.podium-place-1{background:radial-gradient(circle at 90% 0%,rgba(215,180,90,.15),transparent 42%),linear-gradient(145deg,#283020,#131b13);border-color:#a98a43}
+body:not(.admin-page) .leaderboard-podium-card.podium-place-1:before{height:3px;background:#d7b45a}
+body:not(.admin-page) .leaderboard-podium-card.podium-place-2:before{background:#aeb8b5}
+body:not(.admin-page) .leaderboard-podium-card.podium-place-3:before{background:#b87952}
+body:not(.admin-page) .podium-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:18px}
+body:not(.admin-page) .podium-medal{width:31px;height:31px;display:grid;place-items:center;border:1px solid #b87952;color:#d4a17c;font-size:17px}
+body:not(.admin-page) .podium-place-1 .podium-medal{border-color:#d7b45a;color:#e6c878}
+body:not(.admin-page) .podium-place-2 .podium-medal{border-color:#aeb8b5;color:#c6d0cd}
+body:not(.admin-page) .podium-position{font-size:8px;letter-spacing:1.4px;color:#c4cebd;font-weight:900}
+body:not(.admin-page) .leaderboard-podium-card .leaderboard-name{font:800 clamp(22px,2.4vw,30px)/.95 'Barlow Condensed',sans-serif;overflow-wrap:anywhere;color:#f5f7f1}
+body:not(.admin-page) .leaderboard-podium-card .leaderboard-sub{display:block;margin-top:8px;color:#aebaa8;font-size:9px;line-height:1.6}
+body:not(.admin-page) .podium-score{margin-top:auto;padding-top:20px;color:#f1f4ec;font:800 30px/1 'Barlow Condensed',sans-serif}
+body:not(.admin-page) .podium-score small{display:block;margin-top:5px;color:#c8f36a;font:800 8px/1 'DM Sans',sans-serif;letter-spacing:1.7px}
+body:not(.admin-page) .leaderboard-share{
+  align-self:flex-start;margin-top:12px;padding:7px 9px;border:1px solid rgba(200,243,106,.28);
+  background:rgba(200,243,106,.06);color:#d9e5d2;font-size:8px;font-weight:900;letter-spacing:1px;cursor:pointer
+}
+body:not(.admin-page) .leaderboard-share:hover{background:#c8f36a;color:#10170f;border-color:#c8f36a}
+body:not(.admin-page) .leaderboard-rest{display:grid;gap:7px}
+body:not(.admin-page) .leaderboard-rest .leaderboard-row{display:grid;grid-template-columns:42px minmax(0,1fr) auto 36px;align-items:center;gap:13px}
+body:not(.admin-page) .leaderboard-rest .leaderboard-share{margin:0;justify-self:end;padding:8px 10px}
+body:not(.admin-page) .leaderboard-rest .leaderboard-points{white-space:nowrap}
+body:not(.admin-page) .leaderboard-tabs{display:flex;gap:8px;flex-wrap:wrap}
+body:not(.admin-page) .leaderboard-tab{border-radius:2px}
+@media(max-width:760px){
+ body:not(.admin-page) .leaderboard-podium{grid-template-columns:1fr;gap:8px}
+ body:not(.admin-page) .leaderboard-podium-card{min-height:0;padding:17px}
+ body:not(.admin-page) .leaderboard-podium-card .podium-score{padding-top:14px}
+ body:not(.admin-page) .leaderboard-rest .leaderboard-row{grid-template-columns:32px minmax(0,1fr) auto 32px;gap:8px;padding:13px 10px}
+ body:not(.admin-page) .leaderboard-rest .leaderboard-points{font-size:15px}
+ body:not(.admin-page) .leaderboard-rest .leaderboard-points small{font-size:7px}
+ body:not(.admin-page) .leaderboard-rest .leaderboard-name{font-size:13px}
+ body:not(.admin-page) .leaderboard-rest .leaderboard-sub{font-size:8px}
+ body:not(.admin-page) .leaderboard-principles{padding:18px}
+}

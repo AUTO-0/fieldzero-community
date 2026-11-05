@@ -534,3 +534,28 @@ body:not(.admin-page) .fz-membership-section{background:radial-gradient(circle a
 .roster-expand-wrap{display:flex;justify-content:center;padding-top:18px;}
 .roster-expand-button{min-width:min(100%,300px);font-size:11px;letter-spacing:.08em;}
 @media(max-width:520px){.operator-row{gap:9px;min-height:54px;padding:8px 9px}.operator-row-index{flex-basis:24px;font-size:9px}.operator-row .operator-avatar,.operator-row-avatar{width:30px;height:30px;flex-basis:30px}.operator-row-main b{font-size:12px}.operator-row-main small{font-size:9px}.operator-row-status{font-size:8px}}
+
+/* FIELDZERO compact session-hour weather */
+.fz-weather-strip{max-width:1180px;width:calc(100% - 40px);margin:26px auto 34px;padding:18px 20px;border:1px solid rgba(185,255,64,.18);border-radius:16px;background:linear-gradient(120deg,rgba(27,39,27,.96),rgba(16,23,17,.98));box-shadow:0 12px 34px rgba(0,0,0,.14)}
+.fz-weather-head{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.fz-weather-kicker{color:var(--fz-lime);font:800 9px/1.4 'DM Sans',sans-serif;letter-spacing:.18em}
+.fz-weather-head h2{margin:5px 0 2px;color:var(--fz-paper);font:800 clamp(20px,3vw,27px)/1 'Barlow Condensed',sans-serif;letter-spacing:.035em}
+.fz-weather-head p{margin:5px 0 0;color:var(--fz-muted);font-size:9px;letter-spacing:.12em}
+.fz-weather-live{display:flex;align-items:center;gap:7px;color:#aeb8a9;font:700 9px 'DM Sans',sans-serif;letter-spacing:.1em;white-space:nowrap}
+.fz-weather-live span{width:7px;height:7px;border-radius:50%;background:var(--fz-lime);box-shadow:0 0 10px rgba(185,255,64,.6)}
+.fz-weather-hours{display:flex;flex-wrap:wrap;gap:7px 18px;margin:14px 0;padding:9px 11px;border:1px solid rgba(185,255,64,.1);border-radius:9px;background:rgba(255,255,255,.025);color:var(--fz-muted);font:700 9px 'DM Sans',sans-serif;letter-spacing:.07em}
+.fz-weather-hours b{margin-left:5px;color:var(--fz-paper);font-weight:700}
+.fz-weather-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}
+.fz-weather-day{min-width:0;display:grid;grid-template-columns:1fr;justify-items:center;gap:5px;padding:10px 5px;border:1px solid rgba(255,255,255,.07);border-radius:10px;background:rgba(255,255,255,.025);text-align:center}
+.fz-weather-date{display:flex;gap:5px;align-items:baseline;color:var(--fz-paper);font:800 10px 'DM Sans',sans-serif}
+.fz-weather-date small,.fz-weather-day small{color:var(--fz-muted);font:600 8px 'DM Sans',sans-serif;letter-spacing:.04em}
+.fz-weather-condition{display:grid;justify-items:center;gap:2px;min-height:36px}
+.fz-weather-condition span{font-size:20px;line-height:1.1}
+.fz-weather-temp b,.fz-weather-rain b,.fz-weather-mm b{color:var(--fz-paper);font:800 12px 'DM Sans',sans-serif;white-space:nowrap}
+.fz-weather-temp,.fz-weather-rain,.fz-weather-mm{display:grid;justify-items:center;gap:2px}
+.fz-weather-rain b.low{color:var(--fz-lime)}.fz-weather-rain b.medium{color:#e4bd64}.fz-weather-rain b.high{color:#e58c78}
+.fz-weather-mm i{font-style:normal;color:var(--fz-muted);font-size:9px}
+.fz-weather-loading{grid-column:1/-1;padding:18px 8px;color:var(--fz-muted);font:700 10px 'DM Sans',sans-serif;letter-spacing:.1em;text-align:center}
+.fz-weather-foot{display:flex;justify-content:space-between;gap:12px;margin-top:12px;color:var(--fz-muted);font:600 8px 'DM Sans',sans-serif;letter-spacing:.08em}
+@media(max-width:720px){.fz-weather-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.fz-weather-day:nth-child(n+5){margin-top:1px}}
+@media(max-width:420px){.fz-weather-strip{width:calc(100% - 24px);padding:14px 11px;margin:18px auto 26px}.fz-weather-hours{display:grid;gap:6px}.fz-weather-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.fz-weather-day{padding:9px 3px}.fz-weather-foot{font-size:7px}}

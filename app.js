@@ -274,24 +274,43 @@
     status($("#formStatus"), "Registration is not live yet. The site owner must finish the Supabase setup first.", "error");
   }
 
+  let rosterRows = [];
+  let rosterExpanded = false;
+  const ROSTER_PREVIEW_LIMIT = 50;
   async function loadRoster() {
     if (!db) return;
     const { data, error } = await db.from("public_roster").select("callsign, team_name, player_rank, avatar_url").order("callsign");
     if (error) { $("#rosterCount").textContent = "ROSTER UNAVAILABLE"; $("#rosterGrid").innerHTML = '<div class="empty-state">Could not load the roster. Please try again later.</div>'; return; }
-    renderRoster(data || []);
+    rosterRows = data || [];
+    renderRoster(rosterRows);
     const countEl = $("#activeMemberCount");
     if (countEl) {
       const {data: countData} = await db.from("public_active_member_count").select("active_count").maybeSingle();
-      countEl.textContent = String(countData?.active_count ?? (data || []).length);
+      countEl.textContent = String(countData?.active_count ?? rosterRows.length);
     }
   }
   function renderRoster(rows) {
     const q = ($("#rosterSearch").value || "").trim().toLowerCase();
     const filtered = rows.filter(p => (p.callsign || "").toLowerCase().includes(q));
+    const visible = rosterExpanded ? filtered : filtered.slice(0, ROSTER_PREVIEW_LIMIT);
     $("#rosterCount").textContent = `${filtered.length} ACTIVE OPERATOR${filtered.length === 1 ? "" : "S"}`;
-    $("#rosterGrid").innerHTML = filtered.length ? filtered.map((p, i) => `<article class="operator-card"><div class="operator-top"><span>OPERATOR / ${String(i+1).padStart(3,"0")}</span><span>● ACTIVE</span></div><div class="operator-call">${p.avatar_url?`<img class="operator-avatar" src="${escapeAttr(p.avatar_url)}" alt="${escapeAttr(p.callsign)} profile photo" loading="lazy">`:''}${escapeHtml(p.callsign)}</div><div class="operator-team">${escapeHtml(p.team_name || "INDEPENDENT")} · ${escapeHtml(p.player_rank || "ROOKIE")}</div></article>`).join("") : '<div class="empty-state">No approved callsigns match that search yet.</div>';
+    $("#rosterGrid").innerHTML = visible.length ? visible.map((p, i) => `<article class="operator-row"><span class="operator-row-index">${String(i+1).padStart(3,"0")}</span>${p.avatar_url?`<img class="operator-avatar" src="${escapeAttr(p.avatar_url)}" alt="" loading="lazy">`:'<span class="operator-row-avatar">◈</span>'}<span class="operator-row-main"><b>${escapeHtml(p.callsign)}</b><small>${escapeHtml(p.team_name || "INDEPENDENT")} · ${escapeHtml(p.player_rank || "ROOKIE")}</small></span><span class="operator-row-status">● ACTIVE</span></article>`).join("") : '<div class="empty-state">No approved callsigns match that search yet.</div>';
+    const expandButton = $("#rosterExpandButton");
+    if (expandButton) {
+      const remaining = Math.max(0, filtered.length - ROSTER_PREVIEW_LIMIT);
+      expandButton.hidden = filtered.length <= ROSTER_PREVIEW_LIMIT;
+      expandButton.textContent = rosterExpanded ? "SHOW LESS ↑" : `VIEW FULL ROSTER · +${remaining} OPERATORS ↗`;
+      expandButton.setAttribute("aria-expanded", rosterExpanded ? "true" : "false");
+    }
   }
-  $("#rosterSearch").addEventListener("input", () => { if (db) loadRoster(); });
+  $("#rosterExpandButton")?.addEventListener("click", () => {
+    rosterExpanded = !rosterExpanded;
+    renderRoster(rosterRows);
+  });
+  $("#rosterSearch").addEventListener("input", () => {
+    rosterExpanded = false;
+    renderRoster(rosterRows);
+  });
 
   async function loadTeams() {
     if (!db) return;

@@ -609,3 +609,25 @@ input:focus,select:focus,textarea:focus{border-color:#789b46;box-shadow:0 0 0 3p
 .site-footer{row-gap:18px}
 @media(max-width:900px){.site-header nav{gap:10px;font-size:8px}.section{padding-left:clamp(20px,5vw,48px);padding-right:clamp(20px,5vw,48px)}}
 @media(max-width:640px){.hero{min-height:560px;height:calc(100svh - 68px)}.hero-note{margin-top:28px}.section{padding:56px 18px}.section-heading h2{font-size:clamp(46px,13vw,66px)}.section-heading>p{font-size:12px;line-height:1.75}.hero-actions .button{min-height:46px}.package-card .button{width:100%}}
+
+
+/* FIELDZERO / Top Operators — compact roster-style ranking list */
+body:not(.admin-page) .leaderboard-operator-list{display:flex;flex-direction:column;gap:0;border-top:1px solid rgba(185,255,64,.18);border-bottom:1px solid rgba(185,255,64,.18)}
+body:not(.admin-page) .leaderboard-operator-row{min-height:58px;padding:9px 12px;border-bottom:1px solid rgba(185,255,64,.10);background:rgba(255,255,255,.015)}
+body:not(.admin-page) .leaderboard-operator-row:last-child{border-bottom:0}
+body:not(.admin-page) .leaderboard-operator-row .operator-row-avatar{width:32px;height:32px;flex-basis:32px;border-radius:50%;font-size:13px}
+body:not(.admin-page) .leaderboard-operator-row.leaderboard-top-rank-1 .operator-row-avatar{color:#e6c878;border-color:#d7b45a;background:rgba(215,180,90,.10)}
+body:not(.admin-page) .leaderboard-operator-row.leaderboard-top-rank-2 .operator-row-avatar{color:#d1d9d6;border-color:#aeb8b5;background:rgba(174,184,181,.09)}
+body:not(.admin-page) .leaderboard-operator-row.leaderboard-top-rank-3 .operator-row-avatar{color:#d69a70;border-color:#b87952;background:rgba(184,121,82,.09)}
+body:not(.admin-page) .leaderboard-operator-row .leaderboard-points{flex:0 0 auto;white-space:nowrap;color:#e9efdf;font:800 14px/1 'Barlow Condensed',sans-serif;text-align:right}
+body:not(.admin-page) .leaderboard-operator-row .leaderboard-points small{display:block;margin-top:4px;color:#9eaa98;font:700 7px/1 'DM Sans',sans-serif;letter-spacing:1px}
+body:not(.admin-page) .leaderboard-operator-row .leaderboard-share{align-self:center;flex:0 0 32px;width:32px;height:32px;margin:0;padding:0;display:grid;place-items:center}
+@media(max-width:520px){
+ body:not(.admin-page) .leaderboard-operator-row{gap:8px;min-height:54px;padding:8px 9px}
+ body:not(.admin-page) .leaderboard-operator-row .operator-row-index{flex-basis:22px;font-size:9px}
+ body:not(.admin-page) .leaderboard-operator-row .operator-row-avatar{width:29px;height:29px;flex-basis:29px}
+ body:not(.admin-page) .leaderboard-operator-row .operator-row-main b{font-size:12px}
+ body:not(.admin-page) .leaderboard-operator-row .operator-row-main small{font-size:8px}
+ body:not(.admin-page) .leaderboard-operator-row .leaderboard-points{font-size:13px}
+ body:not(.admin-page) .leaderboard-operator-row .leaderboard-share{flex-basis:29px;width:29px;height:29px}
+}

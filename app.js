@@ -100,7 +100,7 @@
       const days=new Map();
       hourly.time.forEach((stamp,i)=>{
         const day=stamp.slice(0,10), hour=Number(stamp.slice(11,13)), minute=hour*60;
-        const date=new Date(day+"T12:00:00+05:30"), weekday=date.getDay();
+        const date=new Date(day+"T12:00:00+05:30"), weekday=date.getUTCDay();
         const operating=weekday===0||weekday===6 ? ((hour>=9&&hour<12)||(hour>=15&&hour<22)) : (hour>=15&&hour<22);
         if(!operating || (day===today&&minute<Math.floor(currentMinute/60)*60))return;
         if(!days.has(day))days.set(day,[]);

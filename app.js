@@ -112,7 +112,7 @@
       const rows=[...days.entries()].slice(0,7);
       if(!rows.length)throw new Error("No session-hour forecast available");
       host.innerHTML=rows.map(([day,items])=>{
-        const d=new Date(day+"T12:00:00+05:30"), temps=items.map(x=>x.temp).filter(Number.isFinite), rain=items.reduce((s,x)=>s+x.rain,0), risk=Math.max(...items.map(x=>x.prob)), representative=items.reduce((best,x)=>x.prob>best.prob?x:best,items[0]), label=labels[d.getDay()];
+        const d=new Date(day+"T12:00:00+05:30"), temps=items.map(x=>x.temp).filter(Number.isFinite), rain=items.reduce((s,x)=>s+x.rain,0), risk=Math.max(...items.map(x=>x.prob)), representative=items.reduce((best,x)=>x.prob>best.prob?x:best,items[0]), label=labels[d.getUTCDay()];
         const riskClass=risk>=70?"high":risk>=40?"medium":"low";
         return '<article class="fz-weather-day"><div class="fz-weather-date"><b>'+label+'</b><small>'+day.slice(8,10)+'/'+day.slice(5,7)+'</small></div><span class="fz-weather-icon" aria-hidden="true">'+icon(representative.code)+'</span><b class="fz-weather-temp">'+Math.round(Math.min(...temps))+'°–'+Math.round(Math.max(...temps))+'°</b><span class="fz-weather-rain '+riskClass+'">☂ '+risk+'% · '+rain.toFixed(1)+'mm</span></article>';
       }).join("");

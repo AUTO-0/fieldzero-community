@@ -86,6 +86,43 @@
     if (meta) meta.content = ({"field-ops":"#111710","jungle-night":"#071a13","graphite":"#151619","desert-recon":"#2a2117","arctic-signal":"#112433","ember-ops":"#201510","lantern-glow":"#191e18","winter-night":"#0e1828","monsoon":"#112124"})[safeTheme];
   }
   function getSriLankaDate() { return new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Colombo",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date()); }
+  async function loadFieldWeather(){
+    const host=$("#fzWeatherGrid"); if(!host)return;
+    const url="https://api.open-meteo.com/v1/forecast?latitude=7.07&longitude=80.01&hourly=temperature_2m,precipitation_probability,precipitation,weather_code&forecast_days=7&timezone=Asia%2FColombo";
+    const nowParts=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Colombo",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date());
+    const part=k=>nowParts.find(p=>p.type===k)?.value||"00";
+    const today=part("year")+"-"+part("month")+"-"+part("day"), currentMinute=Number(part("hour"))*60+Number(part("minute"));
+    try{
+      const response=await fetch(url,{headers:{Accept:"application/json"},cache:"no-store"});
+      if(!response.ok)throw new Error("Forecast service unavailable");
+      const payload=await response.json(), hourly=payload.hourly;
+      if(!hourly?.time?.length)throw new Error("Forecast data unavailable");
+      const days=new Map();
+      hourly.time.forEach((stamp,i)=>{
+        const day=stamp.slice(0,10), hour=Number(stamp.slice(11,13)), minute=hour*60;
+        const date=new Date(day+"T12:00:00+05:30"), weekday=date.getDay();
+        const operating=weekday===0||weekday===6 ? ((hour>=9&&hour<12)||(hour>=15&&hour<22)) : (hour>=15&&hour<22);
+        if(!operating || (day===today&&minute<Math.floor(currentMinute/60)*60))return;
+        if(!days.has(day))days.set(day,[]);
+        days.get(day).push({temp:Number(hourly.temperature_2m?.[i]),prob:Number(hourly.precipitation_probability?.[i]??0),rain:Number(hourly.precipitation?.[i]??0),code:Number(hourly.weather_code?.[i]??0)});
+      });
+      const labels=["SUN","MON","TUE","WED","THU","FRI","SAT"];
+      const weatherName=code=>code>=95?"THUNDERSTORM":code>=80?"SHOWERS":code>=61?"RAIN":code>=51?"DRIZZLE":code===0?"CLEAR":code<=3?"CLOUDY":"SHOWERS";
+      const icon=code=>code>=95?"⛈":code>=61?"🌧":code>=51?"🌦":code===0?"☀":"☁";
+      const rows=[...days.entries()].slice(0,7);
+      if(!rows.length)throw new Error("No session-hour forecast available");
+      host.innerHTML=rows.map(([day,items])=>{
+        const d=new Date(day+"T12:00:00+05:30"), temps=items.map(x=>x.temp).filter(Number.isFinite), rain=items.reduce((s,x)=>s+x.rain,0), risk=Math.max(...items.map(x=>x.prob)), representative=items.reduce((best,x)=>x.prob>best.prob?x:best,items[0]), label=labels[d.getDay()];
+        const riskClass=risk>=70?"high":risk>=40?"medium":"low";
+        return '<article class="fz-weather-day"><div class="fz-weather-date"><b>'+label+'</b><small>'+day.slice(8,10)+'/'+day.slice(5,7)+'</small></div><div class="fz-weather-condition"><span>'+icon(representative.code)+'</span><small>'+weatherName(representative.code)+'</small></div><div class="fz-weather-temp"><b>'+Math.round(Math.min(...temps))+'°–'+Math.round(Math.max(...temps))+'°</b><small>TEMP</small></div><div class="fz-weather-rain"><b class="'+riskClass+'">'+risk+'%</b><small>RAIN RISK</small></div><div class="fz-weather-mm"><b>'+rain.toFixed(1)+' <i>mm</i></b><small>EXPECTED</small></div></article>';
+      }).join("");
+      $("#fzWeatherUpdated").textContent="SESSION HOURS ONLY · UPDATED "+new Intl.DateTimeFormat("en-LK",{timeZone:"Asia/Colombo",hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date());
+    }catch(error){
+      console.warn("FIELDZERO weather forecast unavailable:",error);
+      host.innerHTML='<div class="fz-weather-loading">FIELD FORECAST TEMPORARILY UNAVAILABLE · PLEASE CHECK AGAIN</div>';
+    }
+  }
+
   function campaignIsInWindow(campaign, dateString=getSriLankaDate()) {
     if (!campaign?.start_date || !campaign?.end_date) return false;
     const current = dateString.slice(5); const start = String(campaign.start_date).slice(5); const end = String(campaign.end_date).slice(5);
@@ -919,6 +956,7 @@
   $('#memberDeleteProfile')?.addEventListener('click',async()=>{if(!confirm('Delete your public FIELDZERO profile and leave all squads? Historical verified match results will be retained.'))return;const {error}=await db.rpc('fz_member_delete_profile');if(error){memberMsg($('#memberProfileStatus'),error.message,'error');return;}await db.auth.signOut();memberMsg($('#memberLoginStatus'),'Your FIELDZERO profile has been deactivated. Historical results are retained.','success');await loadMemberAccount();await loadRoster();await loadTeams();});
   db?.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY' && $('#memberPasswordUpdate'))$('#memberPasswordUpdate').hidden=false;if(event==='SIGNED_IN' && session && location.hash.includes('memberArea')){memberMsg($('#memberLoginStatus'),'Email verified / session restored. Loading your operator dossier…','success');}if($('#memberDashboard'))setTimeout(()=>loadMemberAccount(),0);});
 
+  loadFieldWeather();
   loadSessionPrices();
   loadMembershipPlans();
   verifyMembershipLink();

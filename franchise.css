@@ -519,3 +519,18 @@ body:not(.admin-page) .fz-membership-section{background:radial-gradient(circle a
 @media(max-width:520px){.fz-member-membership-content{grid-template-columns:1fr 1fr}.fz-membership-card-preview{padding:16px}.fz-membership-card-preview b{font-size:24px}}
 
 .fz-membership-plan-unit{margin-top:8px;color:#d6e7c8;font:800 10px/1.4 'DM Sans',sans-serif;letter-spacing:1.2px}
+
+/* FIELDZERO / compact public operator roster */
+.roster-grid{display:flex;flex-direction:column;gap:0;border-top:1px solid rgba(185,255,64,.18);border-bottom:1px solid rgba(185,255,64,.18);}
+.operator-row{display:flex;align-items:center;gap:12px;min-width:0;min-height:58px;padding:9px 12px;border-bottom:1px solid rgba(185,255,64,.10);background:rgba(255,255,255,.015);}
+.operator-row:last-child{border-bottom:0;}
+.operator-row-index{flex:0 0 30px;color:var(--fz-muted);font:600 10px/1.2 ui-monospace,monospace;letter-spacing:.08em;}
+.operator-row .operator-avatar,.operator-row-avatar{width:34px;height:34px;flex:0 0 34px;border-radius:50%;object-fit:cover;border:1px solid rgba(185,255,64,.28);}
+.operator-row-avatar{display:grid;place-items:center;color:var(--fz-lime);background:rgba(185,255,64,.07);font-size:15px;}
+.operator-row-main{display:flex;flex:1;flex-direction:column;gap:4px;min-width:0;}
+.operator-row-main b{overflow:hidden;color:var(--fz-paper);font-size:13px;letter-spacing:.045em;text-overflow:ellipsis;white-space:nowrap;}
+.operator-row-main small{overflow:hidden;color:var(--fz-muted);font-size:10px;letter-spacing:.035em;text-overflow:ellipsis;white-space:nowrap;}
+.operator-row-status{flex:0 0 auto;color:var(--fz-lime);font:600 9px/1 ui-monospace,monospace;letter-spacing:.07em;white-space:nowrap;}
+.roster-expand-wrap{display:flex;justify-content:center;padding-top:18px;}
+.roster-expand-button{min-width:min(100%,300px);font-size:11px;letter-spacing:.08em;}
+@media(max-width:520px){.operator-row{gap:9px;min-height:54px;padding:8px 9px}.operator-row-index{flex-basis:24px;font-size:9px}.operator-row .operator-avatar,.operator-row-avatar{width:30px;height:30px;flex-basis:30px}.operator-row-main b{font-size:12px}.operator-row-main small{font-size:9px}.operator-row-status{font-size:8px}}

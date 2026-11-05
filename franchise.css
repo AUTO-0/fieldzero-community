@@ -517,3 +517,5 @@ body:not(.admin-page) .fz-membership-section{background:radial-gradient(circle a
 #fzMembershipQrWork{position:absolute;left:-9999px;top:-9999px;width:260px;height:260px;overflow:hidden}
 @media(max-width:800px){.fz-membership-plan-grid{grid-template-columns:1fr}.fz-membership-note{grid-template-columns:1fr}.fz-member-membership-content{grid-template-columns:1fr 1fr}.fz-membership-admin-row{grid-template-columns:1fr 1fr}.fz-membership-admin-row .fz-membership-admin-actions{grid-column:1/-1}}
 @media(max-width:520px){.fz-member-membership-content{grid-template-columns:1fr 1fr}.fz-membership-card-preview{padding:16px}.fz-membership-card-preview b{font-size:24px}}
+
+.fz-membership-plan-unit{margin-top:8px;color:#d6e7c8;font:800 10px/1.4 'DM Sans',sans-serif;letter-spacing:1.2px}

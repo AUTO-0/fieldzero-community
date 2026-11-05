@@ -957,6 +957,7 @@
   db?.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY' && $('#memberPasswordUpdate'))$('#memberPasswordUpdate').hidden=false;if(event==='SIGNED_IN' && session && location.hash.includes('memberArea')){memberMsg($('#memberLoginStatus'),'Email verified / session restored. Loading your operator dossier…','success');}if($('#memberDashboard'))setTimeout(()=>loadMemberAccount(),0);});
 
   loadFieldWeather();
+  window.setInterval(loadFieldWeather, 30 * 60 * 1000);
   loadSessionPrices();
   loadMembershipPlans();
   verifyMembershipLink();

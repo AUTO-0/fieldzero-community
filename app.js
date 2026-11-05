@@ -716,7 +716,9 @@
         return;
       }
 
-      const rankCard = (row, index, podium = false) => {
+      // Keep the Top Operators visually consistent with the compact public operator roster.
+      // All ten positions use the same tidy list rows; podium colours only accent the rank marker.
+      const rows = data.map((row, index) => {
         const name = isTeams ? row.name : row.callsign;
         const points = Number(isTeams ? row.points : row.player_points) || 0;
         const safeName = escapeHtml(name || (isTeams ? "UNNAMED SQUAD" : "UNKNOWN OPERATOR"));
@@ -724,24 +726,16 @@
           ? `${Number(row.member_count) || 0}/5 ACTIVE OPERATORS · SQUAD RANK #${Number(row.team_rank) || index + 1}`
           : `${escapeHtml(row.player_rank || "ROOKIE")} · ${Number(row.matches_played) || 0} MATCHES · ${Number(row.wins) || 0} WINS`;
         const rank = index + 1;
-        const medal = rank === 1 ? "CHAMPION" : rank === 2 ? "RUNNER-UP" : "THIRD PLACE";
-        return podium
-          ? `<article class="leaderboard-podium-card podium-place-${rank}">
-              <div class="podium-card-top"><span class="podium-medal" aria-label="${medal}">${rank === 1 ? "★" : rank === 2 ? "◆" : "▲"}</span><span class="podium-position">0${rank} / ${medal}</span></div>
-              <div class="leaderboard-name">${safeName}</div><span class="leaderboard-sub">${subtitle}</span>
-              <div class="podium-score">${points.toLocaleString()}<small>POINTS</small></div>
-              <button class="leaderboard-share" type="button" data-share-rank="${rank}" data-share-name="${escapeAttr(name || "FIELDZERO PLAYER")}" data-share-points="${points}" data-share-board="${isTeams ? "squad" : "operator"}">SHARE RESULT ↗</button>
-            </article>`
-          : `<div class="leaderboard-row">
-              <div class="leaderboard-rank">${String(rank).padStart(2, "0")}</div>
-              <div><div class="leaderboard-name">${safeName}</div><span class="leaderboard-sub">${subtitle}</span></div>
-              <div class="leaderboard-points">${points.toLocaleString()}<small>POINTS</small></div>
-              <button class="leaderboard-share" type="button" data-share-rank="${rank}" data-share-name="${escapeAttr(name || "FIELDZERO PLAYER")}" data-share-points="${points}" data-share-board="${isTeams ? "squad" : "operator"}" aria-label="Share ranking for ${safeName}">↗</button>
-            </div>`;
-      };
-      const podium = data.slice(0, 3).map((row, index) => rankCard(row, index, true)).join("");
-      const remaining = data.slice(3).map((row, index) => rankCard(row, index + 3, false)).join("");
-      target.innerHTML = `<div class="leaderboard-podium">${podium}</div>${remaining ? `<div class="leaderboard-rest">${remaining}</div>` : ""}`;
+        const rankClass = rank <= 3 ? ` leaderboard-top-rank-${rank}` : "";
+        return `<div class="operator-row leaderboard-operator-row${rankClass}">
+          <span class="operator-row-index">${String(rank).padStart(2, "0")}</span>
+          <span class="operator-row-avatar" aria-hidden="true">${rank === 1 ? "★" : rank === 2 ? "◆" : rank === 3 ? "▲" : (isTeams ? "⌂" : "◎")}</span>
+          <div class="operator-row-main"><b>${safeName}</b><small>${subtitle}</small></div>
+          <span class="leaderboard-points">${points.toLocaleString()}<small>PTS</small></span>
+          <button class="leaderboard-share" type="button" data-share-rank="${rank}" data-share-name="${escapeAttr(name || "FIELDZERO PLAYER")}" data-share-points="${points}" data-share-board="${isTeams ? "squad" : "operator"}" aria-label="Share ranking for ${safeName}">↗</button>
+        </div>`;
+      }).join("");
+      target.innerHTML = `<div class="leaderboard-operator-list">${rows}</div>`;
       target.querySelectorAll("[data-share-rank]").forEach(button => {
         button.addEventListener("click", async () => {
           const shareText = `FIELDZERO ${button.dataset.shareBoard.toUpperCase()} RANKING\n#${button.dataset.shareRank} — ${button.dataset.shareName}\n${Number(button.dataset.sharePoints).toLocaleString()} POINTS\nOWN THE FIELD. BUILD YOUR SQUAD.\nhttps://auto-0.github.io/fieldzero-community/#leaderboards`;

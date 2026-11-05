@@ -673,3 +673,43 @@ body:not(.admin-page) .leaderboard-rest .leaderboard-share{
   body:not(.admin-page) .leaderboard-rest .leaderboard-points{font-size:12px}
   body:not(.admin-page) .leaderboard-rest .leaderboard-share{width:28px;height:28px;min-width:28px}
 }
+
+
+/* FIELDZERO V28 — actual top-ten player and squad table rows */
+body:not(.admin-page) .leaderboard-table{
+  display:flex;flex-direction:column;gap:0;
+  border:1px solid rgba(200,243,106,.16);
+}
+body:not(.admin-page) .leaderboard-table .leaderboard-row{
+  display:grid;grid-template-columns:30px minmax(0,1fr) 64px;
+  align-items:center;gap:10px;min-height:48px;
+  padding:7px 11px;border:0;border-bottom:1px solid rgba(200,243,106,.10);
+  background:rgba(255,255,255,.015);
+}
+body:not(.admin-page) .leaderboard-table .leaderboard-row:last-child{border-bottom:0}
+body:not(.admin-page) .leaderboard-table .leaderboard-rank{
+  font-size:16px;line-height:1;color:#c8f36a;
+}
+body:not(.admin-page) .leaderboard-table .leaderboard-name{
+  min-width:0;font-size:12px;line-height:1.2;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;
+}
+body:not(.admin-page) .leaderboard-table .leaderboard-sub{
+  margin-top:3px;font-size:9px;line-height:1.2;
+}
+body:not(.admin-page) .leaderboard-table .leaderboard-points{
+  font-size:13px;line-height:1;white-space:nowrap;
+}
+body:not(.admin-page) .leaderboard-table .leaderboard-points small{
+  margin-top:3px;font-size:7px;line-height:1.1;
+}
+@media(max-width:560px){
+  body:not(.admin-page) .leaderboard-table .leaderboard-row{
+    grid-template-columns:24px minmax(0,1fr) 54px;min-height:44px;
+    gap:8px;padding:6px 9px;
+  }
+  body:not(.admin-page) .leaderboard-table .leaderboard-rank{font-size:14px}
+  body:not(.admin-page) .leaderboard-table .leaderboard-name{font-size:11px}
+  body:not(.admin-page) .leaderboard-table .leaderboard-sub{font-size:8px}
+  body:not(.admin-page) .leaderboard-table .leaderboard-points{font-size:12px}
+}

@@ -114,9 +114,9 @@
       host.innerHTML=rows.map(([day,items])=>{
         const d=new Date(day+"T12:00:00+05:30"), temps=items.map(x=>x.temp).filter(Number.isFinite), rain=items.reduce((s,x)=>s+x.rain,0), risk=Math.max(...items.map(x=>x.prob)), representative=items.reduce((best,x)=>x.prob>best.prob?x:best,items[0]), label=labels[d.getDay()];
         const riskClass=risk>=70?"high":risk>=40?"medium":"low";
-        return '<article class="fz-weather-day"><div class="fz-weather-date"><b>'+label+'</b><small>'+day.slice(8,10)+'/'+day.slice(5,7)+'</small></div><div class="fz-weather-condition"><span>'+icon(representative.code)+'</span><small>'+weatherName(representative.code)+'</small></div><div class="fz-weather-temp"><b>'+Math.round(Math.min(...temps))+'°–'+Math.round(Math.max(...temps))+'°</b><small>TEMP</small></div><div class="fz-weather-rain"><b class="'+riskClass+'">'+risk+'%</b><small>RAIN RISK</small></div><div class="fz-weather-mm"><b>'+rain.toFixed(1)+' <i>mm</i></b><small>EXPECTED</small></div></article>';
+        return '<article class="fz-weather-day"><div class="fz-weather-date"><b>'+label+'</b><small>'+day.slice(8,10)+'/'+day.slice(5,7)+'</small></div><span class="fz-weather-icon" aria-hidden="true">'+icon(representative.code)+'</span><b class="fz-weather-temp">'+Math.round(Math.min(...temps))+'°–'+Math.round(Math.max(...temps))+'°</b><span class="fz-weather-rain '+riskClass+'">☂ '+risk+'% · '+rain.toFixed(1)+'mm</span></article>';
       }).join("");
-      $("#fzWeatherUpdated").textContent="SESSION HOURS ONLY · UPDATED "+new Intl.DateTimeFormat("en-LK",{timeZone:"Asia/Colombo",hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date());
+      $("#fzWeatherUpdated").textContent="UPDATED "+new Intl.DateTimeFormat("en-LK",{timeZone:"Asia/Colombo",hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date());
     }catch(error){
       console.warn("FIELDZERO weather forecast unavailable:",error);
       host.innerHTML='<div class="fz-weather-loading">FIELD FORECAST TEMPORARILY UNAVAILABLE · PLEASE CHECK AGAIN</div>';

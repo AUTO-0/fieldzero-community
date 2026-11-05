@@ -476,3 +476,44 @@ body:not(.admin-page) .monthly-mvp-copy small{margin-top:14px;color:#d7b45a;font
 @media(max-width:620px){body:not(.admin-page) .monthly-mvp-card{grid-template-columns:1fr}body:not(.admin-page) .monthly-mvp-photo,body:not(.admin-page) .monthly-mvp-photo img{min-height:210px;max-height:260px}}
 
 .fz-marketing-table{display:grid;gap:0;border:1px solid rgba(200,243,106,.16);border-radius:12px;overflow:hidden}.fz-marketing-row{display:grid;grid-template-columns:1.5fr .7fr .7fr .9fr;gap:10px;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.07);font-size:.82rem}.fz-marketing-row:last-child{border-bottom:0}.fz-marketing-head{background:rgba(200,243,106,.07);color:#c8f36a;font-size:.68rem;letter-spacing:.1em;font-weight:800}.fz-marketing-row span:not(:first-child){font-variant-numeric:tabular-nums}.fz-marketing-row b{font-weight:700}@media(max-width:560px){.fz-marketing-row{grid-template-columns:1.15fr .55fr .55fr .8fr;gap:6px;padding:10px 8px;font-size:.72rem}.fz-marketing-head{font-size:.58rem}}
+
+
+/* FIELDZERO MEMBERSHIP SYSTEM */
+body:not(.admin-page) .fz-membership-section{background:radial-gradient(circle at 90% 0%,rgba(200,243,106,.09),transparent 32%),linear-gradient(145deg,#101a13,#080d09);border-top:1px solid rgba(200,243,106,.16)}
+.fz-membership-plan-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.fz-membership-plan-card{position:relative;padding:25px;background:linear-gradient(155deg,#1d2a20,#0d150f);border:1px solid rgba(200,243,106,.2);box-shadow:0 18px 42px rgba(0,0,0,.2);display:flex;flex-direction:column;min-height:290px}
+.fz-membership-plan-card.featured{border-color:rgba(200,243,106,.7);box-shadow:inset 0 2px #c8f36a,0 22px 48px rgba(0,0,0,.25)}
+.fz-membership-plan-kicker{font-size:9px;letter-spacing:2px;color:#c8f36a;font-weight:900}
+.fz-membership-plan-card h3{font:900 clamp(27px,3vw,38px)/.95 'Barlow Condensed',sans-serif;margin:17px 0 8px;color:#f0f4e9}
+.fz-membership-plan-price{font:900 31px/1 'Barlow Condensed',sans-serif;color:#c8f36a;margin:9px 0}
+.fz-membership-plan-meta{font-size:10px;color:#aeb9a8;letter-spacing:1px}
+.fz-membership-plan-card ul{padding-left:17px;color:#c8d2c2;font-size:12px;line-height:1.9;margin:18px 0 24px}
+.fz-membership-plan-card li::marker{color:#c8f36a}
+.fz-membership-plan-card .button{margin-top:auto;align-self:flex-start}
+.fz-membership-note{margin-top:22px;padding:20px;display:grid;grid-template-columns:1fr 2fr auto;gap:18px;align-items:center;border:1px solid rgba(200,243,106,.22);background:rgba(200,243,106,.045)}
+.fz-membership-note b{color:#c8f36a;font-size:10px;letter-spacing:2px}.fz-membership-note span{color:#b9c5b3;font-size:12px;line-height:1.8}
+.fz-member-membership-panel{border-color:rgba(200,243,106,.35);background:linear-gradient(120deg,rgba(200,243,106,.07),rgba(18,29,20,.95))}
+.fz-member-membership-content{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:14px;padding:18px 0 4px}
+.fz-member-membership-content>div{display:flex;flex-direction:column;gap:7px;min-width:0}
+.fz-member-membership-content small{font-size:9px;letter-spacing:1.3px;color:#9ead98}
+.fz-member-membership-content b{font-size:13px;color:#edf4e8;overflow-wrap:anywhere}
+.profile-membership{display:inline-flex;align-items:center;gap:8px;margin:13px 0 2px;padding:7px 11px;border:1px solid rgba(200,243,106,.35);background:rgba(200,243,106,.08);color:#d8f99c;font-size:10px;font-weight:900;letter-spacing:1.2px}
+.fz-membership-verify-modal{position:fixed;z-index:99999;inset:0;background:rgba(0,0,0,.84);display:grid;place-items:center;padding:20px}
+.fz-membership-verify-modal[hidden]{display:none}
+.fz-membership-verify-card{position:relative;width:min(480px,100%);padding:30px;background:linear-gradient(145deg,#1c2a20,#090f0b);border:1px solid rgba(200,243,106,.5);box-shadow:0 30px 90px #000}
+.fz-membership-verify-card>span{color:#c8f36a;font-size:9px;letter-spacing:2px;font-weight:900}
+.fz-membership-verify-card h2{font:900 34px/1 'Barlow Condensed',sans-serif;margin:16px 0;color:#f0f4e9}
+.fz-membership-verify-card p{color:#c4cebd;font-size:13px;line-height:1.7}
+.fz-membership-verify-card #fzMembershipVerifyDetails{padding:14px;margin-top:16px;background:rgba(255,255,255,.04);color:#e6eddf;font-size:12px;line-height:1.9}
+#fzMembershipVerifyClose{position:absolute;right:12px;top:8px;background:none;border:0;color:#fff;font-size:28px;cursor:pointer}
+.fz-membership-plan-admin{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:13px;border-bottom:1px solid rgba(255,255,255,.08)}
+.fz-membership-plan-admin b,.fz-membership-plan-admin small{display:block}.fz-membership-plan-admin small{color:#aab6a4;margin-top:5px}
+.fz-membership-admin-actions{display:flex;gap:7px;flex-wrap:wrap}
+.fz-membership-admin-row{display:grid;grid-template-columns:1.2fr 1fr .8fr 1fr auto;gap:10px;align-items:center;padding:13px;border-bottom:1px solid rgba(255,255,255,.08);font-size:12px}
+.fz-membership-admin-row small{display:block;color:#aab6a4;margin-top:4px}
+.fz-membership-card-preview{position:relative;overflow:hidden;width:min(430px,100%);aspect-ratio:85.6/54;margin-top:18px;padding:22px;background:linear-gradient(125deg,#0a100c 0%,#243225 65%,#111a12 100%);border:1px solid rgba(200,243,106,.6);box-shadow:0 18px 42px rgba(0,0,0,.3);display:flex;flex-direction:column;justify-content:space-between;color:#eef5e8}
+.fz-membership-card-preview:after{content:"";position:absolute;width:180px;height:180px;border:1px solid rgba(200,243,106,.2);border-radius:50%;right:-45px;top:-70px;box-shadow:0 0 0 18px rgba(200,243,106,.035),0 0 0 38px rgba(200,243,106,.025)}
+.fz-membership-card-preview span{font:900 34px 'Barlow Condensed',sans-serif;color:#c8f36a}.fz-membership-card-preview b{font:900 28px 'Barlow Condensed',sans-serif;letter-spacing:2px}.fz-membership-card-preview small{font-size:8px;letter-spacing:2px;color:#b8c6ae}
+#fzMembershipQrWork{position:absolute;left:-9999px;top:-9999px;width:260px;height:260px;overflow:hidden}
+@media(max-width:800px){.fz-membership-plan-grid{grid-template-columns:1fr}.fz-membership-note{grid-template-columns:1fr}.fz-member-membership-content{grid-template-columns:1fr 1fr}.fz-membership-admin-row{grid-template-columns:1fr 1fr}.fz-membership-admin-row .fz-membership-admin-actions{grid-column:1/-1}}
+@media(max-width:520px){.fz-member-membership-content{grid-template-columns:1fr 1fr}.fz-membership-card-preview{padding:16px}.fz-membership-card-preview b{font-size:24px}}

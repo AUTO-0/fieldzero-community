@@ -559,3 +559,53 @@ body:not(.admin-page) .fz-membership-section{background:radial-gradient(circle a
 .fz-weather-foot{display:flex;justify-content:space-between;gap:12px;margin-top:12px;color:var(--fz-muted);font:600 8px 'DM Sans',sans-serif;letter-spacing:.08em}
 @media(max-width:720px){.fz-weather-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.fz-weather-day:nth-child(n+5){margin-top:1px}}
 @media(max-width:420px){.fz-weather-strip{width:calc(100% - 24px);padding:14px 11px;margin:18px auto 26px}.fz-weather-hours{display:grid;gap:6px}.fz-weather-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.fz-weather-day{padding:9px 3px}.fz-weather-foot{font-size:7px}}
+
+/* FIELDZERO V1.0 — simpler public experience, compact weather and clearer hierarchy */
+.fz-weather-strip{max-width:1120px;width:calc(100% - 40px);margin:15px auto 24px;padding:10px 13px;border:1px solid rgba(185,255,64,.15);border-radius:10px;background:#172117;box-shadow:none}
+.fz-weather-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.fz-weather-head h2{margin:0;color:#f1f3ec;font:800 17px/1 'Barlow Condensed',sans-serif;letter-spacing:.05em}
+.fz-weather-head h2 span{color:#9eaa98;font-size:13px;font-weight:600}
+.fz-weather-head>small{color:#9eaa98;font:700 8px 'DM Sans',sans-serif;letter-spacing:.1em}
+.fz-weather-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:5px 0 8px;color:#9eaa98;font:600 8px 'DM Sans',sans-serif;letter-spacing:.045em}
+.fz-weather-meta i{font-style:normal;color:#63705e}
+.fz-weather-meta b{margin-left:auto;color:#b9ff40;font-weight:700}
+.fz-weather-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.fz-weather-day{min-width:0;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto;align-items:center;justify-items:start;gap:2px 5px;padding:6px 8px;border:1px solid rgba(255,255,255,.075);border-radius:7px;background:rgba(255,255,255,.025);text-align:left}
+.fz-weather-date{grid-column:1;display:flex;align-items:baseline;gap:5px;color:#f1f3ec;font:800 9px 'DM Sans',sans-serif}
+.fz-weather-date small{color:#8e9a87;font:600 8px 'DM Sans',sans-serif}
+.fz-weather-icon{grid-column:2;grid-row:1;font-size:15px;line-height:1}
+.fz-weather-temp{grid-column:1;grid-row:2;color:#f1f3ec;font:800 10px 'DM Sans',sans-serif;white-space:nowrap}
+.fz-weather-rain{grid-column:2;grid-row:2;color:#b9ff40;font:700 8px 'DM Sans',sans-serif;white-space:nowrap}
+.fz-weather-rain.medium{color:#e4bd64}.fz-weather-rain.high{color:#e58c78}
+.fz-weather-loading{grid-column:1/-1;padding:8px;color:#9eaa98;font:700 9px 'DM Sans',sans-serif;letter-spacing:.08em;text-align:center}
+.fz-weather-hours,.fz-weather-foot,.fz-weather-condition,.fz-weather-temp small,.fz-weather-mm{display:none!important}
+@media(max-width:760px){.fz-weather-strip{width:calc(100% - 28px);margin:12px auto 18px;padding:9px 10px}.fz-weather-grid{display:flex;overflow-x:auto;gap:5px;padding-bottom:2px;scroll-snap-type:x mandatory;scrollbar-width:thin}.fz-weather-day{flex:0 0 94px;scroll-snap-align:start}.fz-weather-head>small{font-size:7px}.fz-weather-meta{font-size:7px;gap:5px}}
+@media(max-width:420px){.fz-weather-head h2{font-size:15px}.fz-weather-head h2 span{font-size:11px}.fz-weather-meta b{margin-left:0}.fz-weather-day{flex-basis:90px}}
+/* Consistent, quiet visual hierarchy across the public site */
+.section{padding-top:clamp(62px,7vw,88px);padding-bottom:clamp(62px,7vw,88px)}
+.section-heading{gap:clamp(20px,4vw,48px);margin-bottom:clamp(28px,4vw,40px)}
+.section-heading>p{max-width:420px}
+.button{min-height:44px;border-radius:5px;transition:background .18s ease,border-color .18s ease,color .18s ease,transform .18s ease}
+.button:hover{transform:translateY(-1px)}
+.button:focus-visible,.site-header a:focus-visible,.menu-toggle:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--lime);outline-offset:3px}
+.site-header{box-shadow:0 5px 20px rgba(0,0,0,.12)}
+.site-header nav{gap:clamp(12px,1.7vw,24px);font-size:9px}
+.site-header nav a{white-space:nowrap}
+.nav-book{color:var(--lime)!important}
+.nav-cta{border-radius:4px}
+.hero{min-height:620px}
+.hero-content{max-width:1040px}
+.hero-copy{max-width:470px;line-height:1.7}
+.hero-note{margin-top:40px}
+.mode-card,.package-card,.event-card,.field-card,.gallery-card,.team-card,.leaderboard-card,.faq-grid details{border-radius:9px;overflow:hidden}
+.mode-card:hover,.package-card:hover,.event-card:hover,.field-card:hover{transform:translateY(-2px)}
+.package-card{padding:clamp(19px,2.4vw,26px)}
+.package-card .button{width:100%;margin-top:8px}
+.event-card,.field-card{box-shadow:none}
+.registration-form,.calendar-panel{border-radius:10px}
+input,select,textarea{border-radius:5px}
+input:focus,select:focus,textarea:focus{border-color:#789b46;box-shadow:0 0 0 3px rgba(185,255,64,.1)}
+.fz-membership-plan-card{border-radius:10px}
+.site-footer{row-gap:18px}
+@media(max-width:900px){.site-header nav{gap:10px;font-size:8px}.section{padding-left:clamp(20px,5vw,48px);padding-right:clamp(20px,5vw,48px)}}
+@media(max-width:640px){.hero{min-height:560px;height:calc(100svh - 68px)}.hero-note{margin-top:28px}.section{padding:56px 18px}.section-heading h2{font-size:clamp(46px,13vw,66px)}.section-heading>p{font-size:12px;line-height:1.75}.hero-actions .button{min-height:46px}.package-card .button{width:100%}}

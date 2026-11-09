@@ -54,7 +54,7 @@
   }));
   document.querySelectorAll(".package-request[data-package]").forEach(link => link.addEventListener("click", () => {
     const experience = $("#bookingExperience");
-    if (experience) experience.value = link.dataset.package;
+    if (experience){experience.value=link.dataset.package;experience.dispatchEvent(new Event('change',{bubbles:true}));}
   }));
 
   function safeWhatsApp(url) {

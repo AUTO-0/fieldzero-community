@@ -713,3 +713,9 @@ body:not(.admin-page) .leaderboard-table .leaderboard-points small{
   body:not(.admin-page) .leaderboard-table .leaderboard-sub{font-size:8px}
   body:not(.admin-page) .leaderboard-table .leaderboard-points{font-size:12px}
 }
+
+/* FIELDZERO / clear booking-first experience */
+.fz-booking-arrival{margin:16px 0 8px;padding:13px 16px;border-left:3px solid var(--fz-lime);background:rgba(185,255,64,.07);color:var(--fz-paper);font-size:13px;line-height:1.6}
+.fz-booking-arrival strong{color:var(--fz-lime)}
+.arena-slots{grid-template-columns:repeat(auto-fit,minmax(104px,1fr))}
+@media(max-width:620px){.arena-slots{grid-template-columns:repeat(3,minmax(0,1fr))}.hero-copy{max-width:35ch}.fz-booking-arrival{font-size:12px}}

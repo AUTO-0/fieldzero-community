@@ -180,7 +180,7 @@
   let fzModeCatalog=[];
   const fzModeByName=name=>fzModeCatalog.find(m=>m.package_name===name);
   const fzTodaySL=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Colombo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-  const fzIsBeforeOpening=fieldId=>publicFields.find(f=>f.id===fieldId)?.is_main&&fzTodaySL()<String(siteSettings?.launch_date||'2026-12-10');
+  const fzIsBeforeOpening=fieldId=>{const f=publicFields.find(x=>x.id===fieldId);return (f?.is_main||(!fieldId&&!publicFields.length))&&fzTodaySL()<String(siteSettings?.launch_date||'2026-12-10');};
   const fzAdvanceAmount=fieldId=>fzIsBeforeOpening(fieldId)?0:500;
   function fzUpdateBookingPaymentCopy(){
     const isFree=fzAdvanceAmount($("#arenaFieldSelect")?.value)===0;
@@ -192,6 +192,7 @@
     if(button&&!button.disabled)button.textContent=isFree?'RESERVE NOW · NO DEPOSIT ↗':'REQUEST SLOT & DEPOSIT DETAILS ↗';
     const process=$(".process-grid article:nth-child(3) p");
     if(process)process.textContent=isFree?'Before opening: receive your reservation reference and booking PDF without paying a deposit. Standard bookings are held for you; special requests require owner approval.':'Your booking PDF includes the deposit instructions. Confirmation follows LKR 500 advance verification.';
+    document.querySelectorAll('.field-deposit-rate').forEach(el=>{el.textContent=isFree?'Pre-launch: reserve with no deposit · session fee paid at field':'LKR 500 booking advance · balance paid at field';});
     const overview=document.querySelector('.fz26-at-a-glance>div:last-child small');
     if(overview)overview.textContent=isFree?'LKR 0 deposit before opening':'LKR 500 advance after request';
     const legend=document.querySelector('.calendar-legend');

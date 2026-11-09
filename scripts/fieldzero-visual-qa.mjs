@@ -46,10 +46,13 @@ for (const target of targets) {
     const r=section.getBoundingClientRect(), b=entry?.getBoundingClientRect();
     return !!b&&b.width>=180&&b.left>=r.left-1&&b.right<=r.right+1&&b.top>=r.top-1&&b.bottom<=r.bottom+1;
   });
+  const publicLaunchDate=await page.locator('#arenaDate').getAttribute('min');
+  const launchNoticeReady=await page.locator('#fzPrelaunchInfo [data-fz-launch-date]').count()===1;
+  const launchDateValid=Boolean(publicLaunchDate&&publicLaunchDate>='2026-12-10');
   let timePeriodTest='not-run';
   try{
     await page.locator('#arenaDate').evaluate(input=>{
-      const date=new Date();
+      const date=new Date((input.min||'2026-12-10')+'T12:00:00Z');
       date.setUTCDate(date.getUTCDate()+7);
       input.value=date.toISOString().slice(0,10);
       input.dispatchEvent(new Event('change',{bubbles:true}));
@@ -105,13 +108,13 @@ for (const target of targets) {
     }catch(e){menuTest='fail: '+String(e.message).slice(0,120);}
   }
   try{await page.locator('#calendar').screenshot({path:'visual-qa-artifacts/'+target.name+'-booking.png',timeout:20000,animations:'disabled'});}catch(e){errors.push('booking screenshot: '+String(e.message).slice(0,140));}
-  const result={...target,...metrics,horizontalOverflow:metrics.contentWidth>metrics.viewportWidth+2,discoveryLayout,firstVisitUnblocked,packageTest,optionalFieldsTest,specialTimeTest,timePeriodTest,communityEntryTest,deepLinkTest,mobileEntryTest,firstTimerTest,routeTest,hubTest,menuTest,errors};
+  const result={...target,...metrics,horizontalOverflow:metrics.contentWidth>metrics.viewportWidth+2,discoveryLayout,launchDateValid,launchNoticeReady,publicLaunchDate,firstVisitUnblocked,packageTest,optionalFieldsTest,specialTimeTest,timePeriodTest,communityEntryTest,deepLinkTest,mobileEntryTest,firstTimerTest,routeTest,hubTest,menuTest,errors};
   results.push(result);
   console.log('VISUAL_QA '+JSON.stringify(result));
   await page.close();
 }
 await browser.close();
 await fs.writeFile('visual-qa-artifacts/report.json',JSON.stringify(results,null,2));
-const failure=results.some(r=>r.horizontalOverflow||!r.discoveryLayout||r.timePeriodTest!=='pass'||r.communityEntryTest!=='pass'||r.deepLinkTest!=='pass'||r.mobileEntryTest==='fail'||r.firstTimerTest!=='pass'||!r.firstVisitUnblocked||r.packageTest!=='pass'||r.optionalFieldsTest!=='pass'||r.specialTimeTest!=='pass'||!r.cssLoaded||!r.hero||!r.selector||r.quickStartCount!==3||r.communityCount<5||r.routeTest!=='pass'||r.hubTest!=='pass'||r.menuTest==='fail'||r.errors.length);
+const failure=results.some(r=>r.horizontalOverflow||!r.launchDateValid||!r.launchNoticeReady||!r.discoveryLayout||r.timePeriodTest!=='pass'||r.communityEntryTest!=='pass'||r.deepLinkTest!=='pass'||r.mobileEntryTest==='fail'||r.firstTimerTest!=='pass'||!r.firstVisitUnblocked||r.packageTest!=='pass'||r.optionalFieldsTest!=='pass'||r.specialTimeTest!=='pass'||!r.cssLoaded||!r.hero||!r.selector||r.quickStartCount!==3||r.communityCount<5||r.routeTest!=='pass'||r.hubTest!=='pass'||r.menuTest==='fail'||r.errors.length);
 if(failure){console.error('FIELDZERO visual QA detected layout or browser issues.');process.exit(1);}
 console.log('FIELDZERO visual QA passed for desktop, mobile, tablet and narrow mobile.');

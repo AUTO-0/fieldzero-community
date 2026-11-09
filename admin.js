@@ -792,6 +792,7 @@
     ${needsAdvance?'<button class="button button-lime" id="fzRecord500Advance">RECORD LKR 500 ADVANCE & CONFIRM</button>':''}
     ${b.status==='pending_payment'&&inv&&Number(inv.amount_paid||0)>=500&&!b.advance_verified_at?'<button class="button button-lime" id="fzConfirmAfterAdvance">CONFIRM AFTER ADVANCE</button>':''}
     ${isConfirmed?'<button class="button button-ghost" id="fzReprintPass">DOWNLOAD BOOKING PASS</button>':''}
+    ${zeroDeposit&&isConfirmed&&!b.invoice_id?'<button class="button button-lime" id="fzZeroDepositInvoice">PREPARE SESSION INVOICE · NO DEPOSIT</button>':''}
     ${b.invoice_id&&isConfirmed?`<button class="button button-lime" id="fzCheckoutEdit">${checkoutReady?'EDIT FINAL BILL / EXTRAS':'ADD SESSION FEE & EXTRAS'}</button>`:''}
     ${b.invoice_id&&checkoutReady&&balance>0.005?'<button class="button button-lime" id="fzRecordBookingPayment">RECORD PAYMENT / MARK AS PAID</button>':''}
     ${b.invoice_id&&fullyPaid?'<button class="button button-lime" id="fzShareBookingInvoice">SEND FINAL PAID INVOICE VIA WHATSAPP</button>':''}
@@ -802,6 +803,7 @@
   $('#fzConfirmAfterAdvance')?.addEventListener('click',()=>fzConfirmExistingAdvance(b));
   $('#fzRecordBookingPayment')?.addEventListener('click',()=>fzPrepareBookingPayment(b));
   $('#fzCheckoutEdit')?.addEventListener('click',()=>fzOpenCheckoutEditor(b));
+  $('#fzZeroDepositInvoice')?.addEventListener('click',()=>fzCreateNoDepositInvoice(b));
   $('#fzShareBookingInvoice')?.addEventListener('click',()=>fzShareBookingInvoice(b));
   $('#fzRequestPdf')?.addEventListener('click',()=>fzGenerateAdvanceRequestPdf(b));
   $('#fzRefreshBookingDocuments')?.addEventListener('click',()=>fzLoadBookingDocuments(b,inv));
@@ -938,6 +940,28 @@
   if(error){alert(error.message);return;}
   const fresh={...b,status:'approved'};await fzGenerateAdminPass(fresh);await fzLoadBookingDays();await fzSelectBooking(b.id);
  }
+ async function fzCreateNoDepositInvoice(b){
+  if(Number(b.deposit_required_amount)!==0||b.status!=='approved'||b.invoice_id){
+    alert('Only an accepted reservation without a deposit and without an invoice can use this action.');return;
+  }
+  const proposed=Number(b.quoted_amount||0);
+  const entered=prompt('Total session fee in LKR for '+(b.booking_reference||'this booking')+' (extras can be added later):',
+    proposed>0?proposed.toFixed(2):'');
+  if(entered===null)return;
+  const amount=Number(String(entered).replace(/,/g,'').trim());
+  if(!Number.isFinite(amount)||amount<=0||amount>10000000){
+    alert('Enter a valid positive total price in LKR. A custom session must have an agreed price before invoicing.');return;
+  }
+  const button=$('#fzZeroDepositInvoice');if(button){button.disabled=true;button.textContent='CREATING INVOICE…';}
+  const {data,error}=await db.rpc('fz_admin_create_no_deposit_booking_invoice',
+    {p_booking_id:b.id,p_total_amount:amount});
+  if(button){button.disabled=false;button.textContent='PREPARE SESSION INVOICE · NO DEPOSIT';}
+  if(error){msg($('#adminStatus'),adminError(error),'error');return;}
+  if(!data){msg($('#adminStatus'),'The invoice ID could not be loaded. Refresh the booking before trying again.','error');return;}
+  msg($('#adminStatus'),'Session invoice created without collecting a deposit. Open the booking to add extras and finalize the bill when the customer attends.','success');
+  await Promise.all([loadFinanceInvoices(),loadFinanceDashboard(),fzLoadBookingDays()]);
+  await fzSelectBooking(b.id);
+ }
  async function fzPrepareBookingPayment(b){return fzOpenBookingPaymentPanel(b,'final');}
  async function fzOpenBookingPaymentPanel(b,mode='final'){
   const host=$('#fzBookingPaymentPanel');if(!host)return;
@@ -1044,7 +1068,7 @@
   let rows=(data||[]).filter(x=>!String(x.description||'').toLowerCase().includes('booking advance / reservation deposit'));
   if(!rows.length)rows=[{description:b.experience||'Field session / package',quantity:1,unit_price:0}];
   const rowHtml=(r={description:'Additional item',quantity:1,unit_price:0})=>`<div class="fz-checkout-row"><input data-checkout-description maxlength="180" aria-label="Item description" value="${esc(r.description)}" placeholder="Session fee / item"><input data-checkout-quantity type="number" min="0.01" step="0.01" aria-label="Quantity" value="${Number(r.quantity||1)}"><input data-checkout-price type="number" min="0" step="0.01" aria-label="Unit price in LKR" value="${Number(r.unit_price||0)}"><button type="button" class="button button-danger" data-checkout-remove>REMOVE</button></div>`;
-  host.innerHTML=`<section class="fz-checkout-editor"><div class="fz-checkout-title"><div><b>FINAL CHECKOUT BILL</b><small>Add the actual session/package fee and any rentals, drinks or other extras. The LKR 500 advance stays credited to this invoice.</small></div><button type="button" class="button button-ghost" id="fzCheckoutClose">CLOSE</button></div><div class="fz-checkout-head"><span>DESCRIPTION</span><span>QTY</span><span>UNIT PRICE (LKR)</span><span></span></div><div id="fzCheckoutRows">${rows.map(rowHtml).join('')}</div><div class="fz-checkout-controls"><button type="button" class="button button-ghost" id="fzCheckoutAdd">+ ADD ITEM</button><label>DISCOUNT (LKR)<input id="fzCheckoutDiscount" type="number" min="0" step="0.01" value="${currentDiscount.toFixed(2)}"></label><label>TAX (%)<input id="fzCheckoutTax" type="number" min="0" max="100" step="0.01" value="${currentTax.toFixed(2)}"></label></div><div class="fz-checkout-estimate" id="fzCheckoutEstimate">ESTIMATED TOTAL · LKR 0.00</div><div class="fz-checkout-footer"><span>After saving, the payment form opens here. A final paid invoice is prepared when the remaining balance is received.</span><button type="button" class="button button-lime" id="fzCheckoutSave">SAVE BILL & CONTINUE TO PAYMENT</button></div><div class="form-status" id="fzCheckoutStatus" role="status"></div></section>`;
+  host.innerHTML=`<section class="fz-checkout-editor"><div class="fz-checkout-title"><div><b>FINAL CHECKOUT BILL</b><small>Add the actual session/package fee and any rentals, drinks or other extras. Any advance already received is credited to the invoice. Zero-deposit pre-launch bookings have no advance to deduct.</small></div><button type="button" class="button button-ghost" id="fzCheckoutClose">CLOSE</button></div><div class="fz-checkout-head"><span>DESCRIPTION</span><span>QTY</span><span>UNIT PRICE (LKR)</span><span></span></div><div id="fzCheckoutRows">${rows.map(rowHtml).join('')}</div><div class="fz-checkout-controls"><button type="button" class="button button-ghost" id="fzCheckoutAdd">+ ADD ITEM</button><label>DISCOUNT (LKR)<input id="fzCheckoutDiscount" type="number" min="0" step="0.01" value="${currentDiscount.toFixed(2)}"></label><label>TAX (%)<input id="fzCheckoutTax" type="number" min="0" max="100" step="0.01" value="${currentTax.toFixed(2)}"></label></div><div class="fz-checkout-estimate" id="fzCheckoutEstimate">ESTIMATED TOTAL · LKR 0.00</div><div class="fz-checkout-footer"><span>After saving, the payment form opens here. A final paid invoice is prepared when the remaining balance is received.</span><button type="button" class="button button-lime" id="fzCheckoutSave">SAVE BILL & CONTINUE TO PAYMENT</button></div><div class="form-status" id="fzCheckoutStatus" role="status"></div></section>`;
   const rowsHost=$('#fzCheckoutRows');
   const updateEstimate=()=>{const subtotal=[...rowsHost.querySelectorAll('.fz-checkout-row')].reduce((sum,row)=>sum+Number(row.querySelector('[data-checkout-quantity]').value||0)*Number(row.querySelector('[data-checkout-price]').value||0),0);const discount=Number($('#fzCheckoutDiscount').value||0),tax=Number($('#fzCheckoutTax').value||0),total=Math.max(0,subtotal-discount)+Math.round(Math.max(0,subtotal-discount)*tax)/100;$('#fzCheckoutEstimate').textContent=`ESTIMATED TOTAL · ${financeFmt(total)} · ALREADY RECEIVED ${financeFmt(alreadyPaid)} · ESTIMATED BALANCE ${financeFmt(Math.max(0,total-alreadyPaid))}`;};
   $('#fzCheckoutAdd').addEventListener('click',()=>{rowsHost.insertAdjacentHTML('beforeend',rowHtml());updateEstimate();});

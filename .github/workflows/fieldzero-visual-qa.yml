@@ -8,6 +8,10 @@ on:
       - 'franchise.css'
       - 'experience-2026.css'
       - 'app.js'
+      - 'admin.html'
+      - 'admin.js'
+      - 'admin-workspace.js'
+      - 'launch-console.css'
       - 'scripts/fieldzero-visual-qa.mjs'
       - '.github/workflows/fieldzero-visual-qa.yml'
 jobs:

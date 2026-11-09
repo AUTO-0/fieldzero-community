@@ -1,0 +1,40 @@
+name: FIELDZERO desktop and mobile visual QA
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'index.html'
+      - 'styles.css'
+      - 'franchise.css'
+      - 'experience-2026.css'
+      - 'app.js'
+      - 'scripts/fieldzero-visual-qa.mjs'
+      - '.github/workflows/fieldzero-visual-qa.yml'
+jobs:
+  visual-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser automation
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Serve the website locally
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/fz-static.log 2>&1 &
+          sleep 2
+      - name: Test responsive layouts and booking UI
+        run: node scripts/fieldzero-visual-qa.mjs
+      - name: Save desktop and mobile screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fieldzero-responsive-qa
+          path: visual-qa-artifacts/
+          retention-days: 14

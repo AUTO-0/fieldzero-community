@@ -595,12 +595,12 @@
       ['EXPERIENCE',`${b.experience||'Field session'} · ${Number(b.player_count||1)} player(s)`],
       ['REQUEST TYPE',b.special_request?'SPECIAL REQUEST · FIELD REVIEW REQUIRED':'STANDARD BOOKING REQUEST']
     ];
-    let y=137;
+    let y=133;
     rows.forEach((r,i)=>{
       if(i%2===0){doc.setFillColor(...light);doc.roundedRect(14,y-6,182,12,1,1,'F');}
       doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...muted);doc.text(r[0],19,y+1);
       doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...dark);doc.text(doc.splitTextToSize(String(r[1]),116),78,y+1);
-      y+=14;
+      y+=12;
     });
     doc.setFillColor(...dark);doc.roundedRect(14,244,182,30,2,2,'F');
     doc.setTextColor(...lime);doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text('HOW TO PAY THE LKR 500 ADVANCE',20,254);

@@ -1,0 +1,38 @@
+/* FIELDZERO CENTRAL CONTROL / PRE-LAUNCH */
+.fz-launch-desk{margin:22px 0 34px;padding:clamp(18px,3vw,30px);border-radius:17px;border:1px solid #62714d;background:linear-gradient(135deg,#1e2d20,#111d15);box-shadow:0 18px 54px rgba(0,0,0,.16);color:#eef2e9}
+.fz-launch-desk *{box-sizing:border-box}
+.fz-launch-desk-head{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;padding-bottom:22px;border-bottom:1px solid #425142}
+.fz-launch-desk .section-kicker{color:#c1f07e;letter-spacing:.15em}
+.fz-launch-desk h2{font:900 clamp(37px,4vw,60px)/.9 'Barlow Condensed',sans-serif;color:#f0f5ec;margin:8px 0 12px}
+.fz-launch-desk h2 em{color:#c3ed7b;font-style:normal}
+.fz-launch-desk p{font-size:12px;line-height:1.8;color:#bfcbb9;margin:0}
+.fz-main-field-status{min-width:170px;display:flex;flex-direction:column;gap:7px;padding:15px;background:#263a29;border-radius:10px}
+.fz-main-field-status span{font-size:9px;color:#c9ef97;font-weight:800;letter-spacing:.13em}
+.fz-main-field-status b{font:800 14px/1.3 'Barlow Condensed',sans-serif}
+.fz-main-field-status small{font:600 10px/1.4 'DM Sans',sans-serif;color:#b4c4ae}
+.fz-launch-desk-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(285px,.8fr);gap:24px;margin-top:24px}
+.fz-main-field-form,.fz-launch-manager{border-radius:12px;border:1px solid #3d523e;padding:22px;background:rgba(3,10,5,.24);min-width:0}
+.fz-main-field-form h3,.fz-launch-manager h3{font:900 30px/1 'Barlow Condensed',sans-serif;color:#ecf7e3;margin:0 0 9px}
+.fz-main-field-form .fz-field-note{margin-bottom:20px}
+.fz-launch-desk label{display:flex;flex-direction:column;gap:7px;margin:13px 0;font:800 10px/1.4 'DM Sans',sans-serif;letter-spacing:.06em;color:#d5e8c8}
+.fz-launch-desk label input,.fz-launch-desk label textarea{font:500 13px/1.5 'DM Sans',sans-serif;letter-spacing:normal;background:#f4f7ed;border:1px solid #a5b99b;color:#1b301e;border-radius:8px;padding:13px;width:100%;min-width:0;max-width:100%}
+.fz-launch-desk label input:focus,.fz-launch-desk label textarea:focus{outline:2px solid #c0f381}
+.fz-launch-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.fz-main-field-buttons{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:22px}
+.fz-main-field-buttons .button,.fz-launch-manager .button{border-radius:100px}
+.fz-main-field-buttons a{color:#c5ed94;font-size:10px;font-weight:800}
+.fz-field-caution{margin-top:18px!important;color:#d7cb99!important}
+.fz-launch-manager{background:radial-gradient(circle at 95% 5%,rgba(196,243,122,.12),transparent 43%),#131f15}
+.fz-launch-tag{color:#c5f286;font-size:10px;letter-spacing:.15em;font-weight:800;margin-bottom:20px}
+.fz-launch-manager h3{font-size:52px;color:#c8f786;margin-bottom:14px}
+.fz-launch-manager form{margin-top:23px}
+.fz-launch-admin-links{display:flex;gap:10px 15px;flex-wrap:wrap;margin:20px 0}
+.fz-launch-admin-links a{color:#b7de84;font-weight:800;font-size:10px}
+.fz-launch-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:22px 0}
+.fz-launch-metrics article{padding:14px 10px;border-radius:9px;background:#2a3929;border:1px solid #455947;display:flex;flex-direction:column;gap:7px}
+.fz-launch-metrics b{font:900 29px 'Barlow Condensed',sans-serif;color:#d4fa93}
+.fz-launch-metrics span{font:700 9px/1.35 'DM Sans',sans-serif;color:#c1ccb8;letter-spacing:.06em}
+.fz-launch-manager>small{display:block;color:#bdcdb8;font-size:10px;line-height:1.7}
+.fz-launch-desk .form-status{margin-top:12px;line-height:1.55;white-space:normal;overflow-wrap:anywhere}
+@media(max-width:900px){.fz-launch-desk-grid{grid-template-columns:1fr}.fz-launch-desk-head{align-items:stretch}.fz-main-field-status{min-width:145px}}
+@media(max-width:570px){.fz-launch-desk{padding:15px;margin:13px 0 24px}.fz-launch-desk-head{flex-direction:column}.fz-main-field-status{width:100%}.fz-main-field-form,.fz-launch-manager{padding:16px}.fz-launch-desk-grid{gap:15px;margin-top:16px}.fz-launch-manager h3{font-size:45px}.fz-main-field-buttons .button{width:100%;text-align:center}.fz-launch-two{grid-template-columns:1fr}}

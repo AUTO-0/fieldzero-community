@@ -217,12 +217,34 @@
     if (error) { console.warn("FIELDZERO session prices unavailable; static prices remain visible.", error.message); return; }
     renderSessionPrices(data || []);
   }
+  function fzFormatPublicLaunchDate(value){
+    const date=/^\d{4}-\d{2}-\d{2}$/.test(String(value||''))?value:'2026-12-10';
+    try{return new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(date+'T12:00:00Z'));}catch{return '10 December 2026';}
+  }
+  function fzApplyPublicLaunchDate(){
+    const planned=String(siteSettings?.launch_date||'2026-12-10');
+    const text=fzFormatPublicLaunchDate(planned);
+    document.querySelectorAll('[data-fz-launch-date]').forEach(el=>{el.textContent=text;});
+    const label=$('#fzLaunchBookingNote');
+    if(label)label.textContent='Planned opening '+text+' · register now · request sessions from opening day onward.';
+    const dateInput=$('#arenaDate');
+    if(dateInput){
+      const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Colombo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+      const min=today>planned?today:planned;
+      dateInput.min=min;
+      if(!dateInput.value||dateInput.value<min){
+        dateInput.value=min;
+        dateInput.dispatchEvent(new Event('change',{bubbles:true}));
+      }
+    }
+  }
   async function loadSiteSettings() {
     if (!db) { renderSocialLinks({}); siteSettingsReady = true; return; }
-    const {data,error} = await db.from("public_site_settings").select("opening_soon_enabled,opening_soon_title,opening_soon_message,instagram_url,facebook_url,tiktok_url").eq("id",1).maybeSingle();
+    const {data,error} = await db.from("public_site_settings").select("opening_soon_enabled,opening_soon_title,opening_soon_message,instagram_url,facebook_url,tiktok_url,launch_date").eq("id",1).maybeSingle();
     if (!error) siteSettings = data || {opening_soon_enabled:true,opening_soon_title:"OPENING SOON",opening_soon_message:"FIELDZERO is preparing for deployment. Register your callsign now to join the community and receive launch updates."};
     else { console.warn("FIELDZERO site settings unavailable. Apply the V9 migration.", error.message); siteSettings = {opening_soon_enabled:false}; renderSocialLinks({}); }
     renderSocialLinks(siteSettings);
+    fzApplyPublicLaunchDate();
     siteSettingsReady = true;
     maybeShowAnnouncement();
   }
@@ -559,7 +581,7 @@
   const localISO = d => new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Colombo",year:"numeric",month:"2-digit",day:"2-digit"}).format(d);
   const slDateTime = (date,hour,minute=0) => new Date(`${date}T${String(hour).padStart(2,"0")}:${String(minute).padStart(2,"0")}:00+05:30`);
   const dateInput = $("#arenaDate");
-  if (dateInput) { dateInput.min=localISO(new Date()); dateInput.value=localISO(new Date()); }
+  if (dateInput) { const earliest=String(siteSettings?.launch_date||'2026-12-10'); const today=localISO(new Date());dateInput.min=earliest>today?earliest:today;dateInput.value=dateInput.min; }
   function openingHours(dateStr) {
     if (!dateStr) return [];
     return Array.from({length:26},(_,i)=>9+i*0.5);
@@ -576,6 +598,7 @@
     const grid=$("#arenaSlots"),select=$("#arenaStartTime");if(!grid||!select)return;
     if(!db){grid.innerHTML='<div class="empty-state">Booking availability is temporarily unavailable.</div>';select.innerHTML='<option value="">Unavailable</option>';return;}
     const req=++fzSlotReq, date=dateInput?.value,field=$("#arenaFieldSelect")?.value;
+    if(date&&date<String(siteSettings?.launch_date||'2026-12-10')){grid.innerHTML='<div class="empty-state">Imbulgoda bookings start on the planned opening date. Choose an opening-day or later session.</div>';select.innerHTML='<option value="">Choose an opening-day or later date</option>';return;}
     if(!date||!field){grid.innerHTML='<div class="empty-state">Choose a field and date to see available times.</div>';select.innerHTML='<option value="">Choose a field and date</option>';return;}
     const hours=openingHours(date),dur=Number($("#arenaDuration").value||1),now=new Date(),closing=slDateTime(date,22);
     const futureHours=hours.filter(h=>{

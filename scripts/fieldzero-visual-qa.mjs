@@ -124,6 +124,8 @@ for (const target of targets) {
   // Visual-only administrator layout audit: no credentials or database writes.
   // Unhide the protected dashboard locally in the test browser only to inspect the form geometry.
   const adminPage=await browser.newPage({viewport:{width:target.width,height:target.height},deviceScaleFactor:1,isMobile:target.name.includes('mobile'),hasTouch:target.name.includes('mobile')});
+  // Visual snapshot only. Suppress background auth callbacks which re-hide the dashboard while photographing it.
+  await adminPage.route('**/*admin.js*',route=>route.abort());
   await adminPage.goto('http://127.0.0.1:8765/admin.html',{waitUntil:'domcontentloaded',timeout:30000});
   await adminPage.waitForTimeout(500);
   await adminPage.evaluate(()=>{

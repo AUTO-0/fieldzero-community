@@ -63,9 +63,11 @@
       ["tiktok_url","tiktok","https://www.tiktok.com/@field.zero8","<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path fill=\"currentColor\" d=\"M19.6 8.2a7.1 7.1 0 0 1-4.3-1.4v7.1a5.8 5.8 0 1 1-5-5.7v3a2.8 2.8 0 1 0 2 2.7V2.8h3a4.2 4.2 0 0 0 4.3 4.1z\"/></svg>"]
     ];
     const links=profiles.map(([key,platform,fallback,icon])=>{
-      const raw=String(settings?.[key]||fallback).trim();
-      let href=fallback;
+      const raw=String(settings?.[key]||(platform==="facebook"?"":fallback)).trim();
+      if(!raw)return "";
+      let href="";
       try{const u=new URL(raw);if(u.protocol==="https:"&&[platform+".com","www."+platform+".com","m."+platform+".com"].includes(u.hostname))href=u.href;}catch{}
+      if(!href)return "";
       return `<a class="social-profile-link social-icon-link social-${platform}" href="${escapeAttr(href)}" target="_blank" rel="noopener noreferrer" aria-label="Follow FIELDZERO on ${platform}" title="${platform.toUpperCase()}">${icon}<span class="social-link-label">${platform.toUpperCase()}</span></a>`;
     });
     const targets=[$("#headerSocialProfiles"),$("#socialProfiles"),$("#footerSocialProfiles")].filter(Boolean);

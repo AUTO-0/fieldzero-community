@@ -283,3 +283,27 @@ body.fz26 .fz26-launch-banner strong{display:block;font-size:9px;}
 body.fz26 .fz26-launch-banner span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal;margin-top:4px;font-size:10px;}
 body.fz26 .fz26-launch-banner button{font-size:9px;max-width:115px;white-space:normal;text-align:right;}
 }
+
+/* Focused conversion: no empty galleries and no five-card wall before the booking calendar. */
+body.fz26 #gallery:has(#galleryGrid .empty-state){display:none;}
+body.fz26 #events:has(#eventsGrid .empty-state){display:none;}
+body.fz26 #packages:not(.fz26-show-all) .package-card:nth-child(n+4){display:none;}
+body.fz26 #packages .fz26-more-packages{display:block;margin:28px auto 0;min-height:45px;padding:12px 22px;border:1px solid #869a7e;border-radius:100px;background:transparent;color:#304e2b;font:800 10px/1.4 "DM Sans",sans-serif;letter-spacing:.09em;cursor:pointer;}
+body.fz26 #packages .fz26-more-packages:hover{background:#e0e7d7;}
+body.fz26 #calendar .booking-form{background:#edf2e8;color:#1a2a1d;}
+body.fz26 #calendar .booking-form .form-top{color:#54733f;}
+body.fz26 #calendar .booking-form .field{color:#334831;}
+body.fz26 #calendar .booking-form input:not([type=checkbox]),body.fz26 #calendar .booking-form select,body.fz26 #calendar .booking-form textarea{background:#fff;color:#1a2c1f;border:1px solid #b8cbb3;}
+body.fz26 #calendar .booking-form .booking-deposit-note{border-radius:12px;}
+body.fz26 #calendar .fz26-booking-extras{margin:22px 0;padding:0 16px;border:1px solid #c7d7c0;border-radius:10px;background:#f8faf3;}
+body.fz26 #calendar .fz26-booking-extras>summary{cursor:pointer;padding:16px 0;color:#365334;font:800 10px/1.5 "DM Sans",sans-serif;letter-spacing:.06em;}
+body.fz26 #calendar .fz26-booking-extras .fz26-extras-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:2px 0 18px;}
+body.fz26 #calendar .fz26-booking-extras .fz26-extras-grid label{min-width:0;}
+body.fz26 #calendar .fz26-booking-extras .fz26-extras-grid label.full{grid-column:1/-1;}
+@media(max-width:700px){
+body.fz26 #packages .package-grid{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;padding:4px 3px 20px;scrollbar-width:thin;}
+body.fz26 #packages .package-card{flex:0 0 min(82vw,320px);min-width:0;scroll-snap-align:start;}
+body.fz26 #packages .fz26-more-packages{margin-top:14px;}
+body.fz26 #calendar .booking-form .form-grid{grid-template-columns:1fr;}
+body.fz26 #calendar .fz26-booking-extras .fz26-extras-grid{grid-template-columns:1fr;}
+}

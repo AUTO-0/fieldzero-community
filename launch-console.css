@@ -36,3 +36,29 @@
 .fz-launch-desk .form-status{margin-top:12px;line-height:1.55;white-space:normal;overflow-wrap:anywhere}
 @media(max-width:900px){.fz-launch-desk-grid{grid-template-columns:1fr}.fz-launch-desk-head{align-items:stretch}.fz-main-field-status{min-width:145px}}
 @media(max-width:570px){.fz-launch-desk{padding:15px;margin:13px 0 24px}.fz-launch-desk-head{flex-direction:column}.fz-main-field-status{width:100%}.fz-main-field-form,.fz-launch-manager{padding:16px}.fz-launch-desk-grid{gap:15px;margin-top:16px}.fz-launch-manager h3{font-size:45px}.fz-main-field-buttons .button{width:100%;text-align:center}.fz-launch-two{grid-template-columns:1fr}}
+
+/* Owner-only editor for public game mode constraints */
+.fz-game-mode-admin{margin:22px 0 32px;padding:clamp(18px,3vw,30px);border:1px solid #4b6946;background:linear-gradient(135deg,#1a271c,#111c14);border-radius:17px;color:#e5f1df;}
+.fz-game-mode-admin *{box-sizing:border-box;}
+.fz-game-admin-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:23px;}
+.fz-game-admin-heading .section-kicker{color:#bdea86;}
+.fz-game-admin-heading h2{font:900 clamp(36px,4vw,58px)/.93 "Barlow Condensed",sans-serif;color:#f1f7ed;margin:9px 0;}
+.fz-game-admin-heading h2 em{font-style:normal;color:#c4ef89;}
+.fz-game-admin-heading p{max-width:760px;font:400 12px/1.7 "DM Sans",sans-serif;color:#becdb7;}
+.fz-game-mode-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.fz-edit-mode{border:1px solid #465e46;background:#223226;border-radius:13px;padding:20px;min-width:0;}
+.fz-edit-mode-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:17px;}
+.fz-edit-mode-top span{font-size:9px;color:#b5d29c;font-weight:800;letter-spacing:.06em;}
+.fz-edit-mode-top h3{font:900 29px/1 "Barlow Condensed",sans-serif;color:#f3f8f0;margin:7px 0 0;}
+.fz-edit-mode-top .fz-mode-status{color:#c2ed8e;border:1px solid #739c59;border-radius:50px;padding:6px 9px;font-size:9px;white-space:nowrap;}
+.fz-edit-mode-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+.fz-edit-mode label{display:flex;flex-direction:column;gap:6px;font:800 10px/1.4 "DM Sans",sans-serif;color:#d2e4cd;letter-spacing:.055em;min-width:0;margin:6px 0;}
+.fz-edit-mode label input,.fz-edit-mode label select,.fz-edit-mode label textarea{width:100%;min-width:0;max-width:100%;border-radius:7px;padding:10px 11px;color:#1d3320;background:#f4f7f0;border:1px solid #a1b59e;font:500 13px/1.5 "DM Sans",sans-serif;letter-spacing:normal;}
+.fz-edit-mode .fz-edit-mode-detail{margin-top:13px;}
+.fz-edit-mode-actions{margin-top:16px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+.fz-edit-mode-actions label.fz-mode-checkbox{display:flex;flex-direction:row;align-items:center;gap:9px;font-size:9px;}
+.fz-edit-mode-actions label.fz-mode-checkbox input{width:17px;height:17px;}
+.fz-edit-mode-actions button{border-radius:100px;font-size:10px;}
+.fz-game-mode-note{font-size:11px;color:#aec5a6;line-height:1.7;margin:17px 0 0;}
+@media(max-width:900px){.fz-game-mode-grid{grid-template-columns:1fr;}}
+@media(max-width:530px){.fz-game-mode-admin{padding:14px}.fz-game-admin-heading{flex-direction:column}.fz-edit-mode{padding:15px}.fz-edit-mode-top{flex-direction:column;gap:4px}.fz-edit-mode-fields{gap:8px}.fz-edit-mode label{font-size:9px}.fz-edit-mode-actions .button{width:100%}}

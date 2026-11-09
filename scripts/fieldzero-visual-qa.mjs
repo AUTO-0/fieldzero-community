@@ -145,7 +145,8 @@ for (const target of targets) {
   });
   const adminView=await adminPage.evaluate(()=>{
     const p=document.querySelector('#fzMainFieldControl'),d=document.querySelector('#dashboard');
-    return {panelDisplay:p?getComputedStyle(p).display:'missing',dashboardDisplay:d?getComputedStyle(d).display:'missing',dashboardHidden:d?.hidden,panelRect:p?.getBoundingClientRect().toJSON()};
+    const ancestors=[];for(let n=p;n&&ancestors.length<8;n=n.parentElement){let r=n.getBoundingClientRect();ancestors.push({tag:n.tagName,id:n.id,cl:n.className,hidden:n.hidden,display:getComputedStyle(n).display,visibility:getComputedStyle(n).visibility,width:r.width,height:r.height});}
+    return {panelDisplay:p?getComputedStyle(p).display:'missing',dashboardDisplay:d?getComputedStyle(d).display:'missing',dashboardHidden:d?.hidden,panelRect:p?.getBoundingClientRect().toJSON(),ancestors};
   });
   console.log('ADMIN_VISUAL_DIAGNOSTIC '+JSON.stringify({name:target.name,...adminView}));
   if(adminMetrics.visible){

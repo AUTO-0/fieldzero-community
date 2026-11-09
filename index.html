@@ -297,6 +297,42 @@
   }
   window.addEventListener('hashchange',openHubForAnchor);
   openHubForAnchor();
+  // Show three beginner-friendly options first; keep advanced packages discoverable.
+  const packageGrid=document.querySelector('#packages .package-grid');
+  if(packageGrid&&packages){
+    const more=document.createElement('button');
+    more.type='button';more.className='fz26-more-packages';
+    more.textContent='VIEW ALL EXPERIENCES ＋';
+    more.setAttribute('aria-expanded','false');
+    packageGrid.after(more);
+    more.addEventListener('click',()=>{
+      const expanded=packages.classList.toggle('fz26-show-all');
+      more.textContent=expanded?'SHOW MAIN EXPERIENCES −':'VIEW ALL EXPERIENCES ＋';
+      more.setAttribute('aria-expanded',String(expanded));
+    });
+    document.querySelectorAll('[data-package-filter]').forEach(button=>button.addEventListener('click',()=>{
+      if(button.dataset.packageFilter!=='all'){
+        packages.classList.add('fz26-show-all');more.textContent='SHOW MAIN EXPERIENCES −';more.setAttribute('aria-expanded','true');
+      }
+    }));
+  }
+  // Reduce perceived booking complexity: optional fields are hidden behind disclosure.
+  const bookingForm=byId('arenaBookingForm'), bookingGrid=bookingForm?.querySelector('.form-grid');
+  if(bookingGrid){
+    const extras=document.createElement('details');extras.className='fz26-booking-extras';
+    const summary=document.createElement('summary');summary.textContent='ADD A REFERRAL, EMAIL OR SPECIAL NOTES (OPTIONAL) ＋';
+    const inner=document.createElement('div');inner.className='fz26-extras-grid';
+    extras.append(summary,inner);bookingGrid.after(extras);
+    ['marketingSource','customerEmail','referralCode','notes'].forEach(name=>{
+      const input=bookingGrid.querySelector('[name="'+name+'"]');
+      const label=input?.closest('label');
+      if(label)inner.append(label);
+    });
+    const specialSelect=byId('specialRequest'), specialTime=bookingForm.querySelector('[name="specialTime"]');
+    const specialLabel=specialTime?.closest('label');
+    const syncSpecial=()=>{if(specialLabel)specialLabel.hidden=specialSelect?.value!=='true';};
+    specialSelect?.addEventListener('change',syncSpecial);syncSpecial();
+  }
   document.querySelectorAll('[data-fz26-experience]').forEach(button=>{
     button.addEventListener('click',()=>{
       const experience=byId('bookingExperience'),duration=byId('arenaDuration');

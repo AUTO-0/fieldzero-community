@@ -279,6 +279,26 @@
     $("#announcementEventDescription").textContent = event.description || "Details will be announced by the organiser.";
   }
   function maybeShowAnnouncement() {
+    // Editorial landing: keep launch announcements visible but non-blocking.
+    // Visitors can choose to open the existing announcement modal.
+    if (document.body.classList.contains('fz26')) {
+      if (siteSettingsReady && siteSettings?.opening_soon_enabled && !document.querySelector('.fz26-launch-banner')) {
+        const note=document.createElement('aside');
+        note.className='fz26-launch-banner';
+        note.setAttribute('aria-label','Launch announcement');
+        const copy=document.createElement('div');
+        const label=document.createElement('strong');label.textContent='FIELDZERO / LAUNCH UPDATE';
+        const message=document.createElement('span');
+        message.textContent=siteSettings?.opening_soon_message || 'Opening soon. Follow the community for launch updates.';
+        copy.append(label,message);
+        const open=document.createElement('button');
+        open.type='button';open.textContent='READ LAUNCH DETAILS ↗';
+        open.addEventListener('click',()=>showAnnouncement('opening'));
+        note.append(copy,open);
+        document.querySelector('.site-header')?.insertAdjacentElement('afterend',note);
+      }
+      return;
+    }
     if (!announcementPopup || !db || !siteSettingsReady || !eventPopupReady || !galleryPopupReady || !appearanceReady || !campaignsReady || sessionStorage.getItem("fz-announcement-shown-v10")) return;
     let chosen=null;
     // One modal at a time. Preserve the launch notice until the owner switches Opening Soon off;

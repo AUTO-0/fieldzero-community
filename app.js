@@ -7,6 +7,12 @@
   const db = clientReady ? window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY) : null;
   $("#year").textContent = new Date().getFullYear();
 
+  // Preserve original booking-source attribution when campaign links use ?utm_source=... .
+  // This is a best-effort signal, not proof that a booking came from the platform.
+  const fzCampaignSource=new URLSearchParams(location.search).get('utm_source')||new URLSearchParams(location.search).get('source')||'';
+  const fzKnownSources=new Set(['instagram','facebook','tiktok','google','whatsapp','friend','walk_in','other']);
+  const fzBookingAttribution=document.querySelector('#arenaBookingForm [name="marketingSource"]');
+  if(fzBookingAttribution&&fzKnownSources.has(fzCampaignSource.toLowerCase()))fzBookingAttribution.value=fzCampaignSource.toLowerCase();
   const menuToggle = $("#menuToggle"), mainNav = $("#mainNav");
   menuToggle.addEventListener("click", () => {
     const open = mainNav.classList.toggle("open");
@@ -598,7 +604,7 @@
     const grid=$("#arenaSlots"),select=$("#arenaStartTime");if(!grid||!select)return;
     if(!db){grid.innerHTML='<div class="empty-state">Booking availability is temporarily unavailable.</div>';select.innerHTML='<option value="">Unavailable</option>';return;}
     const req=++fzSlotReq, date=dateInput?.value,field=$("#arenaFieldSelect")?.value;
-    if(date&&date<String(siteSettings?.launch_date||'2026-12-10')){grid.innerHTML='<div class="empty-state">Imbulgoda bookings start on the planned opening date. Choose an opening-day or later session.</div>';select.innerHTML='<option value="">Choose an opening-day or later date</option>';return;}
+    if(date&&date<String(siteSettings?.launch_date||'2026-12-10')&&publicFields.find(f=>f.id===field)?.is_main){grid.innerHTML='<div class="empty-state">Imbulgoda bookings start on the planned opening date. Choose an opening-day or later session.</div>';select.innerHTML='<option value="">Choose an opening-day or later date</option>';return;}
     if(!date||!field){grid.innerHTML='<div class="empty-state">Choose a field and date to see available times.</div>';select.innerHTML='<option value="">Choose a field and date</option>';return;}
     const hours=openingHours(date),dur=Number($("#arenaDuration").value||1),now=new Date(),closing=slDateTime(date,22);
     const futureHours=hours.filter(h=>{

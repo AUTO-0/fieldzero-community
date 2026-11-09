@@ -88,10 +88,9 @@ for (const target of targets) {
   if(target.width<=700){
     try{
       const sticky=page.locator('.fz26-mobile-community');
-      const hub=page.locator('#fzCommunityGateway');
-      await hub.evaluate(el=>el.open=false);
       await sticky.click({timeout:6000});
-      mobileEntryTest=await hub.getAttribute('open')!==null?'pass':'fail';
+      mobileEntryTest=(await page.locator('#registrationForm').isVisible())&&
+        (await page.locator('[data-operator-tab="register"]').getAttribute('aria-selected'))==='true'?'pass':'fail';
     }catch(e){mobileEntryTest='fail: '+String(e.message).slice(0,160);}
   }
   try{

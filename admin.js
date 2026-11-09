@@ -12,7 +12,7 @@
  async function showSession(){const {data:{session}}=await db.auth.getSession();if(session&&await isAdmin(session.user)){loginPanel.hidden=true;dashboard.hidden=false;await refreshAll();await loadAssignmentOptions()}else{loginPanel.hidden=false;dashboard.hidden=true}}
  $("#loginForm").addEventListener("submit",async e=>{e.preventDefault();const fd=new FormData(e.currentTarget);$("#loginButton").disabled=true;const {error}=await db.auth.signInWithPassword({email:fd.get("email"),password:fd.get("password")});$("#loginButton").disabled=false;if(error){msg($("#loginStatus"),"Sign in failed. Check your credentials and confirm the account is enabled.","error");return}await showSession()});
  $("#logoutButton").addEventListener("click",async()=>{await db.auth.signOut();await showSession()});
- async function refreshAll(){await Promise.all([loadApplications(),loadBookings(),loadTeams(),loadPlayers(),loadEvents(),loadArenaBookings(),loadLeaderRequests(),loadMemberLinkRequests(),loadChallenges(),loadEventRegistrations(),loadResultOptions(),loadFeedback(),loadGalleryAdmin(),loadFieldsAdmin(),loadSessionPricesAdmin(),loadSiteSettingsAdmin(),loadSocialLinksAdmin(),loadSiteAppearanceAdmin(),loadSeasonalCampaignsAdmin(),loadOpsAll(),fzLoadBookingDays(),fzLoadSpecialRequests(),fzLoadSpotlights(),fzLoadSeasons(),fzLoadReferralManager(),fzLoadMembershipAdmin()])}
+ async function refreshAll(){await Promise.all([loadApplications(),loadBookings(),loadTeams(),loadPlayers(),loadEvents(),loadArenaBookings(),loadLeaderRequests(),loadMemberLinkRequests(),loadChallenges(),loadEventRegistrations(),loadResultOptions(),loadFeedback(),loadGalleryAdmin(),loadFieldsAdmin(),loadSessionPricesAdmin(),loadSiteSettingsAdmin(),fzLoadLaunchQuick(),loadSocialLinksAdmin(),loadSiteAppearanceAdmin(),loadSeasonalCampaignsAdmin(),loadOpsAll(),fzLoadBookingDays(),fzLoadSpecialRequests(),fzLoadSpotlights(),fzLoadSeasons(),fzLoadReferralManager(),fzLoadMembershipAdmin()])}
  async function loadApplications(){const el=$("#applications");el.innerHTML="<p>Loading…</p>";const {data,error}=await db.from("player_applications").select("id,real_name,callsign,mobile,contact_email,primary_blaster,team_preference,play_style,status,created_at").eq("status","pending").order("created_at",{ascending:true});if(error){el.innerHTML=`<p class="admin-error">${esc(adminError(error))}</p>`;return}if(!data?.length){el.innerHTML='<div class="empty-state">No pending applications.</div>';return}el.innerHTML=data.map(a=>`<article class="application-card"><div class="application-heading"><div><span class="application-label">PENDING APPLICATION</span><h3>${esc(a.callsign)}</h3></div><span class="pending-pill">REVIEW</span></div><div class="application-details"><span><b>Real name</b>${esc(a.real_name)}</span><span><b>Mobile</b>${esc(a.mobile)}</span><span><b>Email</b>${esc(a.contact_email||'—')}</span><span><b>Blaster</b>${esc(a.primary_blaster)}</span><span><b>Team preference</b>${esc(a.team_preference)}</span><span><b>Play style</b>${esc(a.play_style)}</span><span><b>Applied</b>${new Date(a.created_at).toLocaleString()}</span></div><div class="application-actions"><button class="button button-lime" data-action="approve" data-id="${a.id}" data-callsign="${esc(a.callsign)}">APPROVE</button><button class="button button-danger" data-action="reject" data-id="${a.id}">REJECT</button></div></article>`).join("");el.querySelectorAll("button[data-action]").forEach(b=>b.addEventListener("click",()=>review(b.dataset.id,b.dataset.action,b.dataset.callsign)))}
  async function review(id,action,callsign){const verb=action==="approve"?"approve":"reject";if(!confirm(`Are you sure you want to ${verb} this application${callsign?" for "+callsign:""}?`))return;const buttons=[...document.querySelectorAll(`#applications button[data-id="${CSS.escape(id)}"]`)];buttons.forEach(b=>{b.disabled=true;b.textContent=action==="approve"?"APPROVING…":"REJECTING…"});const {error}=await db.rpc("review_player_application",{application_id:id,decision:action});if(error){msg($("#adminStatus"),`Could not ${verb} ${callsign||"application"}: ${adminError(error)}. Check the V21 SQL migration and admin account permissions.`,"error");await loadApplications();return}msg($("#adminStatus"),`Application ${action==="approve"?"approved":"rejected"}.`,"success");await Promise.all([loadApplications(),loadPlayers(),loadTeams(),loadAssignmentOptions()])}
  async function loadBookings(){const el=$("#bookings");const {data,error}=await db.from("event_bookings").select("id,event_id,booking_type,real_name,callsign,mobile,player_count,notes,status,created_at,events(title,event_date)").eq("status","pending").order("created_at",{ascending:true});if(error){el.innerHTML=`<p class="admin-error">${esc(adminError(error))}</p>`;return}if(!data?.length){el.innerHTML='<div class="empty-state">No pending booking requests.</div>';return}el.innerHTML=data.map(b=>`<article class="application-card"><div class="application-heading"><div><span class="application-label">${esc(b.booking_type.toUpperCase())} BOOKING</span><h3>${esc(b.callsign)} · ${esc(b.events?.title||"Event")}</h3></div><span class="pending-pill">PENDING</span></div><div class="application-details"><span><b>Real name</b>${esc(b.real_name)}</span><span><b>Mobile</b>${esc(b.mobile)}</span><span><b>Players</b>${Number(b.player_count)}</span><span><b>Event date</b>${esc(b.events?.event_date||"TBA")}</span><span><b>Notes</b>${esc(b.notes||"—")}</span><span><b>Requested</b>${new Date(b.created_at).toLocaleString()}</span></div><div class="application-actions"><button class="button button-lime" data-booking-action="approve" data-id="${b.id}">CONFIRM</button><button class="button button-danger" data-booking-action="reject" data-id="${b.id}">REJECT</button></div></article>`).join("");el.querySelectorAll("[data-booking-action]").forEach(btn=>btn.addEventListener("click",async()=>{const decision=btn.dataset.bookingAction;if(!confirm(`${decision==="approve"?"Confirm":"Reject"} this booking?`))return;const {error}=await db.rpc("review_event_booking",{booking_id:btn.dataset.id,decision});if(error){msg($("#adminStatus"),adminError(error),"error");return}msg($("#adminStatus"),`Booking ${decision}d.`,"success");await loadBookings()} ) )}
@@ -130,6 +130,7 @@
   if(error){const host=$('#fieldsAdmin');if(host)host.innerHTML=`<p class="admin-error">${esc(error.message||adminError(error))}</p>`;return;}
   const rows=data||[],active=rows.filter(f=>f.active&&f.network_status==='active');
   adminFieldCache=rows;mainAdminFieldId=(rows.find(f=>f.is_main)||{}).id||'';
+  fzRenderMainFieldControl(rows.find(f=>f.is_main)||null);
   const financeFilter=$('#finFieldFilter');if(financeFilter){const old=financeFilter.value||'all';financeFilter.innerHTML='<option value="all">ALL FIELDZERO LOCATIONS</option>'+rows.map(f=>`<option value="${f.id}">${esc(f.name)}${f.is_main?' · MAIN':''}${f.active&&f.network_status==='active'?'':' · SUSPENDED'}</option>`).join('');financeFilter.value=[...financeFilter.options].some(o=>o.value===old)?old:'all';}
   const invoiceField=$('#finInvoiceFieldSelect');if(invoiceField){const old=invoiceField.value;invoiceField.innerHTML=active.map(f=>`<option value="${f.id}">${esc(f.name)}${f.is_main?' · MAIN':''}</option>`).join('');invoiceField.value=active.some(f=>f.id===old)?old:(mainAdminFieldId||active[0]?.id||'');}
   const accountField=$('#finAccountFieldSelect');if(accountField){const old=accountField.value;accountField.innerHTML=active.map(f=>`<option value="${f.id}">${esc(f.name)}${f.is_main?' · MAIN':''}</option>`).join('');accountField.value=active.some(f=>f.id===old)?old:(financeFilter?.value&&financeFilter.value!=='all'?financeFilter.value:(mainAdminFieldId||active[0]?.id||''));}
@@ -141,6 +142,90 @@
   const host=$('#fieldsAdmin');if(host){host.innerHTML=rows.map(f=>`<article class="field-record-card"><div class="field-record-main"><span class="field-record-kicker">${f.is_main?'MAIN FIELD · 0% COMMISSION':`FRANCHISE · ${Number(f.commission_rate||10)}% COMMISSION`}</span><h4>${esc(f.name)}</h4><p>${esc(f.address||'Address not set')} · ${f.active&&f.network_status==='active'?'ACTIVE':'SUSPENDED / HIDDEN'}</p><small>Field setup and suspension are controlled in the FIELDZERO NETWORK panel. Historical records are retained.</small></div></article>`).join('')||'<div class="empty-state">No field records are available.</div>';}
  }
  $('#fieldForm')?.addEventListener('submit',async e=>{e.preventDefault();msg($('#fieldAdminStatus'),'Use the public Field Partnership request so the owner account and commission settings are created together.','error');});
+
+ function fzAllowedGoogleMap(raw){
+   try{
+     const u=new URL(String(raw||'').trim());
+     return u.protocol==='https:'&&(['maps.app.goo.gl','maps.google.com','www.google.com','google.com'].includes(u.hostname))&&
+       (u.hostname==='maps.app.goo.gl'||u.pathname.startsWith('/maps')||u.searchParams.has('q')||u.searchParams.has('query'));
+   }catch{return false;}
+ }
+ function fzRenderMainFieldControl(field){
+   const form=$('#fzMainFieldForm');if(!form)return;
+   if(!field){msg($('#fzMainFieldStatus'),'No main-field record found. Do not create a replacement; check the existing network data.','error');return;}
+   form.elements.namedItem('field_id').value=field.id||'';
+   ['name','address','google_maps_url','latitude','longitude'].forEach(key=>{const el=form.elements.namedItem(key);if(el)el.value=field[key]??'';});
+   const link=$('#fzMainFieldMapPreview');
+   if(link){link.href=fzAllowedGoogleMap(field.google_maps_url)?field.google_maps_url:'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(field.address||'Imbulgoda, Gampaha, Sri Lanka');}
+   const state=$('#fzMainFieldPublicStatus');if(state)state.textContent=field.active&&field.network_status==='active'?'PUBLIC FIELD ACTIVE':'FIELD SUSPENDED';
+   void fzLoadLaunchMetrics();
+ }
+ async function fzLoadLaunchMetrics(){
+   const host=$('#fzLaunchMetrics');if(!host)return;
+   const fieldId=mainAdminFieldId;
+   if(!fieldId){host.textContent='Main field not yet loaded.';return;}
+   const first=String($('#fzLaunchQuickForm')?.elements.namedItem('launch_date')?.value||'2026-12-10');
+   const from=first+'T00:00:00+05:30';
+   const request=(filter)=>{let q=db.from('arena_bookings').select('id',{head:true,count:'exact'}).eq('field_id',fieldId).gte('booking_start',from);return filter?q.eq('status',filter):q};
+   const [all,holding,approved,applications]=await Promise.all([
+     request(null),request('pending_payment'),request('approved'),db.from('player_applications').select('id',{head:true,count:'exact'})
+   ]);
+   host.replaceChildren();
+   [['BOOKING REQUESTS',all],['AWAITING DEPOSIT',holding],['CONFIRMED SESSIONS',approved],['OPERATOR APPLICATIONS',applications]].forEach(([name,response])=>{
+     const card=document.createElement('article'),number=document.createElement('b'),label=document.createElement('span');
+     number.textContent=response.error?'—':String(response.count??0);
+     label.textContent=String(name);card.append(number,label);host.append(card);
+   });
+   if([all,holding,approved,applications].some(r=>r.error)){
+     const note=document.createElement('small');
+     note.textContent='Some counts could not be loaded. A dash means unavailable, not zero.';
+     host.append(note);
+   }
+ }
+ $('#fzMainFieldForm')?.addEventListener('submit',async event=>{
+   event.preventDefault();
+   const form=event.currentTarget,fd=new FormData(form),id=String(fd.get('field_id')||'');
+   const name=String(fd.get('name')||'').trim(),address=String(fd.get('address')||'').trim();
+   const rawUrl=String(fd.get('google_maps_url')||'').trim(),latRaw=String(fd.get('latitude')||'').trim(),lonRaw=String(fd.get('longitude')||'').trim();
+   if(!id||name.length<4||address.length<8){msg($('#fzMainFieldStatus'),'Please enter the saved main field, a field name and an address of at least 8 characters.','error');return;}
+   if(rawUrl&&!fzAllowedGoogleMap(rawUrl)){msg($('#fzMainFieldStatus'),'Paste a valid HTTPS Google Maps link or leave it empty.','error');return;}
+   if(Boolean(latRaw)!==Boolean(lonRaw)){msg($('#fzMainFieldStatus'),'Enter both latitude and longitude, or leave both blank.','error');return;}
+   const latitude=latRaw?Number(latRaw):null,longitude=lonRaw?Number(lonRaw):null;
+   if((latitude!==null&&(!Number.isFinite(latitude)||Math.abs(latitude)>90))||(longitude!==null&&(!Number.isFinite(longitude)||Math.abs(longitude)>180))){
+     msg($('#fzMainFieldStatus'),'Coordinates are invalid. Please check the map pin.','error');return;
+   }
+   const google_maps_url=rawUrl||(latitude!==null?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(latitude+','+longitude):'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(address));
+   const payload={name,address,google_maps_url,latitude,longitude};
+   const button=$('#fzMainFieldSaveButton');if(button)button.disabled=true;
+   const {data,error}=await db.from('arena_fields').update(payload).eq('id',id).eq('is_main',true).select('id,name,address,google_maps_url,latitude,longitude,active,is_main,network_status').maybeSingle();
+   if(button)button.disabled=false;
+   if(error||!data){msg($('#fzMainFieldStatus'),error?adminError(error):'No main-field record was updated. Your admin access may have expired.','error');return;}
+   msg($('#fzMainFieldStatus'),'Saved. The main field keeps the same ID and bookings; public field directions will reflect the update.','success');
+   await loadFieldsAdmin();
+ });
+ async function fzLoadLaunchQuick(){
+   const form=$('#fzLaunchQuickForm');if(!form)return;
+   const {data,error}=await db.from('site_settings').select('launch_date').eq('id',1).maybeSingle();
+   if(error||!data){msg($('#fzLaunchQuickStatus'),error?adminError(error):'Launch settings could not be loaded.','error');return;}
+   const date=data.launch_date||'2026-12-10';
+   form.elements.namedItem('launch_date').value=date;
+   const main=$('#siteSettingsForm');if(main?.elements.namedItem('launch_date'))main.elements.namedItem('launch_date').value=date;
+   await fzLoadLaunchMetrics();
+ }
+ $('#fzLaunchQuickForm')?.addEventListener('submit',async event=>{
+   event.preventDefault();
+   const form=event.currentTarget,date=String(new FormData(form).get('launch_date')||'');
+   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){msg($('#fzLaunchQuickStatus'),'Choose a valid calendar date.','error');return;}
+   if(!confirm('Change the planned Imbulgoda opening date to '+date+'? Check existing confirmed bookings before postponing.'))return;
+   const button=$('#fzLaunchQuickButton');if(button)button.disabled=true;
+   const {data,error}=await db.from('site_settings').update({launch_date:date,updated_at:new Date().toISOString()}).eq('id',1).select('launch_date').maybeSingle();
+   if(button)button.disabled=false;
+   if(error||!data){msg($('#fzLaunchQuickStatus'),error?adminError(error):'Launch date not updated.','error');return;}
+   msg($('#fzLaunchQuickStatus'),'Opening date saved. Public booking dates are now restricted by this date. Update the public launch announcement text if the date changed.','success');
+   const other=$('#siteSettingsForm')?.elements.namedItem('launch_date');if(other)other.value=data.launch_date;
+   await fzLoadLaunchMetrics();
+ });
+
  async function loadEvents(){
   const el=$("#eventsAdmin");if(!el)return;
   let eventQuery=db.from("events").select("id,title,event_type,event_date,start_time,end_time,registration_deadline,published,price_amount,price_currency,field_id,location,popup_featured,arena_fields(name)").order("event_date",{ascending:false});const eventField=$('#eventsAdminFieldFilter')?.value||'all';if(eventField!=='all')eventQuery=eventQuery.eq('field_id',eventField);const {data,error}=await eventQuery;
@@ -155,14 +240,15 @@
 
  async function loadSiteSettingsAdmin(){
   const form=$("#siteSettingsForm");if(!form)return;
-  const {data,error}=await db.from("site_settings").select("id,opening_soon_enabled,opening_soon_title,opening_soon_message").eq("id",1).maybeSingle();
+  const {data,error}=await db.from("site_settings").select("id,opening_soon_enabled,opening_soon_title,opening_soon_message,launch_date").eq("id",1).maybeSingle();
   if(error){msg($("#siteSettingsStatus"),"Could not load launch settings. Apply the V9 migration and try again.","error");return;}
   if(!data){msg($("#siteSettingsStatus"),"No saved launch settings found. Run the V9 migration.","error");return;}
   form.elements.namedItem("opening_soon_enabled").checked=!!data.opening_soon_enabled;
   form.elements.namedItem("opening_soon_title").value=data.opening_soon_title||"OPENING SOON";
   form.elements.namedItem("opening_soon_message").value=data.opening_soon_message||"";
+  form.elements.namedItem("launch_date").value=data.launch_date||"2026-12-10";
  }
- $("#siteSettingsForm")?.addEventListener("submit",async e=>{e.preventDefault();const form=e.currentTarget,fd=new FormData(form),payload={id:1,opening_soon_enabled:fd.get("opening_soon_enabled")==="on",opening_soon_title:String(fd.get("opening_soon_title")||"").trim(),opening_soon_message:String(fd.get("opening_soon_message")||"").trim(),updated_at:new Date().toISOString()};if(payload.opening_soon_title.length<2||payload.opening_soon_message.length<2){msg($("#siteSettingsStatus"),"Enter a title and message before saving.","error");return;}const {error}=await db.from("site_settings").upsert(payload,{onConflict:"id"});if(error){msg($("#siteSettingsStatus"),error.message||adminError(error),"error");return;}msg($("#siteSettingsStatus"),payload.opening_soon_enabled?"Opening Soon pop-up is enabled. Player registration remains open.":"Opening Soon pop-up is disabled. Event pop-ups can now take priority.","success");});
+ $("#siteSettingsForm")?.addEventListener("submit",async e=>{e.preventDefault();const form=e.currentTarget,fd=new FormData(form),payload={id:1,opening_soon_enabled:fd.get("opening_soon_enabled")==="on",opening_soon_title:String(fd.get("opening_soon_title")||"").trim(),opening_soon_message:String(fd.get("opening_soon_message")||"").trim(),launch_date:String(fd.get("launch_date")||"2026-12-10"),updated_at:new Date().toISOString()};if(payload.opening_soon_title.length<2||payload.opening_soon_message.length<2){msg($("#siteSettingsStatus"),"Enter a title and message before saving.","error");return;}const {error}=await db.from("site_settings").upsert(payload,{onConflict:"id"});if(error){msg($("#siteSettingsStatus"),error.message||adminError(error),"error");return;}msg($("#siteSettingsStatus"),payload.opening_soon_enabled?"Pre-launch announcement enabled. Registrations remain open.":"Pre-launch announcement disabled.","success");await fzLoadLaunchQuick();});
  async function loadSocialLinksAdmin(){
   const form=$("#socialLinksForm");if(!form)return;
   const {data,error}=await db.from("site_settings").select("instagram_url,facebook_url,tiktok_url").eq("id",1).maybeSingle();

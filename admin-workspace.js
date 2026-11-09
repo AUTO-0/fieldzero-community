@@ -64,6 +64,12 @@
     panels.get('overview').append(topBar);
   }
   if (status) panels.get('overview').append(status);
+  // Owner's main field and public game-mode settings belong on the landing dashboard,
+  // not inside the legacy Community accordion (which is hidden on first login).
+  const mainFieldControl=dashboard.querySelector(':scope > #fzMainFieldControl');
+  const gameModes=dashboard.querySelector(':scope > #fzGameModeManager');
+  if(mainFieldControl) panels.get('overview').append(mainFieldControl);
+  if(gameModes) panels.get('overview').append(gameModes);
   dashboard.insertBefore(shell,foot || null);
 
   // The existing operations console has a useful KPI header and independent modules.

@@ -40,6 +40,22 @@ for (const target of targets) {
     const hidden=!(await page.locator('input[name="specialTime"]').isVisible());
     specialTimeTest=visible&&hidden?'pass':'fail';
   }catch(e){specialTimeTest='fail: '+String(e.message).slice(0,150);}
+  let timePeriodTest='not-run';
+  try{
+    await page.locator('#arenaDate').evaluate(input=>{
+      const date=new Date();
+      date.setUTCDate(date.getUTCDate()+7);
+      input.value=date.toISOString().slice(0,10);
+      input.dispatchEvent(new Event('change',{bubbles:true}));
+    });
+    await page.waitForTimeout(800);
+    const periods=page.locator('#fzTimePeriods [data-fz-slot-period]');
+    await page.locator('[data-fz-slot-period="evening"]').click({timeout:8000});
+    await page.waitForTimeout(800);
+    const count=await page.locator('#arenaSlots .arena-slot').count();
+    const pressed=await page.locator('[data-fz-slot-period="evening"]').getAttribute('aria-pressed');
+    timePeriodTest=(await periods.count())===3&&pressed==='true'&&count>=1&&count<=10?'pass':'fail (slots='+count+', pressed='+pressed+')';
+  }catch(e){timePeriodTest='fail: '+String(e.message).slice(0,180);}
   let communityEntryTest='not-run',deepLinkTest='not-run',mobileEntryTest='not-applicable',firstTimerTest='not-run';
   try{
     const hub=page.locator('#fzCommunityGateway');
@@ -82,13 +98,13 @@ for (const target of targets) {
     }catch(e){menuTest='fail: '+String(e.message).slice(0,120);}
   }
   try{await page.locator('#calendar').screenshot({path:'visual-qa-artifacts/'+target.name+'-booking.png',timeout:20000,animations:'disabled'});}catch(e){errors.push('booking screenshot: '+String(e.message).slice(0,140));}
-  const result={...target,...metrics,horizontalOverflow:metrics.contentWidth>metrics.viewportWidth+2,firstVisitUnblocked,packageTest,optionalFieldsTest,specialTimeTest,communityEntryTest,deepLinkTest,mobileEntryTest,firstTimerTest,routeTest,hubTest,menuTest,errors};
+  const result={...target,...metrics,horizontalOverflow:metrics.contentWidth>metrics.viewportWidth+2,firstVisitUnblocked,packageTest,optionalFieldsTest,specialTimeTest,timePeriodTest,communityEntryTest,deepLinkTest,mobileEntryTest,firstTimerTest,routeTest,hubTest,menuTest,errors};
   results.push(result);
   console.log('VISUAL_QA '+JSON.stringify(result));
   await page.close();
 }
 await browser.close();
 await fs.writeFile('visual-qa-artifacts/report.json',JSON.stringify(results,null,2));
-const failure=results.some(r=>r.horizontalOverflow||r.communityEntryTest!=='pass'||r.deepLinkTest!=='pass'||r.mobileEntryTest==='fail'||r.firstTimerTest!=='pass'||!r.firstVisitUnblocked||r.packageTest!=='pass'||r.optionalFieldsTest!=='pass'||r.specialTimeTest!=='pass'||!r.cssLoaded||!r.hero||!r.selector||r.quickStartCount!==3||r.communityCount<5||r.routeTest!=='pass'||r.hubTest!=='pass'||r.menuTest==='fail'||r.errors.length);
+const failure=results.some(r=>r.horizontalOverflow||r.timePeriodTest!=='pass'||r.communityEntryTest!=='pass'||r.deepLinkTest!=='pass'||r.mobileEntryTest==='fail'||r.firstTimerTest!=='pass'||!r.firstVisitUnblocked||r.packageTest!=='pass'||r.optionalFieldsTest!=='pass'||r.specialTimeTest!=='pass'||!r.cssLoaded||!r.hero||!r.selector||r.quickStartCount!==3||r.communityCount<5||r.routeTest!=='pass'||r.hubTest!=='pass'||r.menuTest==='fail'||r.errors.length);
 if(failure){console.error('FIELDZERO visual QA detected layout or browser issues.');process.exit(1);}
 console.log('FIELDZERO visual QA passed for desktop, mobile, tablet and narrow mobile.');

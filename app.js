@@ -216,7 +216,7 @@
         host.hidden=false;host.replaceChildren();
         const title=document.createElement('strong');title.textContent=mode.package_name;
         const meta=document.createElement('span');meta.textContent=min===max?min+' player · '+dur+' min':min+'–'+max+' players · '+dur+' min';
-        const price=document.createElement('b');price.textContent=mode.price_amount==null?'Custom quote':(mode.price_currency||'LKR')+' '+Number(mode.price_amount).toLocaleString('en-LK')+' / player';
+        const price=document.createElement('b');price.textContent=mode.price_amount==null?'Custom quote':(mode.price_currency||'LKR')+' '+Number(mode.price_amount).toLocaleString('en-LK')+(mode.price_note?' · '+mode.price_note:' · Confirm pricing terms with FIELDZERO');
         const desc=document.createElement('p');desc.textContent=mode.mode_details||'Follow the marshal guidance for this session.';
         host.append(title,meta,price,desc);
       }

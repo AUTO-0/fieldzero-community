@@ -259,3 +259,13 @@ body.fz26 .fz26-at-a-glance strong{font-size:8px;}
 @media (prefers-reduced-motion:reduce){
 body.fz26 *{scroll-behavior:auto!important;transition:none!important;animation-duration:.01ms!important;}
 }
+/* Mobile booking action stays available without covering form controls. */
+body.fz26 .fz26-mobile-cta{display:none;}
+@media(max-width:700px){
+body.fz26{padding-bottom:65px;}
+body.fz26 .fz26-mobile-cta{position:fixed;left:0;right:0;bottom:0;z-index:45;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px max(15px,env(safe-area-inset-left)) calc(11px + env(safe-area-inset-bottom)) max(15px,env(safe-area-inset-right));background:rgba(11,21,14,.97);border-top:1px solid rgba(196,243,122,.25);box-shadow:0 -8px 26px #050a0588;backdrop-filter:blur(15px);}
+body.fz26 .fz26-mobile-cta>span{display:flex;flex-direction:column;gap:3px;min-width:0;}
+body.fz26 .fz26-mobile-cta b{font-size:10px;letter-spacing:.08em;color:#f0f4ed;}
+body.fz26 .fz26-mobile-cta small{font-size:9px;color:#a5b9a0;}
+body.fz26 .fz26-mobile-cta a{border-radius:100px;background:var(--fz26-lime);color:#101910;font:800 10px/1 "DM Sans",sans-serif;letter-spacing:.055em;padding:15px 16px;white-space:nowrap;}
+}

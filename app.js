@@ -177,6 +177,60 @@
     campaignsReady=true; maybeShowAnnouncement();
   }
   const announcementPopup = $("#announcementPopup");
+  let fzModeCatalog=[];
+  const fzModeByName=name=>fzModeCatalog.find(m=>m.package_name===name);
+  const fzTodaySL=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Colombo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  const fzIsBeforeOpening=fieldId=>publicFields.find(f=>f.id===fieldId)?.is_main&&fzTodaySL()<String(siteSettings?.launch_date||'2026-12-10');
+  const fzAdvanceAmount=fieldId=>fzIsBeforeOpening(fieldId)?0:500;
+  function fzUpdateBookingPaymentCopy(){
+    const isFree=fzAdvanceAmount($("#arenaFieldSelect")?.value)===0;
+    const hint=$("#bookingAdvanceRate");
+    if(hint)hint.textContent=isFree?'PRE-LAUNCH: No advance or deposit. Book now free of upfront payment; session fees are paid when play begins.':'LKR 500 booking advance is required; confirmation follows payment verification.';
+    const note=$("#fzLaunchBookingNote");
+    if(note)note.textContent=isFree?'PRE-LAUNCH BOOKINGS OPEN · NO DEPOSIT · PLAY FROM '+fzFormatPublicLaunchDate(siteSettings?.launch_date)+' ONWARD':'Book your FIELDZERO session. LKR 500 deposit applies to new bookings from opening day.';
+    const button=$("#submitArenaBooking");
+    if(button&&!button.disabled)button.textContent=isFree?'RESERVE NOW · NO DEPOSIT ↗':'REQUEST SLOT & DEPOSIT DETAILS ↗';
+    const process=$(".process-grid article:nth-child(3) p");
+    if(process)process.textContent=isFree?'Before opening: receive your reservation reference and booking PDF without paying a deposit. Standard bookings are held for you; special requests require owner approval.':'Your booking PDF includes the deposit instructions. Confirmation follows LKR 500 advance verification.';
+    const overview=document.querySelector('.fz26-at-a-glance>div:last-child small');
+    if(overview)overview.textContent=isFree?'LKR 0 deposit before opening':'LKR 500 advance after request';
+    const legend=document.querySelector('.calendar-legend');
+    if(legend)legend.querySelector('.slot-pending')?.parentElement?.replaceChildren(Object.assign(document.createElement('i'),{className:'slot-pending'}),document.createTextNode(isFree?' Pending review':' Temporary deposit hold'));
+  }
+  function fzRenderModeInfo(){
+    const experience=$("#bookingExperience"), mode=fzModeByName(experience?.value);
+    const special=$("#specialRequest"),players=document.querySelector('#arenaBookingForm [name="playerCount"]'),duration=$("#arenaDuration");
+    const host=$("#fzSelectedModeDetails"),resource=$("#fzResourceNote");
+    if(!experience||!players||!duration)return;
+    if(mode){
+      if(mode.package_key==='birthday-private-event'&&special)special.value='true';
+      const min=Number(mode.min_players)||1,max=Number(mode.max_players)||16,oldPlayers=Number(players.value)||min;
+      players.innerHTML=Array.from({length:max-min+1},(_,i)=>'<option value="'+(min+i)+'">'+(min+i)+'</option>').join('');
+      players.value=String(Math.max(min,Math.min(oldPlayers,max)));
+      const dur=Number(mode.duration_minutes)||60,hr=dur/60,validDur=[...duration.options].some(o=>Number(o.value)===hr);
+      if(!validDur){const opt=document.createElement('option');opt.value=String(hr);opt.textContent=dur+' minutes';duration.append(opt);}
+      duration.value=String(hr);
+      duration.disabled=special?.value!=='true';
+      if(host){
+        host.hidden=false;host.replaceChildren();
+        const title=document.createElement('strong');title.textContent=mode.package_name;
+        const meta=document.createElement('span');meta.textContent=min===max?min+' player · '+dur+' min':min+'–'+max+' players · '+dur+' min';
+        const price=document.createElement('b');price.textContent=mode.price_amount==null?'Custom quote':(mode.price_currency||'LKR')+' '+Number(mode.price_amount).toLocaleString('en-LK')+' / player';
+        const desc=document.createElement('p');desc.textContent=mode.mode_details||'Follow the marshal guidance for this session.';
+        host.append(title,meta,price,desc);
+      }
+      if(resource)resource.textContent=mode.venue_resource==='target'
+        ?'SOLO TARGET BAY · Separate from the main arena. Target reservations never block arena matches. Only available target times are shown.'
+        :'MAIN ARENA · Existing confirmed arena matches block overlapping starts. Solo target practice uses a separate bay.';
+    }else{
+      duration.disabled=false;
+      players.innerHTML=[1,2,3,4,5,6,7,8,9,10,12,16].map(v=>'<option>'+v+'</option>').join('');
+      if(host)host.hidden=true;
+      if(resource)resource.textContent='Choose an experience to see its duration, player limits, price and separate arena/target availability.';
+      if(experience?.value==='Other / Need advice'&&special)special.value='true';
+    }
+    loadArenaSlots();
+  }
   const formatPrice = (amount) => Number(amount).toLocaleString("en-LK", {minimumFractionDigits:0,maximumFractionDigits:2});
   function renderSessionPrices(rows) {
     (rows || []).forEach(item => {
@@ -219,9 +273,30 @@
   $('#fzMembershipVerifyModal')?.addEventListener('click',e=>{if(e.target.id==='fzMembershipVerifyModal')e.currentTarget.hidden=true;});
   async function loadSessionPrices() {
     if (!db) return;
-    const {data,error} = await db.from("public_session_prices").select("package_key,package_name,price_amount,price_currency,display_label,price_note,active");
+    const {data,error} = await db.from("public_session_prices").select("package_key,package_name,price_amount,price_currency,display_label,price_note,active,min_players,max_players,duration_minutes,venue_resource,mode_details,requestable");
     if (error) { console.warn("FIELDZERO session prices unavailable; static prices remain visible.", error.message); return; }
     renderSessionPrices(data || []);
+    fzModeCatalog=(data||[]).filter(m=>m.active!==false&&m.requestable!==false&&m.package_key!=='fieldzero-membership');
+    const select=$("#bookingExperience");
+    if(select){
+      const prior=select.value;
+      select.innerHTML='<option value="">Choose a game mode…</option>'+fzModeCatalog.map(m=>'<option value="'+escapeAttr(m.package_name)+'">'+escapeHtml(m.package_name)+'</option>').join('')+'<option value="Other / Need advice">Other / Need advice</option>';
+      if([...select.options].some(o=>o.value===prior))select.value=prior;
+      fzRenderModeInfo();
+    }
+    document.querySelectorAll('[data-session-price]').forEach(price=>{
+      const row=(data||[]).find(x=>x.package_key===price.dataset.sessionPrice);
+      if(!row||row.requestable===false)return;
+      const card=price.closest('.package-card');
+      const detail=card?.querySelector('ul');
+      if(detail){
+        const lines=[row.min_players===row.max_players?row.min_players+' player':row.min_players+'–'+row.max_players+' players',row.duration_minutes+' minute session',row.venue_resource==='target'?'Separate target bay':'Main arena',row.mode_details||'See the booking form for details'];
+        detail.replaceChildren(...lines.map(v=>{const li=document.createElement('li');li.textContent=v;return li;}));
+      }
+      const summary=card?.querySelector('p');
+      if(summary&&row.mode_details)summary.textContent=row.mode_details;
+    });
+    fzUpdateBookingPaymentCopy();
   }
   function fzFormatPublicLaunchDate(value){
     const date=/^\d{4}-\d{2}-\d{2}$/.test(String(value||''))?value:'2026-12-10';
@@ -251,6 +326,7 @@
     else { console.warn("FIELDZERO site settings unavailable. Apply the V9 migration.", error.message); siteSettings = {opening_soon_enabled:false}; renderSocialLinks({}); }
     renderSocialLinks(siteSettings);
     fzApplyPublicLaunchDate();
+    fzUpdateBookingPaymentCopy();
     siteSettingsReady = true;
     maybeShowAnnouncement();
   }
@@ -437,7 +513,7 @@
     publicFields.forEach(f=>fieldNames.set(f.id,f.name));
     if(!publicFields.length){grid.innerHTML='<div class="empty-state">No active fields have been published yet.</div>';return;}
     fillFieldSelect($("#arenaFieldSelect"),publicFields,'Choose a field…');
-    const advanceHint=$("#bookingAdvanceRate"); if(advanceHint){const chosen=publicFields.find(f=>f.id===$("#arenaFieldSelect")?.value);advanceHint.textContent=chosen?`Fixed booking advance: LKR 500. The field admin verifies the payment before confirming your booking. Standard slot holds last 12 hours.`:'Every booking requires a fixed LKR 500 advance. Standard requests get a temporary 12-hour hold; special requests must be approved before payment is confirmed.';}
+    fzUpdateBookingPaymentCopy();
     fillFieldSelect($("#feedbackFieldSelect"),publicFields,'Choose the field you visited');
     const feedbackFilter=$("#feedbackFieldFilter");
     if(feedbackFilter){const previous=feedbackFilter.value;feedbackFilter.innerHTML='<option value="all">ALL FIELDZERO FIELDS</option>'+publicFields.map(f=>`<option value="${escapeAttr(f.id)}">${escapeHtml(f.name)}</option>`).join('');feedbackFilter.value=publicFields.some(f=>f.id===previous)?previous:'all';}
@@ -448,7 +524,7 @@
       const all=document.createElement('option');all.value='all';all.textContent='ALL FIELDS';select.insertBefore(all,select.firstChild);select.value='all';
     });
     const fieldSelect=$("#arenaFieldSelect");
-    if(fieldSelect&&!fieldSelect.dataset.v15Bound){fieldSelect.dataset.v15Bound='1';fieldSelect.addEventListener('change',()=>{if(dateInput)loadArenaSlots();const chosen=publicFields.find(f=>f.id===fieldSelect.value);const hint=$("#bookingAdvanceRate");if(hint&&chosen)hint.textContent=`Fixed booking advance: LKR 500. The field admin verifies the payment before confirming your booking. Standard slot holds last 12 hours.`;});}
+    if(fieldSelect&&!fieldSelect.dataset.v15Bound){fieldSelect.dataset.v15Bound='1';fieldSelect.addEventListener('change',()=>{if(dateInput)loadArenaSlots();fzUpdateBookingPaymentCopy();});}
     document.dispatchEvent(new CustomEvent('fieldzero:fields-ready',{detail:{mainFieldId:publicFields.find(f=>f.is_main)?.id||publicFields[0]?.id||'',selectedFieldId:fieldSelect?.value||''}}));
     loadPublicSpotlight();
     grid.innerHTML=publicFields.map(f=>{const q=encodeURIComponent((f.latitude!=null&&f.longitude!=null)?`${f.latitude},${f.longitude}`:f.address||f.name);const mapSrc=`https://www.google.com/maps?q=${q}&output=embed`;const url=/^https:\/\//i.test(f.google_maps_url||"")?f.google_maps_url:"";return `<article class="field-card ${f.is_main?'main-field-card':''}"><iframe title="Map for ${escapeHtml(f.name)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${mapSrc}"></iframe><div class="field-card-copy"><span class="event-type">${f.is_main?'MAIN FIELD':'FIELDZERO NETWORK'}</span><h3>${escapeHtml(f.name)}</h3><p>${escapeHtml(f.address||"Address to be announced")}</p><small class="field-deposit-rate">Fixed booking advance: LKR 500 · Balance and extras paid at checkout</small><div class="field-card-actions">${url?`<a class="button button-lime" href="${escapeAttr(url)}" target="_blank" rel="noopener noreferrer">OPEN IN GOOGLE MAPS ↗</a>`:""}</div></div></article>`}).join("");
@@ -613,7 +689,13 @@
     });
     if(!futureHours.some(h=>fzHourPeriod(h)===fzSlotPeriod)&&futureHours.length)fzSlotPeriod=fzHourPeriod(futureHours[0]);
     const from=slDateTime(date,0).toISOString(),to=slDateTime(date,23,59).toISOString();
-    const {data,error}=await db.from("public_arena_bookings").select("booking_start,booking_end,status,field_id").eq("field_id",field).gte("booking_start",from).lte("booking_start",to);
+    const selectedMode=fzModeByName($("#bookingExperience")?.value);
+    if(!selectedMode&&$("#bookingExperience")?.value!=='Other / Need advice'){
+      grid.innerHTML='<div class="empty-state">Choose a game mode first to see the available arena or target-bay times.</div>';
+      select.innerHTML='<option value="">Choose a game mode first</option>';return;
+    }
+    const selectedResource=selectedMode?.venue_resource||'arena';
+    const {data,error}=await db.from("public_arena_bookings").select("booking_start,booking_end,status,field_id,booking_resource").eq("field_id",field).eq("booking_resource",selectedResource).gte("booking_start",from).lte("booking_start",to);
     if(req!==fzSlotReq)return;
     if(error){grid.innerHTML='<div class="empty-state">Could not check availability. Please retry.</div>';select.innerHTML='<option value="">Availability unavailable</option>';return;}
     const rows=data||[],previous=select.value;
@@ -633,10 +715,11 @@
     };
     futureHours.forEach(h=>{if(slotState(h)==='free')available.push(timeLabel(h));});
     const shown=futureHours.filter(h=>fzHourPeriod(h)===fzSlotPeriod);
-    grid.innerHTML=shown.length?shown.map(h=>{
+    const targetMode=selectedResource==='target';
+    grid.innerHTML=shown.length?shown.filter(h=>!targetMode||slotState(h)==='free').map(h=>{
       const state=slotState(h),label=state==='free'?'AVAILABLE':state==='booked'?'BOOKED':'DEPOSIT HOLD';
-      return '<button type="button" class="arena-slot '+state+'" data-hour="'+timeLabel(h)+'" '+(state!=='free'?'disabled':'')+'><b>'+timeLabel(h)+'</b><small>'+label+'</small></button>';
-    }).join(''):'<div class="empty-state">No upcoming times in this period. Choose another date.</div>';
+      return '<button type="button" class="arena-slot '+state+'" data-hour="'+timeLabel(h)+'" '+(state!=='free'?'disabled':'')+'><b>'+timeLabel(h)+'</b><small>'+(targetMode?'TARGET BAY':label)+'</small></button>';
+    }).join('')||'<div class="empty-state">No target-bay openings remain in this period. Try another time.</div>':'<div class="empty-state">No upcoming times in this period. Choose another date.</div>';
     select.innerHTML='<option value="">Choose an available start time…</option>'+available.map(t=>'<option value="'+t+'">'+t+'</option>').join('');
     if(available.includes(previous))select.value=previous;
     grid.querySelectorAll('[data-hour]').forEach(button=>button.addEventListener('click',()=>{
@@ -646,7 +729,9 @@
     }));
   }
   if(dateInput){dateInput.addEventListener('change',loadArenaSlots);$("#arenaDuration").addEventListener('change',loadArenaSlots);loadArenaSlots();}
-  const specialToggle=$("#specialRequest"); if(specialToggle) specialToggle.addEventListener("change",()=>{const slot=$("#arenaStartTime");slot.required=specialToggle.value!=="true";});
+  const specialToggle=$("#specialRequest"); if(specialToggle) specialToggle.addEventListener("change",()=>{const slot=$("#arenaStartTime");slot.required=specialToggle.value!=="true";fzRenderModeInfo();});
+  $("#bookingExperience")?.addEventListener('change',fzRenderModeInfo);
+  fzUpdateBookingPaymentCopy();
   async function generateCustomerBookingPdf(b){
     if(!window.jspdf?.jsPDF)throw new Error('PDF library unavailable');
     const {jsPDF}=window.jspdf;

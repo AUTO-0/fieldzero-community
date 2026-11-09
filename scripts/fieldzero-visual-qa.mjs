@@ -9,7 +9,15 @@ for (const target of targets) {
   const errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://127.0.0.1:8765/index.html',{waitUntil:'domcontentloaded',timeout:30000});
-  await page.waitForTimeout(3200);
+  await page.waitForTimeout(3500);
+  const openingModal=page.locator('#fzOpeningCountdown');
+  const openingPopupVisible=await openingModal.isVisible();
+  const countdownDays=Number(await page.locator('#fzCountdownDays').textContent());
+  if(openingPopupVisible){
+    await openingModal.screenshot({path:'visual-qa-artifacts/'+target.name+'-opening-popup.png',animations:'disabled'});
+    await page.locator('#fzCountdownClose').click();
+  }
+  const countdownOkay=openingPopupVisible&&Number.isInteger(countdownDays)&&countdownDays>0&&!(await openingModal.isVisible());
   const metrics=await page.evaluate(()=>{
     const box=(s)=>{const r=document.querySelector(s)?.getBoundingClientRect();return r?{x:Math.round(r.x),y:Math.round(r.y),width:Math.round(r.width),height:Math.round(r.height)}:null;};
     const root=document.documentElement,body=document.body;
@@ -51,6 +59,7 @@ for (const target of targets) {
   const launchDateValid=Boolean(publicLaunchDate&&publicLaunchDate>='2026-12-10');
   let timePeriodTest='not-run';
   try{
+    await page.locator('#bookingExperience').selectOption('Quick Skirmish');
     await page.locator('#arenaDate').evaluate(input=>{
       const date=new Date((input.min||'2026-12-10')+'T12:00:00Z');
       date.setUTCDate(date.getUTCDate()+7);
@@ -108,7 +117,7 @@ for (const target of targets) {
     }catch(e){menuTest='fail: '+String(e.message).slice(0,120);}
   }
   try{await page.locator('#calendar').screenshot({path:'visual-qa-artifacts/'+target.name+'-booking.png',timeout:20000,animations:'disabled'});}catch(e){errors.push('booking screenshot: '+String(e.message).slice(0,140));}
-  const result={...target,...metrics,horizontalOverflow:metrics.contentWidth>metrics.viewportWidth+2,discoveryLayout,launchDateValid,launchNoticeReady,publicLaunchDate,firstVisitUnblocked,packageTest,optionalFieldsTest,specialTimeTest,timePeriodTest,communityEntryTest,deepLinkTest,mobileEntryTest,firstTimerTest,routeTest,hubTest,menuTest,errors};
+  const result={...target,...metrics,horizontalOverflow:metrics.contentWidth>metrics.viewportWidth+2,countdownOkay,openingPopupVisible,countdownDays,discoveryLayout,launchDateValid,launchNoticeReady,publicLaunchDate,firstVisitUnblocked,packageTest,optionalFieldsTest,specialTimeTest,timePeriodTest,communityEntryTest,deepLinkTest,mobileEntryTest,firstTimerTest,routeTest,hubTest,menuTest,errors};
   results.push(result);
   console.log('VISUAL_QA '+JSON.stringify(result));
   await page.close();
@@ -133,7 +142,12 @@ for (const target of targets) {
     return {visible:r.width>0&&r.height>0,width:r.width,withinViewport:r.left>=-1&&r.right<=innerWidth+1,hasLocationInput:!!el.querySelector('[name="google_maps_url"]'),hasLaunchInput:!!el.querySelector('#fzLaunchQuickForm [name="launch_date"]')};
   });
   await adminPage.locator('#fzMainFieldControl').screenshot({path:'visual-qa-artifacts/'+target.name+'-admin-field-control.png',animations:'disabled'});
-  if(!adminMetrics.visible||!adminMetrics.withinViewport||!adminMetrics.hasLocationInput||!adminMetrics.hasLaunchInput){
+  const modesLayout=await adminPage.locator('#fzGameModeManager').evaluate(el=>{
+    const box=el.getBoundingClientRect();
+    return box.width>0&&box.height>0&&box.left>=-1&&box.right<=innerWidth+1;
+  });
+  await adminPage.locator('#fzGameModeManager').screenshot({path:'visual-qa-artifacts/'+target.name+'-admin-game-modes.png',animations:'disabled'});
+  if(!modesLayout||!adminMetrics.visible||!adminMetrics.withinViewport||!adminMetrics.hasLocationInput||!adminMetrics.hasLaunchInput){
     console.error('ADMIN_UI_FAILURE '+JSON.stringify({target:target.name,...adminMetrics}));
     process.exitCode=1;
   }
@@ -142,6 +156,6 @@ for (const target of targets) {
 }
 await browser.close();
 await fs.writeFile('visual-qa-artifacts/report.json',JSON.stringify(results,null,2));
-const failure=results.some(r=>r.horizontalOverflow||!r.launchDateValid||!r.launchNoticeReady||!r.discoveryLayout||r.timePeriodTest!=='pass'||r.communityEntryTest!=='pass'||r.deepLinkTest!=='pass'||r.mobileEntryTest==='fail'||r.firstTimerTest!=='pass'||!r.firstVisitUnblocked||r.packageTest!=='pass'||r.optionalFieldsTest!=='pass'||r.specialTimeTest!=='pass'||!r.cssLoaded||!r.hero||!r.selector||r.quickStartCount!==3||r.communityCount<5||r.routeTest!=='pass'||r.hubTest!=='pass'||r.menuTest==='fail'||r.errors.length);
+const failure=results.some(r=>r.horizontalOverflow||!r.countdownOkay||!r.launchDateValid||!r.launchNoticeReady||!r.discoveryLayout||r.timePeriodTest!=='pass'||r.communityEntryTest!=='pass'||r.deepLinkTest!=='pass'||r.mobileEntryTest==='fail'||r.firstTimerTest!=='pass'||!r.firstVisitUnblocked||r.packageTest!=='pass'||r.optionalFieldsTest!=='pass'||r.specialTimeTest!=='pass'||!r.cssLoaded||!r.hero||!r.selector||r.quickStartCount!==3||r.communityCount<5||r.routeTest!=='pass'||r.hubTest!=='pass'||r.menuTest==='fail'||r.errors.length);
 if(failure){console.error('FIELDZERO visual QA detected layout or browser issues.');process.exit(1);}
 console.log('FIELDZERO visual QA passed for desktop, mobile, tablet and narrow mobile.');

@@ -70,6 +70,7 @@ for (const target of targets) {
     routeTest=await page.locator('#bookingExperience').inputValue()==='Solo Target Practice'&&await page.locator('#arenaDuration').inputValue()==='0.5'?'pass':'fail';
   }catch(e){routeTest='fail: '+String(e.message).slice(0,120);}
   try{
+    await page.locator('#fzCommunityGateway').evaluate(el=>{el.open=false;});
     await page.locator('#fzCommunityGateway>summary').click({timeout:5000});
     hubTest=await page.locator('#fzCommunityGateway').getAttribute('open')!==null?'pass':'fail';
   }catch(e){hubTest='fail: '+String(e.message).slice(0,120);}

@@ -4,6 +4,11 @@
   const clientReady = !!(window.supabase && config.SUPABASE_URL &&
     config.SUPABASE_ANON_KEY && !config.SUPABASE_URL.includes("YOUR-PROJECT") &&
     !config.SUPABASE_ANON_KEY.includes("YOUR_SUPABASE"));
+  // Capture the recovery callback before Supabase consumes the URL fragment.
+  const fzPasswordLinkHash = new URLSearchParams(location.hash.replace(/^#/, ''));
+  const fzRecoveryFromLink = fzPasswordLinkHash.get('type') === 'recovery';
+  const fzRecoveryLinkError = fzPasswordLinkHash.get('error_description') || fzPasswordLinkHash.get('error') || '';
+  let fzPasswordRecoveryActive = fzRecoveryFromLink;
   const db = clientReady ? window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY) : null;
   $("#year").textContent = new Date().getFullYear();
 
@@ -1132,11 +1137,23 @@
   const memberLoginForm = $('#memberLoginForm');
   let memberContext = null, memberSquads = [], pendingOperatorEmail = "";
   const memberMsg = (el, text, kind='') => { if(el) status(el,text,kind); };
+  function showMemberRecoveryForm(){
+    const form=$('#memberPasswordUpdate');
+    if(!form)return;
+    if(operatorRegistrationForm)operatorRegistrationForm.hidden=true;
+    if(operatorLoginForm)operatorLoginForm.hidden=true;
+    if(operatorTabs)operatorTabs.hidden=true;
+    if($('#memberDashboard'))$('#memberDashboard').hidden=true;
+    form.hidden=false;
+    memberMsg($('#memberPasswordStatus'),'Reset link verified. Enter and confirm your new password.','success');
+    requestAnimationFrame(()=>$('#memberArea')?.scrollIntoView({behavior:'smooth',block:'start'}));
+  }
   function memberStat(label,value){return `<div><b>${escapeHtml(value ?? '0')}</b><small>${escapeHtml(label)}</small></div>`;}
   async function loadMemberAccount(){
     if(!db || !$('#memberDashboard')) return;
     const {data:{session}} = await db.auth.getSession();
-    if(!session){$('#memberLoginForm').hidden=false;$('#registrationForm').hidden=true;if(operatorTabs)operatorTabs.hidden=false;$('#memberDashboard').hidden=true;memberContext=null;return;}
+    if(fzPasswordRecoveryActive && session){showMemberRecoveryForm();return;}
+    if(!session){$('#memberPasswordUpdate').hidden=true;$('#memberLoginForm').hidden=false;$('#registrationForm').hidden=true;if(operatorTabs)operatorTabs.hidden=false;$('#memberDashboard').hidden=true;memberContext=null;return;}
     $('#memberLoginForm').hidden=true;$('#registrationForm').hidden=true;if(operatorTabs)operatorTabs.hidden=true;$('#memberDashboard').hidden=false;
     const {data,error}=await db.rpc('fz_member_get_context');
     if(error){memberMsg($('#memberLoginStatus'),`Operator profile service error: ${error.message||'Unknown database error'}. Ask admin to check V18/V21 migrations and RPC permissions.`,'error');return;}
@@ -1200,14 +1217,54 @@
   }
   memberLoginForm?.addEventListener('submit',async e=>{e.preventDefault();const fd=new FormData(memberLoginForm),btn=$('#memberLoginButton');const username=String(fd.get('username')||'').trim().toLowerCase(),password=String(fd.get('password')||'');if(!/^[a-z0-9_-]{3,24}$/.test(username)){memberMsg($('#memberLoginStatus'),'Enter your FIELDZERO username.','error');return;}btn.disabled=true;btn.textContent='SIGNING IN…';const {data,error}=await db.functions.invoke('member-login',{body:{username,password}});btn.disabled=false;btn.textContent='SIGN IN ↗';if(error||!data?.access_token||!data?.refresh_token){memberMsg($('#memberLoginStatus'),'Sign in failed. Check your username and password, then try again.','error');return;}const {error:setError}=await db.auth.setSession({access_token:data.access_token,refresh_token:data.refresh_token});if(setError){memberMsg($('#memberLoginStatus'),'Login session could not be started. Please try again.','error');return;}memberMsg($('#memberLoginStatus'),'Signed in. Loading your profile…','success');await loadMemberAccount();});
   $('#memberRefresh')?.addEventListener('click',loadMemberAccount);
-  $('#memberPasswordUpdate')?.addEventListener('submit',async e=>{e.preventDefault();const password=$('#memberNewPassword').value;if(password.length<8){memberMsg($('#memberPasswordStatus'),'Use at least 8 characters.','error');return;}const {error}=await db.auth.updateUser({password});if(error){memberMsg($('#memberPasswordStatus'),error.message,'error');return;}e.currentTarget.reset();e.currentTarget.hidden=true;memberMsg($('#memberLoginStatus'),'Your password has been updated.','success');});
+  $('#memberPasswordUpdate')?.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const form=e.currentTarget, password=$('#memberNewPassword').value;
+    const confirmation=$('#memberConfirmPassword').value;
+    const submit=form.querySelector('button[type="submit"]');
+    if(password.length<8){memberMsg($('#memberPasswordStatus'),'Use at least 8 characters.','error');return;}
+    if(password!==confirmation){memberMsg($('#memberPasswordStatus'),'Your passwords do not match. Please try again.','error');return;}
+    submit.disabled=true;
+    const {data:{session}}=await db.auth.getSession();
+    if(!session){memberMsg($('#memberPasswordStatus'),'Your reset link has expired. Please request a new one.','error');submit.disabled=false;return;}
+    const {error}=await db.auth.updateUser({password});
+    submit.disabled=false;
+    if(error){memberMsg($('#memberPasswordStatus'),error.message,'error');return;}
+    fzPasswordRecoveryActive=false;
+    form.reset();form.hidden=true;
+    await db.auth.signOut();
+    await loadMemberAccount();
+    memberMsg($('#memberLoginStatus'),'Password updated successfully. Sign in with your username and new password.','success');
+    location.hash='memberArea';
+    $('#memberArea')?.scrollIntoView({behavior:'smooth',block:'start'});
+  });
   $('#memberSignOut')?.addEventListener('click',async()=>{await db.auth.signOut();memberMsg($('#memberLoginStatus'),'You have signed out.','success');await loadMemberAccount();});
-  $('#memberForgotPassword')?.addEventListener('click',async()=>{const email=prompt('Enter the private email address used when you created your FIELDZERO account:');if(!email)return;const {error}=await db.auth.resetPasswordForEmail(email.trim(),{redirectTo:`${location.origin}${location.pathname}#memberArea`});memberMsg($('#memberLoginStatus'),error?error.message:'If the address is registered, a password reset email will be sent. Check your inbox.',error?'error':'success');});
+  $('#memberForgotPassword')?.addEventListener('click',async()=>{const email=prompt('Enter the private email address used when you created your FIELDZERO account:');if(!email)return;const {error}=await db.auth.resetPasswordForEmail(email.trim(),{redirectTo:`${location.origin}${location.pathname}`});memberMsg($('#memberLoginStatus'),error?error.message:'If the address is registered, a password reset email will be sent. Check your inbox.',error?'error':'success');});
   $('#memberSquadSearch')?.addEventListener('input',renderMemberSquads);
   $('#memberProfileForm')?.addEventListener('submit',async e=>{e.preventDefault();if(!db)return;const btn=e.currentTarget.querySelector('button[type=submit]');btn.disabled=true;let avatarUrl=memberContext?.account?.avatar_url||'';const file=$('#memberAvatarFile').files[0];if(file){if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>5*1024*1024){memberMsg($('#memberProfileStatus'),'Choose a JPG, PNG or WEBP image up to 5 MB.','error');btn.disabled=false;return;}const {data:{user}}=await db.auth.getUser();const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';const path=`${user.id}/${crypto.randomUUID()}.${ext}`;const {error:uploadError}=await db.storage.from('fz-member-avatars').upload(path,file,{contentType:file.type,upsert:false});if(uploadError){memberMsg($('#memberProfileStatus'),uploadError.message,'error');btn.disabled=false;return;}avatarUrl=db.storage.from('fz-member-avatars').getPublicUrl(path).data.publicUrl;}
     const {error}=await db.rpc('fz_member_update_profile',{p_callsign:$('#memberCallsign').value.trim(),p_display_name:$('#memberDisplayName').value.trim(),p_avatar_url:avatarUrl});btn.disabled=false;if(error){memberMsg($('#memberProfileStatus'),error.message,'error');return;}memberMsg($('#memberProfileStatus'),'Profile saved.','success');await loadMemberAccount();await loadRoster();await loadTeams();});
   $('#memberDeleteProfile')?.addEventListener('click',async()=>{if(!confirm('Delete your public FIELDZERO profile and leave all squads? Historical verified match results will be retained.'))return;const {error}=await db.rpc('fz_member_delete_profile');if(error){memberMsg($('#memberProfileStatus'),error.message,'error');return;}await db.auth.signOut();memberMsg($('#memberLoginStatus'),'Your FIELDZERO profile has been deactivated. Historical results are retained.','success');await loadMemberAccount();await loadRoster();await loadTeams();});
-  db?.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY' && $('#memberPasswordUpdate'))$('#memberPasswordUpdate').hidden=false;if(event==='SIGNED_IN' && session && location.hash.includes('memberArea')){memberMsg($('#memberLoginStatus'),'Email verified / session restored. Loading your operator dossier…','success');}if($('#memberDashboard'))setTimeout(()=>loadMemberAccount(),0);});
+  db?.auth.onAuthStateChange((event,session)=>{
+    if(event==='PASSWORD_RECOVERY')fzPasswordRecoveryActive=true;
+    if(fzPasswordRecoveryActive && session && (event==='PASSWORD_RECOVERY'||event==='SIGNED_IN'||event==='INITIAL_SESSION')){
+      showMemberRecoveryForm();
+    }else if(event==='SIGNED_IN' && session && location.hash.includes('memberArea')){
+      memberMsg($('#memberLoginStatus'),'Email verified / session restored. Loading your operator dossier…','success');
+    }
+    if($('#memberDashboard'))setTimeout(()=>loadMemberAccount(),0);
+  });
+  // Handle recovery callbacks even if the auth event fired before this listener was set.
+  if(db && (fzRecoveryFromLink || fzRecoveryLinkError)){
+    db.auth.getSession().then(({data:{session},error})=>{
+      if(fzRecoveryFromLink && session && !error){fzPasswordRecoveryActive=true;showMemberRecoveryForm();return;}
+      fzPasswordRecoveryActive=false;
+      memberMsg($('#memberLoginStatus'),'This reset link is invalid or expired. Please request a new reset email.','error');
+      $('#memberArea')?.scrollIntoView({behavior:'smooth',block:'start'});
+    }).catch(()=>{
+      fzPasswordRecoveryActive=false;
+      memberMsg($('#memberLoginStatus'),'Could not verify this reset link. Please request another one.','error');
+    });
+  }
 
   loadFieldWeather();
   window.setInterval(loadFieldWeather, 30 * 60 * 1000);

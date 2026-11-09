@@ -112,6 +112,33 @@ for (const target of targets) {
   results.push(result);
   console.log('VISUAL_QA '+JSON.stringify(result));
   await page.close();
+  // Visual-only administrator layout audit: no credentials or database writes.
+  // Unhide the protected dashboard locally in the test browser only to inspect the form geometry.
+  const adminPage=await browser.newPage({viewport:{width:target.width,height:target.height},deviceScaleFactor:1,isMobile:target.name.includes('mobile'),hasTouch:target.name.includes('mobile')});
+  await adminPage.goto('http://127.0.0.1:8765/admin.html',{waitUntil:'domcontentloaded',timeout:30000});
+  await adminPage.waitForTimeout(500);
+  await adminPage.evaluate(()=>{
+    const login=document.querySelector('#loginPanel'),dash=document.querySelector('#dashboard');
+    if(login)login.hidden=true;
+    if(dash)dash.hidden=false;
+    const form=document.querySelector('#fzMainFieldForm');
+    if(form){
+      form.elements.namedItem('name').value='Imbulgoda Field';
+      form.elements.namedItem('address').value='Imbulgoda, Gampaha, Sri Lanka';
+      form.elements.namedItem('google_maps_url').value='https://www.google.com/maps/search/?api=1&query=Imbulgoda';
+    }
+  });
+  const adminMetrics=await adminPage.locator('#fzMainFieldControl').evaluate(el=>{
+    const r=el.getBoundingClientRect();
+    return {visible:r.width>0&&r.height>0,width:r.width,withinViewport:r.left>=-1&&r.right<=innerWidth+1,hasLocationInput:!!el.querySelector('[name="google_maps_url"]'),hasLaunchInput:!!el.querySelector('#fzLaunchQuickForm [name="launch_date"]')};
+  });
+  await adminPage.locator('#fzMainFieldControl').screenshot({path:'visual-qa-artifacts/'+target.name+'-admin-field-control.png',animations:'disabled'});
+  if(!adminMetrics.visible||!adminMetrics.withinViewport||!adminMetrics.hasLocationInput||!adminMetrics.hasLaunchInput){
+    console.error('ADMIN_UI_FAILURE '+JSON.stringify({target:target.name,...adminMetrics}));
+    process.exitCode=1;
+  }
+  console.log('ADMIN_VISUAL_QA '+JSON.stringify({name:target.name,...adminMetrics}));
+  await adminPage.close();
 }
 await browser.close();
 await fs.writeFile('visual-qa-artifacts/report.json',JSON.stringify(results,null,2));

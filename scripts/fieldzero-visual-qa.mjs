@@ -130,8 +130,8 @@ for (const target of targets) {
   await adminPage.waitForTimeout(500);
   await adminPage.evaluate(()=>{
     const login=document.querySelector('#loginPanel'),dash=document.querySelector('#dashboard');
-    if(login)login.hidden=true;
-    if(dash)dash.hidden=false;
+    if(login){login.hidden=true;login.style.display='none';}
+    if(dash){dash.hidden=false;dash.removeAttribute('hidden');dash.style.setProperty('display','block','important');dash.style.setProperty('visibility','visible','important');}
     const form=document.querySelector('#fzMainFieldForm');
     if(form){
       form.elements.namedItem('name').value='Imbulgoda Field';
@@ -143,12 +143,19 @@ for (const target of targets) {
     const r=el.getBoundingClientRect();
     return {visible:r.width>0&&r.height>0,width:r.width,withinViewport:r.left>=-1&&r.right<=innerWidth+1,hasLocationInput:!!el.querySelector('[name="google_maps_url"]'),hasLaunchInput:!!el.querySelector('#fzLaunchQuickForm [name="launch_date"]')};
   });
-  await adminPage.locator('#fzMainFieldControl').screenshot({path:'visual-qa-artifacts/'+target.name+'-admin-field-control.png',animations:'disabled'});
+  const adminView=await adminPage.evaluate(()=>{
+    const p=document.querySelector('#fzMainFieldControl'),d=document.querySelector('#dashboard');
+    return {panelDisplay:p?getComputedStyle(p).display:'missing',dashboardDisplay:d?getComputedStyle(d).display:'missing',dashboardHidden:d?.hidden,panelRect:p?.getBoundingClientRect().toJSON()};
+  });
+  console.log('ADMIN_VISUAL_DIAGNOSTIC '+JSON.stringify({name:target.name,...adminView}));
+  if(adminMetrics.visible){
+    await adminPage.locator('#fzMainFieldControl').screenshot({path:'visual-qa-artifacts/'+target.name+'-admin-field-control.png',animations:'disabled',timeout:12000});
+  }
   const modesLayout=await adminPage.locator('#fzGameModeManager').evaluate(el=>{
     const box=el.getBoundingClientRect();
     return box.width>0&&box.height>0&&box.left>=-1&&box.right<=innerWidth+1;
   });
-  await adminPage.locator('#fzGameModeManager').screenshot({path:'visual-qa-artifacts/'+target.name+'-admin-game-modes.png',animations:'disabled'});
+  if(modesLayout) await adminPage.locator('#fzGameModeManager').screenshot({path:'visual-qa-artifacts/'+target.name+'-admin-game-modes.png',animations:'disabled',timeout:12000});
   if(!modesLayout||!adminMetrics.visible||!adminMetrics.withinViewport||!adminMetrics.hasLocationInput||!adminMetrics.hasLaunchInput){
     console.error('ADMIN_UI_FAILURE '+JSON.stringify({target:target.name,...adminMetrics}));
     process.exitCode=1;

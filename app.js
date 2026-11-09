@@ -742,13 +742,13 @@
     doc.setFillColor(...dark);doc.rect(0,0,210,59,'F');doc.setFillColor(...lime);doc.rect(0,0,4,59,'F');
     doc.setFillColor(...lime);doc.roundedRect(14,13,24,24,2,2,'F');doc.setTextColor(...dark);doc.setFont('helvetica','bold');doc.setFontSize(17);doc.text('FZ',20,29);
     doc.setTextColor(255,255,255);doc.setFontSize(16);doc.text('FIELDZERO',45,22);doc.setFontSize(7);doc.setTextColor(...lime);doc.text('OWN THE FIELD. BUILD YOUR SQUAD.',45,29);
-    doc.setTextColor(255,255,255);doc.setFontSize(15);doc.text('ADVANCE PAYMENT REQUEST',196,19,{align:'right'});doc.setFontSize(7);doc.setTextColor(206,216,202);doc.text('RESERVATION · NOT YET CONFIRMED',196,27,{align:'right'});
+    doc.setTextColor(255,255,255);doc.setFontSize(15);doc.text(Number(b.advance_required||0)===0?'OPENING RESERVATION':'ADVANCE PAYMENT REQUEST',196,19,{align:'right'});doc.setFontSize(7);doc.setTextColor(206,216,202);doc.text(Number(b.advance_required||0)===0?(b.special_request?'SPECIAL REQUEST · AWAITING APPROVAL':'RESERVED · NO DEPOSIT DUE'):'RESERVATION · NOT YET CONFIRMED',196,27,{align:'right'});
     doc.setTextColor(206,216,202);doc.setFontSize(7);doc.text('BOOKING REFERENCE',14,48);doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(12);doc.text(String(b.booking_reference||'FZ-BOOKING'),14,54);
 
     doc.setFillColor(...lime);doc.roundedRect(14,70,182,38,3,3,'F');
-    doc.setTextColor(...dark);doc.setFont('helvetica','bold');doc.setFontSize(7);doc.text('ADVANCE REQUIRED TO SECURE YOUR BOOKING',21,80);
-    doc.setFontSize(23);doc.text(money(500),21,96);
-    doc.setFontSize(7);doc.text('PAY LKR 500.00',188,84,{align:'right'});doc.setFont('helvetica','normal');doc.text('Booking confirms only after the field verifies payment.',188,92,{align:'right'});
+    doc.setTextColor(...dark);doc.setFont('helvetica','bold');doc.setFontSize(7);doc.text(Number(b.advance_required||0)===0?'NO ADVANCE BEFORE OPENING':'ADVANCE REQUIRED TO SECURE YOUR BOOKING',21,80);
+    doc.setFontSize(23);doc.text(money(b.advance_required||0),21,96);
+    doc.setFontSize(7);doc.text(Number(b.advance_required||0)===0?'NO PAYMENT NOW':'PAY LKR 500.00',188,84,{align:'right'});doc.setFont('helvetica','normal');doc.text(Number(b.advance_required||0)===0?(b.special_request?'Await owner review. No deposit now.':'Pre-launch reservation saved.'): 'Confirmed after payment verification.',188,92,{align:'right'});
 
     doc.setTextColor(...dark);doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text('BOOKING DETAILS',14,122);doc.setDrawColor(...line);doc.line(14,126,196,126);
     const rows=[
@@ -769,16 +769,16 @@
       y+=12;
     });
     doc.setFillColor(...dark);doc.roundedRect(14,244,182,30,2,2,'F');
-    doc.setTextColor(...lime);doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text('HOW TO PAY THE LKR 500 ADVANCE',20,254);
+    doc.setTextColor(...lime);doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text(Number(b.advance_required||0)===0?'YOUR NEXT STEP · NO DEPOSIT':'HOW TO PAY THE LKR 500 ADVANCE',20,254);
     doc.setTextColor(255,255,255);doc.setFont('helvetica','normal');doc.setFontSize(6.8);
-    const paymentText=b.special_request? 'SPECIAL REQUEST: Please wait for the field admin to approve availability before paying. The LKR 500 advance becomes due only after acceptance. The field will confirm the payment instructions with you.':(String(b.payment_instructions||'').trim()||'Payment instructions have not been published for this field. Contact the field admin and quote your booking reference before making payment.');
+    const paymentText=Number(b.advance_required||0)===0?(b.special_request?'SPECIAL REQUEST: Our operator will review your booking and contact you. There is no deposit to pay before opening.':'PRE-LAUNCH RESERVED: No LKR 500 deposit is due. Keep this booking ID and arrive 15 minutes early. The session fee is collected when play begins.'):b.special_request?'SPECIAL REQUEST: Wait for admin approval before paying. The LKR 500 deposit applies after acceptance.':(String(b.payment_instructions||'').trim()||'Payment instructions have not been published. Contact the field admin and quote your booking reference before paying.');
     const paymentLines=doc.splitTextToSize(paymentText.slice(0,360),168).slice(0,3);
     doc.text(paymentLines,20,262);
     if(b.payment_contact_phone){doc.setTextColor(...lime);doc.setFont('helvetica','bold');doc.setFontSize(6.3);doc.text(`FIELD CONTACT: ${String(b.payment_contact_phone).slice(0,32)}`,20,271);}
-    doc.setTextColor(...muted);doc.setFontSize(6.5);doc.text('IMPORTANT: Arrive 15 minutes before your start time for registration and safety briefing. This is a payment request only. It is not an invoice, proof of payment or confirmed booking. Your booking is confirmed only after the field admin verifies and records the LKR 500 advance.',14,283,{maxWidth:182});
+    doc.setTextColor(...muted);doc.setFontSize(6.5);doc.text(Number(b.advance_required||0)===0?'IMPORTANT: Arrive 15 minutes early for check-in and safety briefing. No deposit is payable before opening. Special requests require owner approval. Venue opening is subject to operational readiness.':'IMPORTANT: Arrive 15 minutes early for check-in and safety briefing. A deposit request is not a receipt or confirmed booking. Your reservation is confirmed after the admin verifies LKR 500.',14,283,{maxWidth:182});
     doc.setDrawColor(...lime);doc.setLineWidth(1);doc.line(14,289,196,289);
     doc.setFontSize(6);doc.text('FIELDZERO · SRI LANKA · KEEP THIS REFERENCE FOR CHECK-IN',14,294);
-    doc.save(`${b.booking_reference||'FIELDZERO-BOOKING'}-ADVANCE-REQUEST.pdf`);
+    doc.save(`${b.booking_reference||'FIELDZERO-BOOKING'}-${Number(b.advance_required||0)===0?'PRELAUNCH-RESERVATION':'ADVANCE-REQUEST'}.pdf`);
   }
   async function loadMonthlyMvp(){
     const host=$('#monthlyMvpGrid');if(!host)return;
@@ -828,7 +828,64 @@
   const referralFromUrl=new URLSearchParams(location.search).get('ref');
   if(referralFromUrl&&arenaReferralInput)arenaReferralInput.value=referralFromUrl.trim().toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,24);
   if(arenaReferralInput)arenaReferralInput.addEventListener('blur',async()=>{const code=arenaReferralInput.value.trim().toUpperCase();arenaReferralInput.value=code;if(!code){if(arenaReferralStatus)arenaReferralStatus.textContent='';return;}if(!db){if(arenaReferralStatus)arenaReferralStatus.textContent='Referral code validation is unavailable right now.';return;}const sessionCheck=await db.auth.getSession();if(sessionCheck.data?.session){if(arenaReferralStatus)arenaReferralStatus.textContent='Your referral code will be checked securely when you submit the booking.';return;}const {data,error}=await db.from('public_fz_referral_codes').select('code,reward_points').eq('code',code).maybeSingle();if(arenaReferralStatus){arenaReferralStatus.textContent=error||!data?'Code not recognised. Check it or leave this field blank.':`Code verified. The referring operator can earn ${Number(data.reward_points)} XP after your visit is verified.`;arenaReferralStatus.dataset.valid=(!error&&!!data)?'true':'false';}});
-  const arenaForm=$("#arenaBookingForm"); if(arenaForm) arenaForm.addEventListener('submit',async e=>{e.preventDefault();const fd=new FormData(arenaForm),el=$("#arenaBookingStatus");if(!db){status(el,'Database is not configured yet.','error');return}const h=fd.get('startTime'),special=fd.get('specialRequest')==='true',specialTime=String(fd.get('specialTime')||'');if(!h&&!special){status(el,'Choose an available start time or select special booking request.','error');return}const date=dateInput.value;const parts=(special&&specialTime?specialTime:String(h||'09:00')).split(':').map(Number);const start=slDateTime(date,parts[0],parts[1]||0);const end=new Date(start.getTime()+Number($("#arenaDuration").value||1)*3600000);if(!special&&(start<slDateTime(date,9)||end>slDateTime(date,22)||start<=new Date()||!Number.isFinite(start.getTime()))){status(el,'Select a future session between 09:00 and 22:00. The full duration must fit before closing.','error');return}const payload={field_id:$("#arenaFieldSelect")?.value||null,real_name:String(fd.get('realName')).trim(),callsign:String(fd.get('callsign')).trim(),mobile:String(fd.get('mobile')).trim(),customer_email:String(fd.get('customerEmail')||'').trim(),experience:String(fd.get('experience')||''),marketing_source:resolveMarketingSource(fd.get('marketingSource')),referral_code:String(fd.get('referralCode')||'').trim().toUpperCase()||null,booking_start:start.toISOString(),booking_end:end.toISOString(),player_count:Number(fd.get('playerCount')),special_request:special,notes:[fd.get('experience') ? `Experience: ${String(fd.get('experience')).trim()}` : '', String(fd.get('notes')||'').trim()].filter(Boolean).join(' | ').slice(0,700),privacy_consent:true};const btn=$("#submitArenaBooking");btn.disabled=true;btn.textContent='PROCESSING BOOKING…';const {data,error}=await db.rpc('fz_submit_arena_booking',{p_booking:payload});btn.disabled=false;btn.textContent='REQUEST SLOT & DEPOSIT DETAILS ↗';if(error){status(el,error.message||'Could not submit booking. Please try again.','error');return}const booking=data?.[0];if(!booking){status(el,'Booking submitted but reference could not be loaded. Contact FIELDZERO.','error');return}try{const infoQ=await db.rpc('fz_public_field_payment_instructions',{p_field_id:payload.field_id});const paymentInfo=Array.isArray(infoQ.data)?infoQ.data[0]||{}:{};await generateCustomerBookingPdf({...payload,...booking,...paymentInfo,field_name:paymentInfo.field_name||$("#arenaFieldSelect")?.selectedOptions?.[0]?.textContent||'FIELDZERO FIELD',advance_required:500});}catch(pdfErr){console.warn('Booking PDF generation failed',pdfErr);try{await generateCustomerBookingPdf({...payload,...booking,field_name:$("#arenaFieldSelect")?.selectedOptions?.[0]?.textContent||'FIELDZERO FIELD',advance_required:500});}catch(retryErr){console.warn('Booking PDF retry failed',retryErr)}}arenaForm.reset();if(referralFromUrl&&arenaReferralInput)arenaReferralInput.value=referralFromUrl.trim().toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,24);dateInput.value=date;await loadArenaSlots();status(el,special?`SPECIAL REQUEST RECEIVED · ${booking.booking_reference}. The selected field must review your request. The required advance is LKR 500 once accepted.`:`BOOKING REQUEST RECEIVED · ${booking.booking_reference}. LKR 500 advance is required. Your booking is confirmed only after the field admin verifies and records the payment.`, 'success');});
+  const arenaForm=$("#arenaBookingForm");
+  if(arenaForm)arenaForm.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const fd=new FormData(arenaForm),el=$("#arenaBookingStatus");
+    if(!db){status(el,'Booking system is temporarily unavailable.','error');return;}
+    const modeName=String(fd.get('experience')||''),mode=fzModeByName(modeName);
+    const special=fd.get('specialRequest')==='true',specialTime=String(fd.get('specialTime')||'');
+    if(!mode&&!special){status(el,'Choose a game mode first. For another idea, choose Special Booking.','error');return;}
+    const chosen=String(fd.get('startTime')||'');
+    if(!chosen&&!special){status(el,'Choose an available start time.','error');return;}
+    if(mode&&!special){
+      const n=Number(fd.get('playerCount'));
+      if(n<Number(mode.min_players)||n>Number(mode.max_players)){status(el,'Select the correct player count for this game mode.','error');return;}
+    }
+    const date=dateInput?.value,parts=(special&&specialTime?specialTime:chosen||'09:00').split(':').map(Number);
+    const start=slDateTime(date,parts[0],parts[1]||0),end=new Date(start.getTime()+Number($("#arenaDuration").value||1)*3600000);
+    if(!Number.isFinite(start.getTime())||start<=new Date()||(!special&&(start<slDateTime(date,9)||end>slDateTime(date,22)))){
+      status(el,'Choose a future session between 09:00 and 22:00.','error');return;
+    }
+    const fieldId=$("#arenaFieldSelect")?.value||null;
+    const payload={
+      field_id:fieldId,real_name:String(fd.get('realName')||'').trim(),
+      callsign:String(fd.get('callsign')||'').trim(),mobile:String(fd.get('mobile')||'').trim(),
+      customer_email:String(fd.get('customerEmail')||'').trim(),experience:modeName,
+      marketing_source:resolveMarketingSource(fd.get('marketingSource')),
+      referral_code:String(fd.get('referralCode')||'').trim().toUpperCase()||null,
+      booking_start:start.toISOString(),booking_end:end.toISOString(),
+      player_count:Number(fd.get('playerCount')),special_request:special,
+      notes:[modeName?'Experience: '+modeName:'',String(fd.get('notes')||'').trim()].filter(Boolean).join(' | ').slice(0,700),
+      privacy_consent:true
+    };
+    const button=$("#submitArenaBooking"),advance=fzAdvanceAmount(fieldId);
+    button.disabled=true;button.textContent='SAVING RESERVATION…';
+    let rpc;
+    try{rpc=await db.rpc('fz_submit_arena_booking',{p_booking:payload});}
+    finally{button.disabled=false;fzUpdateBookingPaymentCopy();}
+    const {data,error}=rpc||{};
+    if(error){status(el,error.message||'Could not submit reservation. Please try again.','error');return;}
+    const booking=data?.[0];if(!booking){status(el,'Reservation saved, but booking ID could not be loaded. Please contact FIELDZERO.','error');return;}
+    try{
+      let paymentInfo={};
+      if(advance>0){
+        const response=await db.rpc('fz_public_field_payment_instructions',{p_field_id:payload.field_id});
+        paymentInfo=Array.isArray(response.data)?response.data[0]||{}:{};
+      }
+      await generateCustomerBookingPdf({...payload,...booking,...paymentInfo,
+        field_name:paymentInfo.field_name||$("#arenaFieldSelect")?.selectedOptions?.[0]?.textContent||'FIELDZERO FIELD',
+        advance_required:advance});
+    }catch(err){console.warn('Booking reference PDF could not be created',err);}
+    arenaForm.reset();
+    if(referralFromUrl&&arenaReferralInput)arenaReferralInput.value=referralFromUrl.trim().toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,24);
+    if(dateInput)dateInput.value=date;
+    fzRenderModeInfo();await loadArenaSlots();
+    const message=advance===0
+      ?(special?'PRE-LAUNCH SPECIAL REQUEST RECEIVED · '+booking.booking_reference+'. No deposit is due. The owner will review and contact you.':'PRE-LAUNCH RESERVATION SAVED · '+booking.booking_reference+'. No deposit is due. Keep your booking reference and arrive 15 minutes early. Opening remains subject to field readiness.')
+      :(special?'SPECIAL REQUEST RECEIVED · '+booking.booking_reference+'. Await the operator’s acceptance before paying the LKR 500 advance.':'BOOKING REQUEST RECEIVED · '+booking.booking_reference+'. LKR 500 advance is required before confirmation.');
+    status(el,message,'success');
+  });
   const profileForm=$("#profileSearchForm");if(profileForm)profileForm.addEventListener('submit',async e=>{e.preventDefault();const box=$("#playerProfile"),call=$("#profileCallsign").value.trim();if(!db){box.innerHTML='<div class="empty-state">Database is not configured.</div>';return}box.innerHTML='<div class="empty-state">Retrieving verified operator record…</div>';const {data,error}=await db.from('public_player_profiles').select('callsign,player_rank,player_points,playing_hours,matches_played,wins,preferred_role,joined_on,win_rate,team_name,membership_name,membership_status,membership_expires_at').ilike('callsign',call).maybeSingle();if(error||!data){box.innerHTML='<div class="empty-state">No approved player profile found for that callsign.</div>';return}const matches=Math.max(0,Number(data.matches_played)||0),wins=Math.max(0,Number(data.wins)||0),hours=Math.max(0,Number(data.playing_hours)||0);const achievements=[{name:'FIRST DEPLOYMENT',detail:'Complete your first verified match',earned:matches>=1,value:matches,target:1},{name:'FIELD REGULAR',detail:'Complete 10 verified matches',earned:matches>=10,value:matches,target:10},{name:'FIELD VETERAN',detail:'Complete 25 verified matches',earned:matches>=25,value:matches,target:25},{name:'FIRST VICTORY',detail:'Record your first verified win',earned:wins>=1,value:wins,target:1},{name:'TEN WINS',detail:'Record 10 verified wins',earned:wins>=10,value:wins,target:10},{name:'TIME ON FIELD',detail:'Record 10 verified playing hours',earned:hours>=10,value:hours,target:10}];const earned=achievements.filter(a=>a.earned).length;box.innerHTML=`<article class="profile-card"><div class="profile-card-topline"><span>FIELDZERO / OPERATOR DOSSIER</span><span>RECORD VERIFIED</span></div><div class="profile-call">${escapeHtml(data.callsign)}</div><div class="profile-sub">${escapeHtml(data.team_name||'INDEPENDENT')} · ${escapeHtml(data.player_rank)}</div><div class="profile-membership">${escapeHtml(data.membership_status==='active'?data.membership_name:(data.membership_status==='expired'?'EXPIRED · '+data.membership_name:'RECRUIT / COMMUNITY'))}</div><div class="profile-stats"><div><b>${Number(data.player_points)}</b><span>POINTS</span></div><div><b>${hours.toFixed(1)}</b><span>PLAY HOURS</span></div><div><b>${matches}</b><span>MATCHES</span></div><div><b>${wins}</b><span>WINS</span></div><div><b>${Number(data.win_rate)||0}%</b><span>WIN RATE</span></div><div><b>${escapeHtml(data.preferred_role||'All-rounder')}</b><span>ROLE</span></div></div><div class="profile-achievement-head"><div><span>OPERATOR MILESTONES</span><b>${earned} / ${achievements.length} UNLOCKED</b></div><p>Milestones are calculated from admin-maintained match and attendance records.</p></div><div class="profile-achievements">${achievements.map(a=>`<div class="profile-achievement ${a.earned?'earned':'locked'}"><span class="achievement-mark">${a.earned?'✦':'◇'}</span><div><b>${a.name}</b><small>${a.detail}</small></div><span class="achievement-state">${a.earned?'EARNED':'LOCKED'}</span></div>`).join('')}</div><div class="profile-card-footer"><small>Roster since ${escapeHtml(data.joined_on||'—')} · Statistics maintained by FIELDZERO admin.</small><button class="button button-lime" id="shareOperatorRecord" type="button">SHARE OPERATOR RECORD ↗</button></div></article>`;const shareButton=box.querySelector('#shareOperatorRecord');shareButton?.addEventListener('click',async()=>{const shareText=`FIELDZERO / OPERATOR RECORD\n\n${data.callsign} · ${data.player_rank}\n${data.team_name||'Independent Operator'}\n${matches} matches · ${wins} wins · ${hours.toFixed(1)} playing hours\n${earned}/${achievements.length} milestones earned\n\nOWN THE FIELD. BUILD YOUR SQUAD.\nhttps://auto-0.github.io/fieldzero-community/#playerlookup`;try{if(navigator.share){await navigator.share({title:'FIELDZERO Operator Record',text:shareText});}else if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(shareText);shareButton.textContent='COPIED TO CLIPBOARD ✓';}else{window.prompt('Copy your FIELDZERO operator record:',shareText);}}catch(err){if(err?.name!=='AbortError')console.warn('[FIELDZERO] Share failed:',err);}});});
   async function loadChallengeTeams(){
     const ids=['leaderTeam','challengingTeam','challengedTeam'];

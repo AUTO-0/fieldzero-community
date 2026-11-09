@@ -15,6 +15,10 @@ for (const target of targets) {
     const root=document.documentElement,body=document.body;
     return {viewportWidth:innerWidth,contentWidth:Math.max(root.scrollWidth,body.scrollWidth),hero:box('#home'),heroTitle:box('#fz26HeroTitle'),selector:box('.fz26-route-panel'),book:box('#calendar'),quickStartCount:document.querySelectorAll('[data-fz26-experience]').length,cssLoaded:[...document.styleSheets].some(s=>s.href?.includes('experience-2026.css')),sections:['packages','calendar','how-it-works','gallery','fzCommunityGateway'].map(id=>({id,found:!!document.getElementById(id)})),communityCount:document.querySelectorAll('#fzCommunityContent>section').length};
   });
+  await page.evaluate(()=>{document.documentElement.style.scrollBehavior='auto';document.body.style.scrollBehavior='auto';window.scrollTo(0,0);});
+  await page.waitForTimeout(300);
+  await page.screenshot({path:'visual-qa-artifacts/'+target.name+'-top.png',animations:'disabled'});
+  await page.locator('#home').screenshot({path:'visual-qa-artifacts/'+target.name+'-hero.png',animations:'disabled'});
   let routeTest='not-run',menuTest='not-applicable',hubTest='not-run';
   try{
     await page.locator('[data-fz26-experience="Solo Target Practice"]').click({timeout:5000});
@@ -31,9 +35,6 @@ for (const target of targets) {
       await page.locator('#menuToggle').click();
     }catch(e){menuTest='fail: '+String(e.message).slice(0,120);}
   }
-  await page.evaluate(()=>scrollTo(0,0));
-  await page.waitForTimeout(220);
-  await page.screenshot({path:'visual-qa-artifacts/'+target.name+'-top.png',animations:'disabled'});
   try{await page.locator('#calendar').screenshot({path:'visual-qa-artifacts/'+target.name+'-booking.png',timeout:20000,animations:'disabled'});}catch(e){errors.push('booking screenshot: '+String(e.message).slice(0,140));}
   const result={...target,...metrics,horizontalOverflow:metrics.contentWidth>metrics.viewportWidth+2,routeTest,hubTest,menuTest,errors};
   results.push(result);

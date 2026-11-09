@@ -13,14 +13,23 @@
 <link href="styles.css?v=fieldzero-booking-faq-2" rel="stylesheet"/>
 <link href="franchise.css?v=fieldzero-booking-20261109" rel="stylesheet"/>
 <link href="experience-2026.css?v=fz-live-reservations-v3" rel="stylesheet"/>
-</head>
+<style>
+.fz-easy-opening{color:#c4e86b;font-size:13px;font-weight:700;letter-spacing:.08em;margin:18px 0 8px}
+.fz-easy-help{background:#172019;border:1px solid #526040;border-radius:12px;padding:18px;margin:0 0 20px;color:#f3f5ec;line-height:1.75}
+.fz-easy-help summary{cursor:pointer;font-weight:700;color:#d2ed98;min-height:32px}
+.fz-easy-help p{margin:10px 0}.fz-easy-help a{color:#d2ed98;text-decoration:underline}
+#calendar .calendar-controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+#calendar .calendar-controls .field{min-width:0}
+#register{scroll-margin-top:110px}
+@media(max-width:600px){#calendar .calendar-controls{grid-template-columns:1fr}.fz-easy-help{padding:14px}}
+</style></head>
 <body class="fz26">
 <header class="site-header">
 <a aria-label="FIELDZERO home" class="brand" href="#home"><span class="brand-mark">FZ</span><span><b>FIELD<span>ZERO</span></b><small>GEL BLASTER COMMUNITY</small></span></a>
 <button aria-expanded="false" aria-label="Toggle navigation" class="menu-toggle" id="menuToggle">☰</button>
 <nav id="mainNav" aria-label="Main navigation"><a href="#packages">EXPERIENCES</a><a href="#how-it-works">FIRST-TIMER GUIDE</a><a class="fz26-nav-community" href="#fzCommunityGateway" data-fz26-open-community="true">COMMUNITY <span aria-hidden="true">↗</span></a><a class="fz26-nav-account" href="#memberArea">OPERATOR LOGIN</a><a class="nav-cta" href="#calendar">BOOK A SESSION ↗</a></nav><div aria-label="FIELDZERO social media" class="header-social" id="headerSocialProfiles"><a class="social-profile-link social-icon-link social-tiktok" href="https://www.tiktok.com/@field.zero8" target="_blank" rel="noopener noreferrer" aria-label="Follow FIELDZERO on TikTok" title="TIKTOK"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.6 8.2a7.1 7.1 0 0 1-4.3-1.4v7.1a5.8 5.8 0 1 1-5-5.7v3a2.8 2.8 0 1 0 2 2.7V2.8h3a4.2 4.2 0 0 0 4.3 4.1z"/></svg><span class="social-link-label">TIKTOK</span></a><a class="social-profile-link social-icon-link social-instagram" href="https://www.instagram.com/fiel_dzero/" target="_blank" rel="noopener noreferrer" aria-label="Follow FIELDZERO on Instagram" title="INSTAGRAM"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.25" fill="currentColor"/></svg><span class="social-link-label">INSTAGRAM</span></a></div>
 </header>
-<div class="fz26-mobile-cta" aria-label="Quick navigation"><a class="fz26-mobile-community" href="#fzCommunityGateway" data-fz26-open-community="true">COMMUNITY <span aria-hidden="true">◎</span></a><a class="fz26-mobile-book" href="#calendar">BOOK NOW <span aria-hidden="true">↗</span></a></div>
+<div class="fz26-mobile-cta" aria-label="Quick navigation"><a class="fz26-mobile-community" href="#register">REGISTER <span aria-hidden="true">＋</span></a><a class="fz26-mobile-book" href="#calendar">BOOK NOW <span aria-hidden="true">↗</span></a></div>
 <section aria-label="Seasonal community message" class="seasonal-ribbon" hidden="" id="seasonalRibbon">
 <div class="seasonal-ribbon-image" hidden="" id="seasonalRibbonImageWrap"><img alt="" id="seasonalRibbonImage" loading="lazy"/></div>
 <div class="seasonal-ribbon-copy"><span class="seasonal-ribbon-kicker" id="seasonalRibbonKicker">FIELDZERO / SEASONAL NOTE</span><h2 id="seasonalRibbonTitle"></h2><p id="seasonalRibbonMessage"></p></div>
@@ -65,10 +74,10 @@
       <div class="fz26-overline"><span class="fz26-status-dot"></span> IMBULGODA, SRI LANKA <span class="fz26-overline-rule"></span> OUTDOOR GEL BLASTER</div>
       <div class="fz26-hero-serial">FIELD EXPERIENCE / 001 — EXPLORE THE REAL WORLD</div>
       <h1 id="fz26HeroTitle">GET OUT.<br><span>GET IN</span><br><em>THE GAME.</em></h1>
-      <p class="hero-copy">Play outdoor gel blaster missions in Imbulgoda — with friends, your squad or solo. First time? We'll show you how. Protective gear and guidance are part of the experience.</p>
+      <p class="fz-easy-opening">OPENING IN DECEMBER · REGISTRATION OPEN</p><p class="hero-copy">Play outdoor gel blaster missions in Imbulgoda — with friends, your squad or solo. First time? We'll show you how. Protective gear and guidance are part of the experience.</p>
       <div class="hero-actions">
         <a class="button button-lime fz26-primary" href="#calendar">FIND YOUR SESSION <span aria-hidden="true">↗</span></a>
-        <a class="button button-ghost fz26-secondary" href="#how-it-works">HOW IT WORKS <span aria-hidden="true">↘</span></a>
+        <a class="button button-ghost fz26-secondary" href="#register">REGISTER OPERATOR <span aria-hidden="true">↗</span></a>
       </div>
       <div class="fz26-hero-trust"><span>✓ BEGINNERS WELCOME</span><span>✓ GUIDED SESSIONS</span><span>✓ SOLO OR SQUADS</span></div>
     </div>
@@ -122,7 +131,7 @@
 <article class="package-card" data-package-category="competitive"><span class="package-tag">COMPETITIVE</span><h3>RANKED<br/>MISSION NIGHT</h3><p>Structured rounds where verified results contribute to individual and squad standings.</p><ul><li>Up to 10 players / two squads</li><li>90 minutes</li><li>Match marshal and score tracking</li><li>Leaderboard points</li></ul><div class="package-price" data-session-price="ranked-mission-night">LKR <b>3,000</b><small>suggested per player</small></div><a class="button button-ghost package-request" data-package="Ranked Mission Night" href="#calendar">VIEW / REQUEST ↗</a></article>
 <article class="package-card" data-package-category="private group"><span class="package-tag">CELEBRATIONS</span><h3>BIRTHDAY /<br/>PRIVATE EVENT</h3><p>Make the field your venue for a birthday, friend reunion or special occasion.</p><ul><li>Custom duration and game plan</li><li>Private group booking request</li><li>Optional tournament format</li><li>Photos and winner recognition</li></ul><div class="package-price" data-session-price="birthday-private-event"><b>Custom</b><small>quote after enquiry</small></div><a class="button button-ghost package-request" data-package="Birthday / Private Event" href="#calendar">PLAN YOUR EVENT ↗</a></article>
 <article class="package-card" data-package-category="competitive group"><span class="package-tag">COMMUNITY</span><h3>FIELDZERO<br/>MEMBERSHIP</h3><p>For regulars who want to build a squad, join monthly challenges and meet players.</p><ul><li>Operator profile and callsign</li><li>Community game-day invitations</li><li>Monthly leaderboard season</li><li>Early tournament registration</li></ul><div class="package-price" data-session-price="fieldzero-membership"><b>View monthly plans</b><small>Operator · Elite · Commander</small></div><a class="button button-ghost" href="#memberships">VIEW MEMBERSHIP PLANS ↗</a></article>
-</div><p class="package-disclaimer">Prices are planning examples, not confirmed live offers. Adjust for equipment wear, gel balls, staffing, electricity, rent and your target margin before accepting payments. Final inclusions, session length and availability must be confirmed by FIELDZERO.</p>
+</div><p class="package-disclaimer">Choose an experience in the booking section to see its current price, player limit and duration. Confirm inclusions with FIELDZERO before your visit.</p>
 <div class="pass-panel"><div class="pass-copy"><span class="section-kicker">FIELDZERO / REPEAT PLAY</span><h3>YOUR CALLSIGN.<br/><em>YOUR PROGRESSION.</em></h3><p>Like a game pass, every visit should build on the last. Start with a single session, then join recurring game days, earn admin-verified points and compete in seasonal rankings.</p><a class="button button-lime" href="#memberArea">CREATE YOUR CALLSIGN ↗</a></div><div class="pass-options"><article><span>01 / TRY IT</span><b>Single session</b><p>Book a guided introduction or target practice.</p></article><article><span>02 / RETURN</span><b>Multi-visit pack</b><p>Ask about a discounted repeat-player pack. Pricing to be confirmed.</p></article><article><span>03 / COMPETE</span><b>Season access</b><p>Join scheduled matches, challenges and tournaments when announced.</p></article></div></div>
 </section><section class="section fz-membership-section" id="memberships">
 <div class="section-kicker">FIELDZERO / OPERATOR MEMBERSHIP</div>
@@ -138,7 +147,7 @@
 </div>
 </section><section aria-label="Sponsored placement" class="sponsor-slot" data-ad-placement="events_inline" hidden="" id="adEventsInline"></section><section class="section fz26-booking" id="calendar"><div class="section-kicker">03 / YOUR NEXT MISSION</div><div class="section-heading"><h2>PICK A TIME.<br/><em>MAKE IT REAL.</em></h2><p>Open every day, 09:00–22:00. Choose a field, session length and time. Before opening: reserve your session with no deposit. Standard bookings are saved immediately; special events require owner approval. After opening, an LKR 500 advance applies to new bookings. Arrive 15 minutes early for the safety briefing.</p></div><div class="calendar-panel"><div class="calendar-controls"><label class="field">FIELD <select id="arenaFieldSelect" required=""><option value="">Loading fields…</option></select></label><label class="field">DATE <input id="arenaDate" required="" type="date"/></label><label class="field">DURATION <select id="arenaDuration"><option value="0.5">30 minutes</option><option value="1" selected>1 hour</option><option value="2">2 hours</option><option value="3">3 hours</option></select></label></div><p id="fzResourceNote" class="fz-resource-note">Choose an experience to view the arena or target-bay availability.</p><div class="fz26-time-periods" id="fzTimePeriods" aria-label="Choose a time of day"><button type="button" data-fz-slot-period="morning" aria-pressed="true">MORNING <small>09:00–13:00</small></button><button type="button" data-fz-slot-period="afternoon" aria-pressed="false">AFTERNOON <small>13:00–17:00</small></button><button type="button" data-fz-slot-period="evening" aria-pressed="false">EVENING <small>17:00–22:00</small></button></div><p class="fz26-planned-date" id="fzLaunchBookingNote">Planned opening 10 December 2026 · register now · request sessions from opening day onward.</p><div class="fz26-slot-hint">Select a time of day, then choose an available start time.</div><div class="arena-slots" id="arenaSlots"><div class="empty-state">Loading arena availability…</div></div><p class="fz-booking-arrival"><strong>BEFORE YOU PLAY:</strong> Please arrive 15 minutes early for registration, protective equipment and a mandatory safety briefing. Session time is playing time.</p><div class="calendar-legend"><span><i class="slot-free"></i> Available</span><span><i class="slot-pending"></i> Pending deposit hold</span><span><i class="slot-booked"></i> Booked</span></div></div><form class="registration-form booking-form" id="arenaBookingForm"><div class="form-top"><span>REGULAR / SPECIAL BOOKING</span><span>FZ / SLOT</span></div><div class="form-grid"><label class="field">START TIME <select id="arenaStartTime" name="startTime"><option value="">Choose a date first</option></select></label><label class="field">HOW DID YOU FIND US? <select name="marketingSource"><option value="">Select a channel (optional)</option><option value="tiktok">TikTok</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="google">Google / Search</option><option value="whatsapp">WhatsApp</option><option value="friend">Friend / Referral</option><option value="walk_in">Walk-in / Saw the field</option><option value="other">Other</option></select></label><label class="field">EXPERIENCE <select id="bookingExperience" name="experience"><option value="">Choose experience…</option><option>Solo Target Practice</option><option>Quick Skirmish</option><option>Squad Deployment</option><option>Ranked Mission Night</option><option>Birthday / Private Event</option><option>Other / Need advice</option></select></label><div class="fz-mode-brief full" id="fzSelectedModeDetails" hidden aria-live="polite"></div><label class="field">BOOKING TYPE <select id="specialRequest" name="specialRequest"><option value="false">Regular session</option><option value="true">Special booking request</option></select></label><label class="field">SPECIAL START TIME (OPTIONAL) <input id="specialTime" name="specialTime" type="time"/><small>For an alternative time, select special booking request. Owner approval required.</small></label><label class="field">REAL NAME <input maxlength="100" name="realName" required=""/></label><label class="field">PLAYER CALLSIGN / NICKNAME (REQUIRED) <input maxlength="24" name="callsign" placeholder="Pick a nickname, e.g. GHOST" autocomplete="nickname" required=""/><small>No account needed to book. Just choose a nickname to use at the field.</small></label><label class="field">WHATSAPP / MOBILE <input maxlength="24" name="mobile" required="" type="tel"/></label><label class="field">EMAIL (OPTIONAL) <input maxlength="160" name="customerEmail" type="email"/></label><label class="field">PLAYERS <select name="playerCount"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>12</option><option>16</option></select></label><label class="field">REFERRAL CODE (OPTIONAL) <input id="arenaReferralCode" maxlength="24" name="referralCode" placeholder="FZ-GHOST-1234" autocomplete="off"/><small>Use a FIELDZERO operator code if someone invited you.</small><span id="arenaReferralStatus" class="form-foot" aria-live="polite"></span></label><label class="field full">SPECIAL REQUEST / NOTES <textarea maxlength="700" name="notes" placeholder="Rental equipment, squad size, birthday/private event or special request" rows="3"></textarea></label><label class="consent full"><input name="consent" required="" type="checkbox"/><span>I agree FIELDZERO may use these details to manage this private booking request. My contact details will not be public.</span></label></div><button class="button button-lime submit-button" id="submitArenaBooking" type="submit">RESERVE NOW · NO DEPOSIT ↗</button><div class="booking-deposit-note"><span class="booking-deposit-icon">01</span><div><b>PRE-LAUNCH BOOKINGS · NO DEPOSIT</b><p>Reserve now without paying the LKR 500 deposit. Your booking reference PDF is issued immediately. Standard reservations are saved when submitted, while special requests need owner approval. Session fees and extras are paid at the field. Deposits apply only to new requests made from opening day onward.</p><small id="bookingAdvanceRate">No deposit for reservations submitted before opening. Bring your booking ID and arrive 15 minutes early.</small></div></div><div class="form-status" id="arenaBookingStatus" role="status"></div></form><div class="booking-next-steps" aria-label="What happens after you request a booking"><div class="booking-next-heading"><span>FIELDZERO / BOOKING GUIDE</span><b>THREE STEPS TO GAME DAY</b></div><div class="booking-next-grid"><article><span>01</span><div><b>REQUEST YOUR SLOT</b><p>Choose your field, date, time and experience. Download your booking reference PDF.</p></div></article><article><span>02</span><div><b>KEEP YOUR BOOKING ID</b><p>Before opening, no deposit is due. Keep the reservation PDF. After opening, new reservations follow the LKR 500 advance-verification process.</p></div></article><article><span>03</span><div><b>ARRIVE & PLAY</b><p>Show your booking ID when you arrive. Pay the remaining session balance and any extras at checkout.</p></div></article></div><p class="booking-guide-foot">Special booking requests are not confirmed until the field admin approves them. Please wait for confirmation before travelling to the field.</p></div></section><section class="section" id="book">
 <div class="section-kicker">05 / RESERVE YOUR SLOT</div>
-<div class="section-heading"><h2>BOOK IN.<br/><em>LOCK ON.</em></h2><p>Request a place in an announced session or tournament. Your booking remains pending until the organiser confirms it. No online payment is collected by this starter site.</p></div>
+<div class="section-heading"><h2>BOOK IN.<br/><em>LOCK ON.</em></h2><p>Request a place in an announced session or tournament. Your booking remains pending until the organiser confirms it. Event requests are reviewed separately from regular arena reservations.</p></div>
 <form class="registration-form booking-form" id="bookingForm">
 <div class="form-top"><span>SESSION / TOURNAMENT REQUEST</span><span>FZ / BOOK</span></div>
 <div class="form-grid">
@@ -370,5 +379,49 @@
 })();
 </script>
 <script src="app.js?v=fz-prelaunch-final-v4"></script><script src="franchise-public.js"></script>
+<script>
+/* Acquisition usability: keep all existing backend handlers and form names. */
+(() => {
+  const form=document.getElementById('arenaBookingForm');
+  const controls=document.querySelector('#calendar .calendar-controls');
+  const experience=document.getElementById('bookingExperience');
+  // An explicit form owner preserves FormData after moving the control above slots.
+  if(form&&controls&&experience){
+    experience.setAttribute('form','arenaBookingForm');
+    experience.required=true;
+    controls.prepend(experience.closest('label'));
+    const brief=document.getElementById('fzSelectedModeDetails');
+    if(brief)controls.after(brief);
+    experience.addEventListener('change',()=>document.getElementById('specialRequest')?.dispatchEvent(new Event('change',{bubbles:true})));
+  }
+  const calendar=document.getElementById('calendar');
+  if(calendar){
+    const help=document.createElement('details');help.className='fz-easy-help';
+    help.innerHTML='<summary>සිංහලෙන් උපදෙස් / Quick booking guide</summary><p lang="si">1. ක්‍රීඩා අත්දැකීම සහ පිටිය තෝරන්න.<br>2. දිනය සහ තිබෙන වේලාවක් තෝරන්න.<br>3. නම, ක්‍රීඩා නාමය සහ WhatsApp අංකය ඇතුළත් කරන්න.<br>4. වෙන්කිරීම යවා booking reference PDF එක සුරකින්න.</p><p>No operator account is needed to book. Choose your experience, field, date and available time, then add your contact details. Save the booking reference PDF. Special requests need owner approval.</p><p lang="si">වෙන්කිරීමට operator account එකක් අවශ්‍ය නැහැ. විවෘත කිරීමට පෙර තැන්පතුවක් අය නොකෙරේ. ක්‍රීඩා ගාස්තුව වෙනම ගෙවිය යුතුයි. විශේෂ ඉල්ලීම් සඳහා හිමිකරුගේ අනුමැතිය අවශ්‍යයි.</p>';
+    calendar.querySelector('.section-heading')?.after(help);
+  }
+  const area=document.getElementById('memberArea');
+  if(area){
+    const anchor=document.createElement('span');anchor.id='register';area.prepend(anchor);
+    const note=document.createElement('details');note.className='fz-easy-help';
+    note.innerHTML='<summary>ලියාපදිංචි වන්නේ කෙසේද? / How to register</summary><p lang="si">OPERATOR REGISTRATION තෝරන්න. ඔබේ තොරතුරු, username, email සහ password ඇතුළත් කර account එක සාදන්න. ලැබෙන email එකෙන් තහවුරු කර admin අනුමැතිය ලැබෙන තුරු රැඳී සිටින්න.</p><p>Create your account, verify your email when prompted, then wait for admin approval. Registration is separate from booking a session. Your real name and phone number are not shown on the public roster.</p>';
+    area.querySelector('.section-heading')?.after(note);
+  }
+  document.querySelectorAll('a[href="#memberArea"]').forEach(a=>{
+    if(/REGISTER|CREATE YOUR CALLSIGN/.test(a.textContent))a.href='#register';
+  });
+  const openRegistration=()=>{
+    if(location.hash!=='#register')return;
+    document.querySelector('[data-operator-tab="register"]')?.click();
+    document.getElementById('fzOpeningCountdown')?.setAttribute('hidden','');
+    area?.scrollIntoView({block:'start'});
+  };
+  window.addEventListener('hashchange',openRegistration);
+  document.querySelectorAll('a[href="#register"]').forEach(a=>a.addEventListener('click',()=>{
+    document.querySelector('[data-operator-tab="register"]')?.click();
+  }));
+  openRegistration();
+})();
+</script>
 </body>
 </html>

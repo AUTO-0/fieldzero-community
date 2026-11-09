@@ -564,27 +564,57 @@
     if (!dateStr) return [];
     return Array.from({length:26},(_,i)=>9+i*0.5);
   }
+  let fzSlotPeriod='morning',fzSlotReq=0;
+  const fzSlotRanges={morning:[9,13],afternoon:[13,17],evening:[17,22]};
+  const fzHourPeriod=h=>h<13?'morning':h<17?'afternoon':'evening';
+  document.querySelectorAll('[data-fz-slot-period]').forEach(button=>button.addEventListener('click',()=>{
+    if(button.disabled)return;
+    fzSlotPeriod=button.dataset.fzSlotPeriod;
+    loadArenaSlots();
+  }));
   async function loadArenaSlots(){
-    const grid=$("#arenaSlots"), select=$("#arenaStartTime"); if(!grid||!select)return;
+    const grid=$("#arenaSlots"),select=$("#arenaStartTime");if(!grid||!select)return;
     if(!db){grid.innerHTML='<div class="empty-state">Booking availability is temporarily unavailable.</div>';select.innerHTML='<option value="">Unavailable</option>';return;}
-    const date=dateInput.value, hours=openingHours(date), field=$("#arenaFieldSelect")?.value;
-    if(!date||!field){grid.innerHTML='<div class="empty-state">Choose a field and date to see available times.</div>';select.innerHTML='<option value="">Choose field and date</option>';return;}
+    const req=++fzSlotReq, date=dateInput?.value,field=$("#arenaFieldSelect")?.value;
+    if(!date||!field){grid.innerHTML='<div class="empty-state">Choose a field and date to see available times.</div>';select.innerHTML='<option value="">Choose a field and date</option>';return;}
+    const hours=openingHours(date),dur=Number($("#arenaDuration").value||1),now=new Date(),closing=slDateTime(date,22);
+    const futureHours=hours.filter(h=>{
+      const hour=Math.floor(h),minute=Math.round((h-hour)*60),start=slDateTime(date,hour,minute);
+      return start>now&&new Date(start.getTime()+dur*3600000)<=closing;
+    });
+    if(!futureHours.some(h=>fzHourPeriod(h)===fzSlotPeriod)&&futureHours.length)fzSlotPeriod=fzHourPeriod(futureHours[0]);
     const from=slDateTime(date,0).toISOString(),to=slDateTime(date,23,59).toISOString();
     const {data,error}=await db.from("public_arena_bookings").select("booking_start,booking_end,status,field_id").eq("field_id",field).gte("booking_start",from).lte("booking_start",to);
-    if(error){grid.innerHTML='<div class="empty-state">Could not check availability. Please try again.</div>';select.innerHTML='<option value="">Availability unavailable</option>';return;}
-    const rows=data||[], dur=Number($("#arenaDuration").value||1), options=[];
-    grid.innerHTML=hours.map(h=>{
+    if(req!==fzSlotReq)return;
+    if(error){grid.innerHTML='<div class="empty-state">Could not check availability. Please retry.</div>';select.innerHTML='<option value="">Availability unavailable</option>';return;}
+    const rows=data||[],previous=select.value;
+    document.querySelectorAll('[data-fz-slot-period]').forEach(button=>{
+      const active=button.dataset.fzSlotPeriod===fzSlotPeriod;
+      button.setAttribute('aria-pressed',String(active));
+      button.disabled=!futureHours.some(h=>fzHourPeriod(h)===button.dataset.fzSlotPeriod);
+    });
+    const available=[],slotState=h=>{
       const hour=Math.floor(h),minute=Math.round((h-hour)*60),start=slDateTime(date,hour,minute),end=new Date(start.getTime()+dur*3600000);
       const overlap=rows.find(r=>new Date(r.booking_start)<end&&new Date(r.booking_end)>start);
-      const outside=end>slDateTime(date,22)||start<=new Date();
-      const state=outside?'closed':overlap?(overlap.status==='approved'?'booked':'pending'):'free';
-      const labelTime=String(hour).padStart(2,'0')+':'+String(minute).padStart(2,'0');
-      if(state==='free')options.push({value:labelTime,label:labelTime});
-      const label=state==='free'?'AVAILABLE':state==='pending'?'DEPOSIT HOLD':state==='booked'?'BOOKED':'CLOSED';
-      return `<button type="button" class="arena-slot ${state}" data-hour="${labelTime}" ${state!=='free'?'disabled':''}><b>${labelTime}</b><small>${label}</small></button>`;
-    }).join('')||'<div class="empty-state">No available sessions for this date.</div>';
-    select.innerHTML='<option value="">Choose an available start time…</option>'+options.map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
-    grid.querySelectorAll('[data-hour]').forEach(b=>b.addEventListener('click',()=>{select.value=b.dataset.hour;select.scrollIntoView({behavior:'smooth',block:'center'});}));
+      return overlap?(overlap.status==='approved'?'booked':'pending'):'free';
+    };
+    const timeLabel=h=>{
+      const hour=Math.floor(h),minute=Math.round((h-hour)*60);
+      return String(hour).padStart(2,'0')+':'+String(minute).padStart(2,'0');
+    };
+    futureHours.forEach(h=>{if(slotState(h)==='free')available.push(timeLabel(h));});
+    const shown=futureHours.filter(h=>fzHourPeriod(h)===fzSlotPeriod);
+    grid.innerHTML=shown.length?shown.map(h=>{
+      const state=slotState(h),label=state==='free'?'AVAILABLE':state==='booked'?'BOOKED':'DEPOSIT HOLD';
+      return '<button type="button" class="arena-slot '+state+'" data-hour="'+timeLabel(h)+'" '+(state!=='free'?'disabled':'')+'><b>'+timeLabel(h)+'</b><small>'+label+'</small></button>';
+    }).join(''):'<div class="empty-state">No upcoming times in this period. Choose another date.</div>';
+    select.innerHTML='<option value="">Choose an available start time…</option>'+available.map(t=>'<option value="'+t+'">'+t+'</option>').join('');
+    if(available.includes(previous))select.value=previous;
+    grid.querySelectorAll('[data-hour]').forEach(button=>button.addEventListener('click',()=>{
+      select.value=button.dataset.hour;
+      grid.querySelectorAll('.arena-slot').forEach(slot=>slot.classList.toggle('chosen',slot===button));
+      select.scrollIntoView({behavior:'smooth',block:'center'});
+    }));
   }
   if(dateInput){dateInput.addEventListener('change',loadArenaSlots);$("#arenaDuration").addEventListener('change',loadArenaSlots);loadArenaSlots();}
   const specialToggle=$("#specialRequest"); if(specialToggle) specialToggle.addEventListener("change",()=>{const slot=$("#arenaStartTime");slot.required=specialToggle.value!=="true";});

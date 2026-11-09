@@ -361,3 +361,20 @@ body.fz26 #fzCommunityGateway{scroll-margin-top:68px;}
 body.fz26 .fz26-discover h2{font-size:45px;}
 body.fz26 .fz26-mobile-cta a.fz26-mobile-community,body.fz26 .fz26-mobile-cta a.fz26-mobile-book{font-size:9px;gap:5px;padding:10px;}
 }
+
+/* Mobile: keep a playable experience visible within the first screen. */
+@media(max-width:700px){
+body.fz26 .fz26-hero{padding-top:24px;padding-bottom:53px;}
+body.fz26 .fz26-hero-serial{margin-top:16px;}
+body.fz26 .fz26-hero h1{margin:15px 0 15px;}
+body.fz26 .fz26-hero .hero-actions{margin-top:17px;}
+body.fz26 .fz26-hero .hero-actions .fz26-secondary{display:none;}
+body.fz26 .fz26-hero-trust{display:none;}
+body.fz26 .fz26-hero-grid{gap:18px;}
+body.fz26 .fz26-route-panel{padding:17px;}
+body.fz26 .fz26-route-panel h2{font-size:37px;margin:17px 0 9px;}
+body.fz26 .fz26-route-panel>p{margin-bottom:14px;}
+body.fz26 .fz26-route{padding:10px;margin:7px 0;}
+body.fz26 .fz26-panel-head{padding-bottom:16px;}
+body.fz26 .fz26-panel-footer{margin-top:13px;padding-top:13px;}
+}

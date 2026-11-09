@@ -19,6 +19,7 @@ for (const target of targets) {
   await page.waitForTimeout(300);
   await page.screenshot({path:'visual-qa-artifacts/'+target.name+'-top.png',animations:'disabled'});
   await page.locator('#home').screenshot({path:'visual-qa-artifacts/'+target.name+'-hero.png',animations:'disabled'});
+  await page.locator('#discoverCommunity').screenshot({path:'visual-qa-artifacts/'+target.name+'-community-entry.png',animations:'disabled'});
   const firstVisitUnblocked=await page.locator('#announcementPopup').evaluate(el=>el.hidden);
   let packageTest='not-run',optionalFieldsTest='not-run',specialTimeTest='not-run';
   try{
@@ -40,6 +41,11 @@ for (const target of targets) {
     const hidden=!(await page.locator('input[name="specialTime"]').isVisible());
     specialTimeTest=visible&&hidden?'pass':'fail';
   }catch(e){specialTimeTest='fail: '+String(e.message).slice(0,150);}
+  const discoveryLayout=await page.locator('#discoverCommunity').evaluate(section=>{
+    const entry=section.querySelector('.fz26-discover-primary');
+    const r=section.getBoundingClientRect(), b=entry?.getBoundingClientRect();
+    return !!b&&b.width>=180&&b.left>=r.left-1&&b.right<=r.right+1&&b.top>=r.top-1&&b.bottom<=r.bottom+1;
+  });
   let timePeriodTest='not-run';
   try{
     await page.locator('#arenaDate').evaluate(input=>{
@@ -90,6 +96,7 @@ for (const target of targets) {
     await page.locator('#fzCommunityGateway>summary').click({timeout:5000});
     hubTest=await page.locator('#fzCommunityGateway').getAttribute('open')!==null?'pass':'fail';
   }catch(e){hubTest='fail: '+String(e.message).slice(0,120);}
+  await page.locator('#fzCommunityGateway>summary').screenshot({path:'visual-qa-artifacts/'+target.name+'-community-hub.png',animations:'disabled'});
   if(target.width<=970) {
     try{
       await page.locator('#menuToggle').click({timeout:5000});
@@ -98,13 +105,13 @@ for (const target of targets) {
     }catch(e){menuTest='fail: '+String(e.message).slice(0,120);}
   }
   try{await page.locator('#calendar').screenshot({path:'visual-qa-artifacts/'+target.name+'-booking.png',timeout:20000,animations:'disabled'});}catch(e){errors.push('booking screenshot: '+String(e.message).slice(0,140));}
-  const result={...target,...metrics,horizontalOverflow:metrics.contentWidth>metrics.viewportWidth+2,firstVisitUnblocked,packageTest,optionalFieldsTest,specialTimeTest,timePeriodTest,communityEntryTest,deepLinkTest,mobileEntryTest,firstTimerTest,routeTest,hubTest,menuTest,errors};
+  const result={...target,...metrics,horizontalOverflow:metrics.contentWidth>metrics.viewportWidth+2,discoveryLayout,firstVisitUnblocked,packageTest,optionalFieldsTest,specialTimeTest,timePeriodTest,communityEntryTest,deepLinkTest,mobileEntryTest,firstTimerTest,routeTest,hubTest,menuTest,errors};
   results.push(result);
   console.log('VISUAL_QA '+JSON.stringify(result));
   await page.close();
 }
 await browser.close();
 await fs.writeFile('visual-qa-artifacts/report.json',JSON.stringify(results,null,2));
-const failure=results.some(r=>r.horizontalOverflow||r.timePeriodTest!=='pass'||r.communityEntryTest!=='pass'||r.deepLinkTest!=='pass'||r.mobileEntryTest==='fail'||r.firstTimerTest!=='pass'||!r.firstVisitUnblocked||r.packageTest!=='pass'||r.optionalFieldsTest!=='pass'||r.specialTimeTest!=='pass'||!r.cssLoaded||!r.hero||!r.selector||r.quickStartCount!==3||r.communityCount<5||r.routeTest!=='pass'||r.hubTest!=='pass'||r.menuTest==='fail'||r.errors.length);
+const failure=results.some(r=>r.horizontalOverflow||!r.discoveryLayout||r.timePeriodTest!=='pass'||r.communityEntryTest!=='pass'||r.deepLinkTest!=='pass'||r.mobileEntryTest==='fail'||r.firstTimerTest!=='pass'||!r.firstVisitUnblocked||r.packageTest!=='pass'||r.optionalFieldsTest!=='pass'||r.specialTimeTest!=='pass'||!r.cssLoaded||!r.hero||!r.selector||r.quickStartCount!==3||r.communityCount<5||r.routeTest!=='pass'||r.hubTest!=='pass'||r.menuTest==='fail'||r.errors.length);
 if(failure){console.error('FIELDZERO visual QA detected layout or browser issues.');process.exit(1);}
 console.log('FIELDZERO visual QA passed for desktop, mobile, tablet and narrow mobile.');

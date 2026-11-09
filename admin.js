@@ -12,7 +12,7 @@
  async function showSession(){const {data:{session}}=await db.auth.getSession();if(session&&await isAdmin(session.user)){loginPanel.hidden=true;dashboard.hidden=false;await refreshAll();await loadAssignmentOptions()}else{loginPanel.hidden=false;dashboard.hidden=true}}
  $("#loginForm").addEventListener("submit",async e=>{e.preventDefault();const fd=new FormData(e.currentTarget);$("#loginButton").disabled=true;const {error}=await db.auth.signInWithPassword({email:fd.get("email"),password:fd.get("password")});$("#loginButton").disabled=false;if(error){msg($("#loginStatus"),"Sign in failed. Check your credentials and confirm the account is enabled.","error");return}await showSession()});
  $("#logoutButton").addEventListener("click",async()=>{await db.auth.signOut();await showSession()});
- async function refreshAll(){await Promise.all([loadApplications(),loadBookings(),loadTeams(),loadPlayers(),loadEvents(),loadArenaBookings(),loadLeaderRequests(),loadMemberLinkRequests(),loadChallenges(),loadEventRegistrations(),loadResultOptions(),loadFeedback(),loadGalleryAdmin(),loadFieldsAdmin(),loadSessionPricesAdmin(),loadSiteSettingsAdmin(),fzLoadLaunchQuick(),loadSocialLinksAdmin(),loadSiteAppearanceAdmin(),loadSeasonalCampaignsAdmin(),loadOpsAll(),fzLoadBookingDays(),fzLoadSpecialRequests(),fzLoadSpotlights(),fzLoadSeasons(),fzLoadReferralManager(),fzLoadMembershipAdmin()])}
+ async function refreshAll(){await Promise.all([loadApplications(),loadBookings(),loadTeams(),loadPlayers(),loadEvents(),loadArenaBookings(),loadLeaderRequests(),loadMemberLinkRequests(),loadChallenges(),loadEventRegistrations(),loadResultOptions(),loadFeedback(),loadGalleryAdmin(),loadFieldsAdmin(),loadSessionPricesAdmin(),fzLoadGameModesAdmin(),loadSiteSettingsAdmin(),fzLoadLaunchQuick(),loadSocialLinksAdmin(),loadSiteAppearanceAdmin(),loadSeasonalCampaignsAdmin(),loadOpsAll(),fzLoadBookingDays(),fzLoadSpecialRequests(),fzLoadSpotlights(),fzLoadSeasons(),fzLoadReferralManager(),fzLoadMembershipAdmin()])}
  async function loadApplications(){const el=$("#applications");el.innerHTML="<p>Loading…</p>";const {data,error}=await db.from("player_applications").select("id,real_name,callsign,mobile,contact_email,primary_blaster,team_preference,play_style,status,created_at").eq("status","pending").order("created_at",{ascending:true});if(error){el.innerHTML=`<p class="admin-error">${esc(adminError(error))}</p>`;return}if(!data?.length){el.innerHTML='<div class="empty-state">No pending applications.</div>';return}el.innerHTML=data.map(a=>`<article class="application-card"><div class="application-heading"><div><span class="application-label">PENDING APPLICATION</span><h3>${esc(a.callsign)}</h3></div><span class="pending-pill">REVIEW</span></div><div class="application-details"><span><b>Real name</b>${esc(a.real_name)}</span><span><b>Mobile</b>${esc(a.mobile)}</span><span><b>Email</b>${esc(a.contact_email||'—')}</span><span><b>Blaster</b>${esc(a.primary_blaster)}</span><span><b>Team preference</b>${esc(a.team_preference)}</span><span><b>Play style</b>${esc(a.play_style)}</span><span><b>Applied</b>${new Date(a.created_at).toLocaleString()}</span></div><div class="application-actions"><button class="button button-lime" data-action="approve" data-id="${a.id}" data-callsign="${esc(a.callsign)}">APPROVE</button><button class="button button-danger" data-action="reject" data-id="${a.id}">REJECT</button></div></article>`).join("");el.querySelectorAll("button[data-action]").forEach(b=>b.addEventListener("click",()=>review(b.dataset.id,b.dataset.action,b.dataset.callsign)))}
  async function review(id,action,callsign){const verb=action==="approve"?"approve":"reject";if(!confirm(`Are you sure you want to ${verb} this application${callsign?" for "+callsign:""}?`))return;const buttons=[...document.querySelectorAll(`#applications button[data-id="${CSS.escape(id)}"]`)];buttons.forEach(b=>{b.disabled=true;b.textContent=action==="approve"?"APPROVING…":"REJECTING…"});const {error}=await db.rpc("review_player_application",{application_id:id,decision:action});if(error){msg($("#adminStatus"),`Could not ${verb} ${callsign||"application"}: ${adminError(error)}. Check the V21 SQL migration and admin account permissions.`,"error");await loadApplications();return}msg($("#adminStatus"),`Application ${action==="approve"?"approved":"rejected"}.`,"success");await Promise.all([loadApplications(),loadPlayers(),loadTeams(),loadAssignmentOptions()])}
  async function loadBookings(){const el=$("#bookings");const {data,error}=await db.from("event_bookings").select("id,event_id,booking_type,real_name,callsign,mobile,player_count,notes,status,created_at,events(title,event_date)").eq("status","pending").order("created_at",{ascending:true});if(error){el.innerHTML=`<p class="admin-error">${esc(adminError(error))}</p>`;return}if(!data?.length){el.innerHTML='<div class="empty-state">No pending booking requests.</div>';return}el.innerHTML=data.map(b=>`<article class="application-card"><div class="application-heading"><div><span class="application-label">${esc(b.booking_type.toUpperCase())} BOOKING</span><h3>${esc(b.callsign)} · ${esc(b.events?.title||"Event")}</h3></div><span class="pending-pill">PENDING</span></div><div class="application-details"><span><b>Real name</b>${esc(b.real_name)}</span><span><b>Mobile</b>${esc(b.mobile)}</span><span><b>Players</b>${Number(b.player_count)}</span><span><b>Event date</b>${esc(b.events?.event_date||"TBA")}</span><span><b>Notes</b>${esc(b.notes||"—")}</span><span><b>Requested</b>${new Date(b.created_at).toLocaleString()}</span></div><div class="application-actions"><button class="button button-lime" data-booking-action="approve" data-id="${b.id}">CONFIRM</button><button class="button button-danger" data-booking-action="reject" data-id="${b.id}">REJECT</button></div></article>`).join("");el.querySelectorAll("[data-booking-action]").forEach(btn=>btn.addEventListener("click",async()=>{const decision=btn.dataset.bookingAction;if(!confirm(`${decision==="approve"?"Confirm":"Reject"} this booking?`))return;const {error}=await db.rpc("review_event_booking",{booking_id:btn.dataset.id,decision});if(error){msg($("#adminStatus"),adminError(error),"error");return}msg($("#adminStatus"),`Booking ${decision}d.`,"success");await loadBookings()} ) )}
@@ -312,6 +312,57 @@
  }
  $("#seasonalCampaignForm")?.addEventListener("submit",async e=>{e.preventDefault();const form=e.currentTarget,fd=new FormData(form),built=campaignPayloadFromForm(form,fd);if(built.error){msg($("#seasonalCampaignStatus"),built.error,"error");return;}let payload=built.payload;const title=payload.title;const imageFile=fd.get("image_file");if(imageFile instanceof File&&imageFile.size){const upload=await uploadCampaignImage(imageFile);if(upload.error){msg($("#seasonalCampaignStatus"),upload.error,"error");return;}payload.image_url=upload.url;}const baseSlug=campaignSlug(title),slug=`${baseSlug}-${payload.start_date.slice(0,4)}`;const {error}=await db.from("seasonal_campaigns").insert({...payload,slug});if(error){msg($("#seasonalCampaignStatus"),error.code==="23505"?"A campaign with this title/year already exists. Edit the existing campaign below.":(error.message||adminError(error)),"error");return;}form.reset();form.elements.namedItem("theme_key").value="field-ops";form.elements.namedItem("cta_target").value="none";form.elements.namedItem("priority").value="50";msg($("#seasonalCampaignStatus"),"Seasonal campaign created. It will appear only within its scheduled dates.","success");await loadSeasonalCampaignsAdmin();});
 
+
+ async function fzLoadGameModesAdmin(){
+   const host=$('#fzGameModeCards');if(!host)return;
+   const {data,error}=await db.from('session_prices')
+      .select('package_key,package_name,price_amount,price_currency,price_note,active,requestable,min_players,max_players,duration_minutes,venue_resource,mode_details')
+      .neq('package_key','fieldzero-membership').order('package_name');
+   if(error){host.innerHTML='<div class="admin-error">Could not load game modes: '+esc(adminError(error))+'</div>';return;}
+   host.innerHTML=(data||[]).map(m=>{
+     const isTarget=m.venue_resource==='target';
+     const price=m.price_amount==null?'':Number(m.price_amount);
+     const options=Array.from({length:6},(_,i)=>(i+1)*30).map(d=>'<option value="'+d+'" '+(Number(m.duration_minutes)===d?'selected':'')+'>'+d+' minutes</option>').join('');
+     return '<form class="fz-edit-mode" data-fz-mode-key="'+esc(m.package_key)+'">'+
+       '<div class="fz-edit-mode-top"><div><span>'+(isTarget?'SEPARATE TARGET BAY':'MAIN ARENA')+' / '+esc(m.package_key)+'</span><h3>'+esc(m.package_name)+'</h3></div><span class="fz-mode-status">'+(m.requestable?'BOOKING ENABLED':'NOT BOOKABLE')+'</span></div>'+
+       '<div class="fz-edit-mode-fields">'+
+       '<label>MIN PLAYERS<input name="min_players" type="number" min="1" max="16" value="'+Number(m.min_players)+'" required></label>'+
+       '<label>MAX PLAYERS<input name="max_players" type="number" min="1" max="16" value="'+Number(m.max_players)+'" required></label>'+
+       '<label>SESSION LENGTH<select name="duration_minutes" required>'+options+'</select></label>'+
+       '<label>PRICE PER PLAYER · LKR<input name="price_amount" type="number" min="0" max="9999999" step="1" placeholder="Custom quote" value="'+price+'"></label>'+
+       '</div>'+
+       '<label class="fz-edit-mode-detail">PUBLIC GAME MODE DESCRIPTION<textarea name="mode_details" maxlength="500" rows="2" required>'+esc(m.mode_details||'')+'</textarea></label>'+
+       '<label class="fz-edit-mode-detail">PRICE NOTE<input name="price_note" maxlength="120" value="'+esc(m.price_note||'per player')+'"></label>'+
+       '<div class="fz-edit-mode-actions"><label class="fz-mode-checkbox"><input type="checkbox" name="requestable" '+(m.requestable?'checked':'')+'> ACCEPT ONLINE RESERVATIONS</label>'+
+       '<button type="submit" class="button button-lime">SAVE GAME MODE ↗</button></div></form>';
+   }).join('')||'<div class="empty-state">No game modes are configured.</div>';
+   host.querySelectorAll('form[data-fz-mode-key]').forEach(form=>form.addEventListener('submit',async e=>{
+     e.preventDefault();
+     const fd=new FormData(form),key=form.dataset.fzModeKey,min=Number(fd.get('min_players')),max=Number(fd.get('max_players')),duration=Number(fd.get('duration_minutes'));
+     const priceRaw=String(fd.get('price_amount')||'').trim(),price=priceRaw===''?null:Number(priceRaw);
+     const details=String(fd.get('mode_details')||'').trim(),note=String(fd.get('price_note')||'').trim();
+     if(!Number.isInteger(min)||!Number.isInteger(max)||min<1||max>16||max<min){
+       msg($('#fzGameModeStatus'),'Player limits must be between 1 and 16; maximum cannot be less than minimum.','error');return;
+     }
+     if(!Number.isInteger(duration)||duration<30||duration>180||duration%30!==0){
+       msg($('#fzGameModeStatus'),'Duration must be 30–180 minutes in 30-minute steps.','error');return;
+     }
+     if(price!==null&&(!Number.isFinite(price)||price<0)||details.length<5){
+       msg($('#fzGameModeStatus'),'Enter a valid non-negative price (or custom quote) and a description of at least 5 characters.','error');return;
+     }
+     const button=form.querySelector('button[type=submit]');button.disabled=true;
+     const payload={min_players:min,max_players:max,duration_minutes:duration,
+       price_amount:price,price_currency:'LKR',mode_details:details,price_note:note,
+       requestable:fd.get('requestable')==='on',updated_at:new Date().toISOString()};
+     const {data,error}=await db.from('session_prices').update(payload)
+        .eq('package_key',key).select('package_key').maybeSingle();
+     button.disabled=false;
+     if(error||!data){msg($('#fzGameModeStatus'),error?adminError(error):'Mode settings were not saved. Re-authenticate and try again.','error');return;}
+     msg($('#fzGameModeStatus'),'Saved '+key+'. Public booking details, calendar rules and prices use these settings. Existing bookings are unchanged.','success');
+     await Promise.all([fzLoadGameModesAdmin(),loadSessionPricesAdmin()]);
+   }));
+ }
+ $('#fzRefreshGameModes')?.addEventListener('click',fzLoadGameModesAdmin);
  async function loadSessionPricesAdmin(){
   const el=$("#sessionPricesAdmin");if(!el)return;
   const {data,error}=await db.from("session_prices").select("package_key,package_name,price_amount,price_currency,display_label,price_note,active").order("package_name");

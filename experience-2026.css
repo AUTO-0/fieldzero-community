@@ -378,3 +378,18 @@ body.fz26 .fz26-route{padding:10px;margin:7px 0;}
 body.fz26 .fz26-panel-head{padding-bottom:16px;}
 body.fz26 .fz26-panel-footer{margin-top:13px;padding-top:13px;}
 }
+
+/* Time-of-day tabs keep the public calendar short and legible. */
+body.fz26 #calendar .fz26-time-periods{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:17px 0 8px;}
+body.fz26 #calendar .fz26-time-periods button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;min-height:57px;padding:8px 5px;border:1px solid rgba(184,213,173,.26);border-radius:11px;background:rgba(255,255,255,.03);color:#d9e7d5;font:800 10px/1.2 "DM Sans",sans-serif;letter-spacing:.055em;cursor:pointer;}
+body.fz26 #calendar .fz26-time-periods button small{font-size:9px;color:#9db29b;line-height:1.25;font-weight:600;letter-spacing:0;}
+body.fz26 #calendar .fz26-time-periods button[aria-pressed="true"]{border-color:#c4f37a;background:#c4f37a;color:#112016;}
+body.fz26 #calendar .fz26-time-periods button[aria-pressed="true"] small{color:#3f5a30;}
+body.fz26 #calendar .fz26-time-periods button:disabled{opacity:.35;cursor:not-allowed;}
+body.fz26 #calendar .fz26-slot-hint{color:#a7bca5;font-size:11px;line-height:1.6;}
+body.fz26 #calendar .arena-slot.chosen{border-color:#c4f37a;box-shadow:0 0 0 1px #c4f37a;}
+@media(max-width:700px){
+body.fz26 #calendar .fz26-time-periods button{font-size:9px;min-height:53px;padding:7px 3px;}
+body.fz26 #calendar .fz26-time-periods button small{font-size:8px;}
+body.fz26 #calendar .fz26-slot-hint{font-size:10px;}
+}

@@ -40,6 +40,30 @@ for (const target of targets) {
     const hidden=!(await page.locator('input[name="specialTime"]').isVisible());
     specialTimeTest=visible&&hidden?'pass':'fail';
   }catch(e){specialTimeTest='fail: '+String(e.message).slice(0,150);}
+  let communityEntryTest='not-run',deepLinkTest='not-run',mobileEntryTest='not-applicable',firstTimerTest='not-run';
+  try{
+    const hub=page.locator('#fzCommunityGateway');
+    await hub.evaluate(el=>el.open=false);
+    await page.locator('#discoverCommunity .fz26-discover-primary').click({timeout:6000});
+    communityEntryTest=await hub.getAttribute('open')!==null?'pass':'fail';
+    await hub.evaluate(el=>el.open=false);
+    await page.locator('#discoverCommunity .fz26-discover-shortcuts a[href="#roster"]').click({timeout:6000});
+    await page.waitForTimeout(150);
+    deepLinkTest=(await hub.getAttribute('open'))!==null&&(await page.locator('#roster').isVisible())?'pass':'fail';
+  }catch(e){communityEntryTest='fail: '+String(e.message).slice(0,160);}
+  if(target.width<=700){
+    try{
+      const sticky=page.locator('.fz26-mobile-community');
+      const hub=page.locator('#fzCommunityGateway');
+      await hub.evaluate(el=>el.open=false);
+      await sticky.click({timeout:6000});
+      mobileEntryTest=await hub.getAttribute('open')!==null?'pass':'fail';
+    }catch(e){mobileEntryTest='fail: '+String(e.message).slice(0,160);}
+  }
+  try{
+    await page.locator('[data-fz26-experience="Quick Skirmish"]').click({timeout:6000});
+    firstTimerTest=await page.locator('#arenaDuration').inputValue()==='1'?'pass':'fail';
+  }catch(e){firstTimerTest='fail: '+String(e.message).slice(0,160);}
   let routeTest='not-run',menuTest='not-applicable',hubTest='not-run';
   try{
     await page.locator('[data-fz26-experience="Solo Target Practice"]').click({timeout:5000});
@@ -57,13 +81,13 @@ for (const target of targets) {
     }catch(e){menuTest='fail: '+String(e.message).slice(0,120);}
   }
   try{await page.locator('#calendar').screenshot({path:'visual-qa-artifacts/'+target.name+'-booking.png',timeout:20000,animations:'disabled'});}catch(e){errors.push('booking screenshot: '+String(e.message).slice(0,140));}
-  const result={...target,...metrics,horizontalOverflow:metrics.contentWidth>metrics.viewportWidth+2,firstVisitUnblocked,packageTest,optionalFieldsTest,specialTimeTest,routeTest,hubTest,menuTest,errors};
+  const result={...target,...metrics,horizontalOverflow:metrics.contentWidth>metrics.viewportWidth+2,firstVisitUnblocked,packageTest,optionalFieldsTest,specialTimeTest,communityEntryTest,deepLinkTest,mobileEntryTest,firstTimerTest,routeTest,hubTest,menuTest,errors};
   results.push(result);
   console.log('VISUAL_QA '+JSON.stringify(result));
   await page.close();
 }
 await browser.close();
 await fs.writeFile('visual-qa-artifacts/report.json',JSON.stringify(results,null,2));
-const failure=results.some(r=>r.horizontalOverflow||!r.firstVisitUnblocked||r.packageTest!=='pass'||r.optionalFieldsTest!=='pass'||r.specialTimeTest!=='pass'||!r.cssLoaded||!r.hero||!r.selector||r.quickStartCount!==3||r.communityCount<5||r.routeTest!=='pass'||r.hubTest!=='pass'||r.menuTest==='fail'||r.errors.length);
+const failure=results.some(r=>r.horizontalOverflow||r.communityEntryTest!=='pass'||r.deepLinkTest!=='pass'||r.mobileEntryTest==='fail'||r.firstTimerTest!=='pass'||!r.firstVisitUnblocked||r.packageTest!=='pass'||r.optionalFieldsTest!=='pass'||r.specialTimeTest!=='pass'||!r.cssLoaded||!r.hero||!r.selector||r.quickStartCount!==3||r.communityCount<5||r.routeTest!=='pass'||r.hubTest!=='pass'||r.menuTest==='fail'||r.errors.length);
 if(failure){console.error('FIELDZERO visual QA detected layout or browser issues.');process.exit(1);}
 console.log('FIELDZERO visual QA passed for desktop, mobile, tablet and narrow mobile.');

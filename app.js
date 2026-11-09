@@ -319,6 +319,27 @@
       }
     }
   }
+  function fzCountdownDisplay(){
+    const popup=$("#fzOpeningCountdown"),dayCount=$("#fzCountdownDays");
+    if(!popup||!dayCount||!siteSettings?.opening_soon_enabled)return;
+    const launch=String(siteSettings.launch_date||'2026-12-10');
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(launch)||fzTodaySL()>=launch)return;
+    const days=Math.max(1,Math.ceil((new Date(launch+'T00:00:00+05:30').getTime()-Date.now())/86400000));
+    dayCount.textContent=String(days).padStart(2,'0');
+    const key='fz-countdown-visit-'+launch;
+    try{if(sessionStorage.getItem(key)==='1')return;sessionStorage.setItem(key,'1');}catch{}
+    popup.hidden=false;
+    $("#fzCountdownClose")?.focus({preventScroll:true});
+  }
+  function fzCloseCountdown(){
+    const popup=$("#fzOpeningCountdown");if(!popup||popup.hidden)return;
+    popup.hidden=true;
+  }
+  $("#fzCountdownClose")?.addEventListener('click',fzCloseCountdown);
+  $("#fzCountdownBook")?.addEventListener('click',fzCloseCountdown);
+  $("#fzCountdownRegister")?.addEventListener('click',fzCloseCountdown);
+  $("#fzOpeningCountdown")?.addEventListener('click',e=>{if(e.target.id==='fzOpeningCountdown')fzCloseCountdown();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')fzCloseCountdown();});
   async function loadSiteSettings() {
     if (!db) { renderSocialLinks({}); siteSettingsReady = true; return; }
     const {data,error} = await db.from("public_site_settings").select("opening_soon_enabled,opening_soon_title,opening_soon_message,instagram_url,facebook_url,tiktok_url,launch_date").eq("id",1).maybeSingle();
@@ -329,6 +350,7 @@
     fzUpdateBookingPaymentCopy();
     siteSettingsReady = true;
     maybeShowAnnouncement();
+    fzCountdownDisplay();
   }
   function showAnnouncement(type) {
     if (!announcementPopup) return;
@@ -806,6 +828,8 @@
     const fieldId=$('#arenaFieldSelect')?.value||'';
     const modal=$('#fzSpotlightModal');
     if(!fieldId||!modal||sessionStorage.getItem('fzSpotlightSeen'))return;
+    // Never stack player spotlight promotions on top of the pre-launch opening countdown.
+    if(fzTodaySL()<String(siteSettings?.launch_date||'2026-12-10'))return;
     const {data,error}=await db.from('fz_spotlight_cards')
       .select('title,subtitle,image_url,card_type')
       .eq('field_id',fieldId)

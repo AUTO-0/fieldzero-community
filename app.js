@@ -659,7 +659,7 @@
         play_style: fd.get("playStyle")
       }, emailRedirectTo: `${location.origin}${location.pathname}#memberArea` }
     });
-    submit.disabled = false; submit.innerHTML = "CREATE OPERATOR ACCOUNT <span>↗</span>";
+    submit.disabled = false; submit.innerHTML = "CREATE MY PLAYER PROFILE <span>↗</span>";
     if (error || (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0)) {
       const message = error?.message?.toLowerCase().includes("already registered") || data?.user?.identities?.length === 0
         ? "This email may already have an account. Try signing in or use password reset."
@@ -669,10 +669,11 @@
     pendingOperatorEmail = email;
     form.reset();
     if (data.session) {
-      status(statusEl, "Account created and player application submitted. Check your email if verification is requested. Your public profile will appear after admin approval.", "success");
+      status(statusEl, "Player profile created. Your Operator profile will appear in the public roster after admin approval. You can now view your account.", "success");
       await loadMemberAccount();
     } else {
-      status(statusEl, "REGISTRATION RECEIVED. Open the verification email sent to " + email + ". After confirming your email, return here and sign in. Your application is waiting for admin review.", "success");
+      status(statusEl, "NEXT STEP: Verify the email sent to " + email + ". Then return to FIELDZERO and sign in. Your player profile will be reviewed by the admin before appearing publicly. Check Spam/Junk if needed.", "success");
+      const resend=$("#resendOperatorConfirmation");if(resend)resend.hidden=false;
     }
   });
 
@@ -692,9 +693,13 @@
   const slDateTime = (date,hour,minute=0) => new Date(`${date}T${String(hour).padStart(2,"0")}:${String(minute).padStart(2,"0")}:00+05:30`);
   const dateInput = $("#arenaDate");
   if (dateInput) { const earliest=String(siteSettings?.launch_date||'2026-12-10'); const today=localISO(new Date());dateInput.min=earliest>today?earliest:today;dateInput.value=dateInput.min; }
-  function openingHours(dateStr) {
+  function openingPeriods(dateStr) {
     if (!dateStr) return [];
-    return Array.from({length:26},(_,i)=>9+i*0.5);
+    const day=new Date(dateStr+'T12:00:00Z').getUTCDay();
+    return day===0||day===6?[[9,12],[15,22]]:[[15,22]];
+  }
+  function openingHours(dateStr) {
+    return openingPeriods(dateStr).flatMap(([start,end])=>Array.from({length:Math.round((end-start)*2)},(_,i)=>start+i*.5));
   }
   let fzSlotPeriod='morning',fzSlotReq=0;
   const fzSlotRanges={morning:[9,13],afternoon:[13,17],evening:[17,22]};
@@ -713,7 +718,8 @@
     const hours=openingHours(date),dur=Number($("#arenaDuration").value||1),now=new Date(),closing=slDateTime(date,22);
     const futureHours=hours.filter(h=>{
       const hour=Math.floor(h),minute=Math.round((h-hour)*60),start=slDateTime(date,hour,minute);
-      return start>now&&new Date(start.getTime()+dur*3600000)<=closing;
+      return start>now&&new Date(start.getTime()+dur*3600000)<=closing
+        &&openingPeriods(date).some(([from,to])=>h>=from&&h+dur<=to);
     });
     if(!futureHours.some(h=>fzHourPeriod(h)===fzSlotPeriod)&&futureHours.length)fzSlotPeriod=fzHourPeriod(futureHours[0]);
     const from=slDateTime(date,0).toISOString(),to=slDateTime(date,23,59).toISOString();
@@ -1127,12 +1133,19 @@
   const operatorRegistrationForm = $('#registrationForm');
   const operatorLoginForm = $('#memberLoginForm');
   const operatorTabs = document.querySelector('.fz-operator-tabs');
-  document.querySelectorAll('[data-operator-tab]').forEach(tab=>tab.addEventListener('click',()=>{
-    const mode=tab.dataset.operatorTab;
-    document.querySelectorAll('[data-operator-tab]').forEach(b=>{const active=b===tab;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));});
-    if(operatorRegistrationForm) operatorRegistrationForm.hidden=mode!=='register';
-    if(operatorLoginForm) operatorLoginForm.hidden=mode!=='login';
-  }));
+  let currentOperatorTab=location.hash==='#memberArea'?'login':'register';
+  function showOperatorTab(mode){
+    currentOperatorTab=mode==='login'?'login':'register';
+    document.querySelectorAll('[data-operator-tab]').forEach(b=>{const active=b.dataset.operatorTab===currentOperatorTab;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));});
+    if(operatorRegistrationForm)operatorRegistrationForm.hidden=currentOperatorTab!=='register';
+    if(operatorLoginForm)operatorLoginForm.hidden=currentOperatorTab!=='login';
+  }
+  document.querySelectorAll('[data-operator-tab]').forEach(tab=>tab.addEventListener('click',()=>showOperatorTab(tab.dataset.operatorTab)));
+  window.addEventListener('hashchange',()=>{
+    if(location.hash==='#register')showOperatorTab('register');
+    else if(location.hash==='#memberArea')showOperatorTab('login');
+  });
+  showOperatorTab(currentOperatorTab);
 
   const memberLoginForm = $('#memberLoginForm');
   let memberContext = null, memberSquads = [], pendingOperatorEmail = "";
@@ -1153,7 +1166,7 @@
     if(!db || !$('#memberDashboard')) return;
     const {data:{session}} = await db.auth.getSession();
     if(fzPasswordRecoveryActive && session){showMemberRecoveryForm();return;}
-    if(!session){$('#memberPasswordUpdate').hidden=true;$('#memberLoginForm').hidden=false;$('#registrationForm').hidden=true;if(operatorTabs)operatorTabs.hidden=false;$('#memberDashboard').hidden=true;memberContext=null;return;}
+    if(!session){$('#memberPasswordUpdate').hidden=true;if(operatorTabs)operatorTabs.hidden=false;showOperatorTab(currentOperatorTab);$('#memberDashboard').hidden=true;memberContext=null;return;}
     $('#memberLoginForm').hidden=true;$('#registrationForm').hidden=true;if(operatorTabs)operatorTabs.hidden=true;$('#memberDashboard').hidden=false;
     const {data,error}=await db.rpc('fz_member_get_context');
     if(error){memberMsg($('#memberLoginStatus'),`Operator profile service error: ${error.message||'Unknown database error'}. Ask admin to check V18/V21 migrations and RPC permissions.`,'error');return;}

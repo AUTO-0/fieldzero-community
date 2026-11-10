@@ -85,9 +85,9 @@
       <div class="fz26-panel-head"><span>01 / START HERE</span><span class="fz26-panel-live">YOUR MISSION</span></div>
       <h2>HOW DO YOU<br><em>WANT TO PLAY?</em></h2>
       <p>Choose your experience. We’ll take you straight to the booking calendar.</p>
-      <button type="button" class="fz26-route" data-fz26-experience="Quick Skirmish" data-fz26-duration="1"><span class="fz26-route-icon">↗</span><span><b>TRY IT FOR THE FIRST TIME</b><small>Guided field game · 60-minute booking</small></span><span class="fz26-arrow">↗</span></button>
-      <button type="button" class="fz26-route" data-fz26-experience="Squad Deployment" data-fz26-duration="1"><span class="fz26-route-icon">⌁</span><span><b>BRING YOUR FRIENDS</b><small>Team missions · 60 minutes</small></span><span class="fz26-arrow">↗</span></button>
-      <button type="button" class="fz26-route" data-fz26-experience="Solo Target Practice" data-fz26-duration="0.5"><span class="fz26-route-icon">◎</span><span><b>GO SOLO</b><small>Target practice · 30 minutes</small></span><span class="fz26-arrow">↗</span></button>
+      <button type="button" class="fz26-route" data-fz26-experience="Quick Skirmish" data-fz26-duration="1"><span class="fz26-route-icon">↗</span><span><b>GUIDED GROUP MATCH</b><small>5–10 players · 60 minutes</small></span><span class="fz26-arrow">↗</span></button>
+      <button type="button" class="fz26-route" data-fz26-experience="Squad Deployment" data-fz26-duration="1"><span class="fz26-route-icon">⌁</span><span><b>BRING YOUR SQUAD</b><small>6–10 players · 60 minutes</small></span><span class="fz26-arrow">↗</span></button>
+      <button type="button" class="fz26-route" data-fz26-experience="Solo Target Practice" data-fz26-duration="0.5"><span class="fz26-route-icon">◎</span><span><b>COMING ALONE?</b><small>Solo target practice · 30 minutes</small></span><span class="fz26-arrow">↗</span></button>
       <div class="fz26-panel-footer"><span><i aria-hidden="true"></i> OPENING IN DECEMBER</span><b>CHOOSE A SLOT BELOW</b></div>
     </aside>
   </div>
@@ -98,7 +98,7 @@
   <div class="fz-join-intro"><span>FIELDZERO / START HERE</span><h2>CREATE YOUR IDENTITY.<br><em>PLAY THE REAL GAME.</em></h2><p>Not a military job or a downloadable video game — FIELDZERO is an outdoor gel blaster gaming community. Become an <strong>Operator</strong> by creating a game-style player profile, or simply book a supervised session.</p><p lang="si">FIELDZERO කියන්නේ එළිමහන් Gel Blaster ක්‍රීඩාවක්. Operator කියන්නේ ක්‍රීඩකයෙක්. ඔබේම Callsign එක තෝරා Profile එකක් සාදාගන්න, නැත්නම් Account එකක් නැතුවත් ක්‍රීඩා වාරයක් වෙන්කරගන්න.</p></div>
   <div class="fz-join-options">
     <article class="fz-join-card"><span>01 / JOIN THE GAME</span><h3>CREATE YOUR OPERATOR PROFILE</h3><p>Choose a callsign, build your player identity, discover squads and follow future stats and rankings. Free to register. Email verification and admin approval are required before your profile becomes public.</p><a href="#register">CREATE MY FREE PROFILE ↗</a><small>NEW PLAYERS WELCOME · NO EQUIPMENT REQUIRED TO REGISTER</small></article>
-    <article class="fz-join-card"><span>02 / BOOK A VISIT</span><h3>BOOK THE REAL FIELD</h3><p>Solo? Try the target bay. Coming with five or more friends? Choose a guided group mission. Pick a date and a time, then save your booking reference. No Operator account is needed to book.</p><a href="#calendar">SEE TIMES & BOOK ↗</a><small>OPENING PLANNED FOR DECEMBER · NO PRE-LAUNCH DEPOSIT</small></article>
+    <article class="fz-join-card"><span>02 / BOOK A VISIT</span><h3>BOOK THE REAL FIELD</h3><p>Solo? Try the target bay. Coming with a group of 5–10 players? Choose a guided match. Pick a date and a time, then save your booking reference. No Operator account is needed to book.</p><a href="#calendar">SEE TIMES & BOOK ↗</a><small>OPENING PLANNED FOR DECEMBER · NO PRE-LAUNCH DEPOSIT</small></article>
   </div>
 </section>
 <section class="fz26-at-a-glance" aria-label="Essential information">
@@ -413,6 +413,37 @@
     const note=document.createElement('details');note.className='fz-easy-help';
     note.innerHTML='<summary>ලියාපදිංචි වන්නේ කෙසේද? / How to register</summary><p lang="si">OPERATOR REGISTRATION තෝරන්න. ඔබේ තොරතුරු, username, email සහ password ඇතුළත් කර account එක සාදන්න. ලැබෙන email එකෙන් තහවුරු කර admin අනුමැතිය ලැබෙන තුරු රැඳී සිටින්න.</p><p>Operator means your in-game player identity, not a staff or military position. Create your free account, verify your email and await admin approval before public listing. Booking a field session does not require an account. Only your callsign is shown publicly.</p>';
     area.querySelector('.section-heading')?.after(note);
+    // One-screen registration: keep essential fields visible; preserve existing backend values.
+    const registration=document.getElementById('registrationForm');
+    const registrationGrid=registration?.querySelector('.form-grid');
+    if(registrationGrid){
+      const optional=document.createElement('details');
+      optional.className='fz-profile-options full';
+      const summary=document.createElement('summary');
+      summary.textContent='OPTIONAL PLAYER PREFERENCES · BLASTER, SQUAD & PLAY STYLE ＋';
+      const optionalFields=document.createElement('div');
+      optionalFields.className='fz-profile-optional-fields';
+      for(const name of ['gun','teamPreference','playStyle']){
+        const field=registrationGrid.querySelector('[name="'+name+'"]');
+        const label=field?.closest('label');
+        if(label)optionalFields.appendChild(label);
+      }
+      optional.append(summary,optionalFields);
+      registrationGrid.querySelector('.consent')?.before(optional);
+      // A visual callsign preview makes the account feel like a game profile.
+      const preview=document.createElement('div');
+      preview.className='fz-recruit-preview';
+      preview.innerHTML='<div class="fz-recruit-monogram" aria-hidden="true">FZ</div><div><small>YOUR NEW OPERATOR ID</small><strong id="fzRecruitPreviewCallsign">YOUR_CALLSIGN</strong><span>PLAYER / NEW RECRUIT · AWAITING APPROVAL</span></div>';
+      registrationGrid.before(preview);
+      const callsignField=registrationGrid.querySelector('[name="callsign"]');
+      const updatePreview=()=>{
+        const v=String(callsignField?.value||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'').slice(0,24);
+        const target=document.getElementById('fzRecruitPreviewCallsign');
+        if(target)target.textContent=v||'YOUR_CALLSIGN';
+      };
+      callsignField?.addEventListener('input',updatePreview);
+      updatePreview();
+    }
   }
   document.querySelectorAll('a[href="#memberArea"]').forEach(a=>{
     if(/REGISTER|CREATE YOUR CALLSIGN/.test(a.textContent))a.href='#register';

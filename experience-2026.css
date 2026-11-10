@@ -482,3 +482,12 @@ body.fz26 #calendar .fz-simple-step-note strong{color:#23451b;}
  body.fz26 #registrationForm .fz-profile-options .fz-profile-optional-fields{grid-template-columns:1fr;}
  body.fz26 #registrationForm .fz-profile-prompt{font-size:11px;}
 }
+
+/* Live game-style callsign preview for new players. */
+body.fz26 #registrationForm .fz-recruit-preview{grid-column:1/-1;display:flex;align-items:center;gap:17px;padding:18px 20px;margin:5px 0 17px;background:linear-gradient(110deg,#17291c,#2a412a);border:1px solid #62834c;border-left:4px solid #c3f27a;color:#f5fce7;border-radius:11px;min-width:0;}
+body.fz26 #registrationForm .fz-recruit-monogram{display:grid;place-items:center;flex:0 0 60px;width:60px;height:60px;background:#c4f37a;color:#18301b;font:900 25px/1 "Barlow Condensed",Impact,sans-serif;border-radius:8px;}
+body.fz26 #registrationForm .fz-recruit-preview>div:last-child{display:grid;gap:5px;min-width:0;}
+body.fz26 #registrationForm .fz-recruit-preview small{color:#bfd1ad;font:800 9px/1.4 "DM Sans",sans-serif;letter-spacing:.12em;}
+body.fz26 #registrationForm .fz-recruit-preview strong{font:900 clamp(25px,4vw,43px)/1 "Barlow Condensed",Impact,sans-serif;letter-spacing:.04em;word-break:break-word;color:#ebfcca;}
+body.fz26 #registrationForm .fz-recruit-preview span{font:700 9px/1.5 "DM Sans",sans-serif;color:#bdcbb5;letter-spacing:.07em;}
+@media(max-width:500px){body.fz26 #registrationForm .fz-recruit-preview{padding:13px;gap:12px;}body.fz26 #registrationForm .fz-recruit-monogram{width:48px;height:48px;flex-basis:48px;}}

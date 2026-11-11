@@ -1,0 +1,33 @@
+name: FIELDZERO worker desk syntax & security checks
+on:
+  push:
+    paths:
+      - 'staff.html'
+      - 'staff.js'
+      - 'inventory.html'
+      - 'inventory.js'
+      - 'staff.css'
+      - 'index.html'
+      - 'social-preview.png'
+      - 'scripts/fieldzero-staff-smoke.mjs'
+      - '.github/workflows/fieldzero-staff-syntax.yml'
+  workflow_dispatch:
+jobs:
+  syntax-check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate JavaScript syntax
+        run: |
+          node --check staff.js
+          node --check inventory.js
+          node --check scripts/fieldzero-staff-smoke.mjs
+      - name: Validate image dimensions and private portal behavior
+        run: |
+          node -e "const fs=require('fs');const b=fs.readFileSync('social-preview.png');if(b.readUInt32BE(16)!==600||b.readUInt32BE(20)!==315)process.exit(1);console.log('OG image 600x315 OK')"
+          node -e "const fs=require('fs');const s=fs.readFileSync('staff.html','utf8');const i=fs.readFileSync('inventory.html','utf8');if(!s.includes('id=\"workspace\" hidden')||!i.includes('id=\"inventoryWorkspace\" hidden'))process.exit(1);console.log('Auth-gated views OK')"

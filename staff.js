@@ -4,6 +4,10 @@
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const conf=window.FIELDZERO_CONFIG||{};
 const db=window.supabase?.createClient(conf.SUPABASE_URL,conf.SUPABASE_ANON_KEY);
+const recoveryLink=new URLSearchParams(location.hash.replace(/^#/,"")).get("type")==="recovery";
+let recoveryMode=recoveryLink;
+const showRecovery=()=>{$("#loginSection").hidden=true;$("#workspace").hidden=true;$("#staffRecovery").hidden=false;};
+db?.auth.onAuthStateChange((event,session)=>{if(event==="PASSWORD_RECOVERY"){recoveryMode=true;showRecovery();}});
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmt=v=>Number(v||0).toLocaleString("en-LK",{maximumFractionDigits:2});
 const money=v=>"LKR "+fmt(v), dt=v=>v?new Date(v).toLocaleString("en-LK",{dateStyle:"medium",timeStyle:"short",timeZone:"Asia/Colombo"}):"—";
@@ -167,5 +171,32 @@ $("#workerForm").onsubmit=async e=>{
  if(error||data?.error){msg(data?.error||error.message,true,$("#workerFormStatus"));return;}
  msg("Worker created. Share their email and temporary password privately. This password is not shown again.",false,$("#workerFormStatus"));e.currentTarget.reset();await loadWorkers();
 };
-db.auth.getSession().then(({data:{session}})=>{if(session)initialize().catch(e=>msg(e.message,true,$("#loginMessage")));});
+$("#forgotStaffPassword").onclick=async()=>{
+ const address=$("#loginForm [name=email]").value.trim()||prompt("Enter your FIELDZERO worker email address:");
+ if(!address)return;
+ const {error}=await db.auth.resetPasswordForEmail(address,{redirectTo:location.origin+location.pathname});
+ msg(error?error.message:"If that account exists, a password reset message will be emailed. Check the inbox and spam.",!!error,$("#loginMessage"));
+};
+$("#staffRecoveryForm").onsubmit=async e=>{
+ e.preventDefault();
+ const password=$("#staffRecoveryPassword").value,confirm=$("#staffRecoveryConfirm").value;
+ if(password.length<12||password!==confirm){msg("Use at least 12 characters, and ensure passwords match.",true,$("#staffRecoveryStatus"));return;}
+ const {error}=await db.auth.updateUser({password});
+ if(error){msg(error.message,true,$("#staffRecoveryStatus"));return;}
+ await db.auth.signOut();
+ msg("Password changed. Return to the staff login page and sign in with the new password.",false,$("#staffRecoveryStatus"));
+ setTimeout(()=>{location.href=location.pathname;},1600);
+};
+$("#staffChangePasswordForm").onsubmit=async e=>{
+ e.preventDefault();
+ const password=$("#staffChangePassword").value;
+ if(password.length<12){msg("Use at least 12 characters.",true,$("#staffPasswordStatus"));return;}
+ const {error}=await db.auth.updateUser({password});
+ msg(error?error.message:"Password updated. Use the new password next time you sign in.",!!error,$("#staffPasswordStatus"));
+ if(!error)e.currentTarget.reset();
+};
+db.auth.getSession().then(({data:{session}})=>{
+ if(recoveryMode){if(session){showRecovery();}else{msg("Reset link is invalid or expired. Request another email.",true,$("#loginMessage"));}}
+ else if(session)initialize().catch(e=>msg(e.message,true,$("#loginMessage")));
+});
 })();

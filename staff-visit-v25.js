@@ -90,13 +90,13 @@ async function render(booking,knownInvoice,afterChange){
  const bill=invoice
   ?'<div class="fz-visit-status '+(isPaid?"fz-paid":"")+'"><strong>'+esc(invoice.invoice_number)+'</strong><span>'+esc(isPaid?"PAID / CLOSED":"AWAITING CHECKOUT")+' · Total LKR '+amount(invoice.total_amount)+' · Paid LKR '+amount(invoice.amount_paid)+'</span></div>'
   :'<div class="fz-visit-grid"><label>SESSION CHARGE (LKR)<input id="visitSessionCharge" type="number" step=".01" min="1" value="'+(basePrice||"")+'"></label><p class="hint">Session charge is checked against the owner-set price. A private custom quote must first be set by the owner.</p></div>'+
-    '<button type="button" class="primary" id="visitCreateInvoice">CREATE CUSTOMER INVOICE</button>';
+    '<button type="button" class="primary" id="visitCreateInvoice" '+(!game?'disabled':'')+'>CREATE CUSTOMER INVOICE</button>'+(game?'':'<p class="hint">Check in the customer and record issued equipment first.</p>');
  const addOns=!isPaid&&invoice
  ?'<div class="fz-visit-extras"><h4>ITEMISE THE FINAL BILL</h4><p class="hint">Keep the standard session charge; add optional rentals, retail items or other additional charges before payment.</p>'+
    '<div id="visitExtraRows"></div><button class="ghost" id="visitAddExtra" type="button">+ ADD EXTRA ITEM</button>'+
    '<label>BASE SESSION CHARGE (LKR)<input id="visitBaseCharge" type="number" step=".01" min="1" value="'+(basePrice||Number(lines[0]?.unit_price||invoice.total_amount))+'"></label>'+
    '<p id="visitBillPreview" class="fz-visit-subtotal">FINAL TOTAL: LKR '+amount(invoice.total_amount)+'</p>'+
-   '<button class="primary fz-visit-wide" id="visitFinalize" type="button">FINALIZE BILL & ISSUE INVOICE</button></div>'
+   '<button class="primary fz-visit-wide" id="visitFinalize" type="button" '+(!game?'disabled':'')+'>FINALIZE BILL & ISSUE INVOICE</button>'+(game?'':'<p class="hint">Complete customer check-in first.</p>')+'</div>'
  :"";
  const payments=invoice&&!isPaid
  ?'<div class="fz-visit-pay"><h4>MARK INVOICE AS PAID</h4><p class="hint">Only press Paid after receiving and verifying the full balance. This records the payment and closes the invoice.</p>'+

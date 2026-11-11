@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-label="Original FIELDZERO illustrated recreational gel blaster and field equipment">
+<defs>
+ <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#07100c"/><stop offset=".48" stop-color="#1c3426"/><stop offset="1" stop-color="#060c0a"/></linearGradient>
+ <radialGradient id="glow"><stop stop-color="#b6ef70" stop-opacity=".42"/><stop offset=".5" stop-color="#6cbd68" stop-opacity=".1"/><stop offset="1" stop-color="#94c76a" stop-opacity="0"/></radialGradient>
+ <linearGradient id="poly" x1=".15" x2=".87" y1="0" y2="1"><stop stop-color="#789380"/><stop offset=".28" stop-color="#33463d"/><stop offset=".54" stop-color="#121e1a"/><stop offset=".8" stop-color="#38473e"/><stop offset="1" stop-color="#080f0d"/></linearGradient>
+ <linearGradient id="green" x1="0" x2="1"><stop stop-color="#d4fa85"/><stop offset=".45" stop-color="#89c967"/><stop offset="1" stop-color="#365a3b"/></linearGradient>
+ <linearGradient id="highlight" x1="0" x2="1"><stop stop-color="#e6f7db"/><stop offset=".42" stop-color="#697d71"/><stop offset="1" stop-color="#1a2622"/></linearGradient>
+ <filter id="shadow" x="-25%" y="-50%" width="150%" height="200%"><feGaussianBlur stdDeviation="22"/></filter>
+ <filter id="halation" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="7"/></filter>
+ <pattern id="grid" width="74" height="74" patternUnits="userSpaceOnUse"><path d="M74 0H0V74" fill="none" stroke="#aecb9b" stroke-opacity=".08" stroke-width="1"/></pattern>
+ <pattern id="grain" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="4" cy="10" r=".7" fill="#edf9d8" opacity=".14"/><circle cx="17" cy="3" r=".7" fill="#edf9d8" opacity=".09"/></pattern>
+ </defs>
+ <rect width="1600" height="900" fill="url(#bg)"/><rect width="1600" height="900" fill="url(#grid)"/>
+ <ellipse cx="1110" cy="395" rx="750" ry="510" fill="url(#glow)"/>
+ <path d="M350 920L1090-60M490 960L1240-80M840 960L1570-80" stroke="#9fe082" stroke-opacity=".08" stroke-width="2"/>
+ <g transform="translate(760 140) rotate(-9 260 380)" opacity=".95">
+   <ellipse cx="360" cy="640" rx="470" ry="75" fill="#000" opacity=".6" filter="url(#shadow)"/>
+   <g stroke="#060c09" stroke-linejoin="round" stroke-width="11">
+    <path fill="url(#poly)" d="M43 378L165 371L177 452L75 476L-18 451L-35 414Z"/>
+    <rect x="100" y="346" width="565" height="123" rx="21" fill="url(#poly)"/>
+    <path d="M646 367L774 375L822 403L820 440L643 438Z" fill="#17231f"/>
+    <path d="M793 393L914 397L913 424L801 427Z" fill="#1c2921"/>
+    <rect x="912" y="390" width="76" height="40" rx="7" fill="#232f28"/>
+    <path d="M194 451L292 453L324 592L270 620L216 552Z" fill="url(#highlight)"/>
+    <path d="M380 453L465 455L488 569L429 573L397 517Z" fill="#121d17"/>
+    <path d="M455 475L602 476L647 536L635 580L537 578L490 520L469 518Z" fill="url(#poly)"/>
+    <path d="M115 341L212 313L615 306L673 343L671 365L126 377Z" fill="#273931"/>
+    <path d="M302 314L318 262L447 259L476 314Z" fill="#18271f"/>
+    <rect x="343" y="225" width="98" height="55" rx="10" fill="#24392f"/>
+    <rect x="363" y="239" width="56" height="24" rx="6" fill="url(#green)"/>
+   </g>
+   <g fill="none" stroke-linecap="round">
+    <path d="M141 386H640" stroke="#bde58c" stroke-width="5" opacity=".9"/>
+    <path d="M148 444H620" stroke="#a0b9a1" stroke-width="4" opacity=".7"/>
+    <path d="M102 463L171 450" stroke="#b1c4b0" stroke-width="4"/>
+    <path d="M215 338H601" stroke="#657e72" stroke-width="5"/>
+    <path d="M656 391H802" stroke="#b1d891" stroke-width="3"/>
+    <path d="M210 471L278 586" stroke="#5b7d60" stroke-width="5"/>
+    <path d="M468 479L628 555" stroke="#a6bbad" stroke-width="4" opacity=".55"/>
+   </g>
+   <g fill="#0c1611" stroke="#9ab29d" stroke-width="3">
+    <rect x="170" y="392" width="56" height="23" rx="5"/><rect x="244" y="392" width="56" height="23" rx="5"/>
+    <rect x="319" y="392" width="56" height="23" rx="5"/><rect x="397" y="392" width="56" height="23" rx="5"/>
+    <rect x="476" y="392" width="56" height="23" rx="5"/>
+   </g>
+   <g fill="#d1f19c"><circle cx="125" cy="414" r="5"/><circle cx="608" cy="409" r="5"/><circle cx="774" cy="402" r="5"/></g>
+   <g opacity=".96"><path d="M770 402L1002 396" stroke="#b7fb78" stroke-width="7" filter="url(#halation)"/><path d="M782 400L1002 396" stroke="#d3ff9b" stroke-width="2"/></g>
+   <g><rect x="540" y="481" width="118" height="31" rx="2" fill="#adce86" opacity=".9"/><text x="553" y="501" font-family="Arial,sans-serif" font-size="16" font-weight="900" fill="#182315" letter-spacing="3">FIELDZERO</text></g>
+ </g>
+ <g opacity=".85" stroke="#c9e9a5" fill="none">
+  <circle cx="1160" cy="385" r="319" stroke-opacity=".16" stroke-width="2"/>
+  <circle cx="1160" cy="385" r="253" stroke-opacity=".16" stroke-width="2"/>
+  <circle cx="1160" cy="385" r="184" stroke-opacity=".18" stroke-width="2"/>
+  <path d="M1160 42V75M1160 695V729M817 385H848M1474 385H1505" stroke-width="3" opacity=".36"/>
+ </g>
+ <rect width="1600" height="900" fill="url(#grain)" opacity=".3"/>
+ <path d="M0 780H1600" stroke="#c1e99c" stroke-opacity=".22" stroke-width="2"/>
+ <g fill="#d9ebcb" font-family="Arial,sans-serif" opacity=".62" font-size="13" letter-spacing="4"><text x="80" y="840">FIELDZERO // SPORTING EQUIPMENT</text><text x="1300" y="840">FZ-SUPPLY / 001</text></g>
+</svg>

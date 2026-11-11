@@ -114,7 +114,7 @@ async function render(booking,knownInvoice,afterChange){
   '<div class="fz-visit-section"><h4>01 / PLAYERS & GEAR</h4>'+details+'</div>'+
   '<div class="fz-visit-section"><h4>02 / CUSTOMER INVOICE</h4>'+bill+addOns+'</div>'+
   '<div class="fz-visit-section"><h4>03 / PAYMENT & CLOSURE</h4>'+(isPaid?'<p class="fz-visit-paid-banner">✓ INVOICE FULLY PAID · CLOSED FOR EDITING</p>':payments||'<p class="hint">Create and finalize the invoice to collect payment.</p>')+'</div>'+
-  (invoice?'<div class="fz-visit-section"><h4>04 / SEND THE INVOICE</h4><p class="hint">On supported mobile devices, choose WhatsApp from the file share sheet to send the PDF. Otherwise, download the PDF and attach it in WhatsApp yourself.</p><div class="button-row"><button type="button" class="ghost" id="visitPdf">DOWNLOAD PDF</button><button type="button" class="primary" id="visitShare">SHARE INVOICE / WHATSAPP ↗</button></div><p class="hint">'+(isPaid?"PAID invoice":"Unpaid invoice / balance due")+" · "+receipts.length+" recorded receipt(s)</p></div>':"")+
+  (invoice?'<div class="fz-visit-section"><h4>04 / SEND THE INVOICE</h4><p class="hint">On supported mobile devices, choose WhatsApp from the file share sheet to send the PDF. Otherwise, download the PDF and attach it in WhatsApp yourself.</p><div class="button-row"><button type="button" class="ghost" id="visitPdf">DOWNLOAD PDF</button><button type="button" class="primary" id="visitShare">SHARE INVOICE / WHATSAPP ↗</button></div><p class="hint">'+(isPaid?"PAID invoice":"Unpaid invoice / balance due")+" · "+receipts.length+' recorded receipt(s)</p></div>':"")+
   '<p id="visitStatus" role="status" class="message"></p>';
  const busy=async(fn,button)=>{
   if(button){button.disabled=true;button.textContent="PROCESSING…";}

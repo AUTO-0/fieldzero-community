@@ -60,13 +60,18 @@ function summarize(b){
  return '<span class="pill">'+esc(status)+'</span>';
 }
 async function loadBookings(){
- const {data,error}=await db.from("arena_bookings").select("*").eq("field_id",fieldId()).order("booking_start",{ascending:false}).limit(220);
+ const raw=String($("#bookingSearch")?.value||"").trim();
+ const q=raw.replace(/[^A-Za-z0-9_+\-]/g,"");
+ let request=db.from("arena_bookings").select("*").eq("field_id",fieldId());
+ if(q.length>=3)request=request.or("booking_reference.ilike.%"+q+"%,mobile.ilike.%"+q+"%,callsign.ilike.%"+q+"%");
+ const {data,error}=await request.order("booking_start",{ascending:false}).limit(q.length>=3?100:300);
  if(error){msg(error.message,true);return;}
  bookings=data||[];
  const {data:sent}=await db.from("fz_booking_confirmations").select("booking_id").in("booking_id",bookings.map(x=>x.id).length?bookings.map(x=>x.id):["00000000-0000-0000-0000-000000000000"]);
  confirmations=sent||[];
  const filter=$("#bookingStatusFilter").value;
- const filtered=bookings.filter(b=>filter==="all"||
+ const searching=String($("#bookingSearch")?.value||"").replace(/[^A-Za-z0-9_+\-]/g,"").length>=3;
+ const filtered=bookings.filter(b=>searching||filter==="all"||
  (filter==="active"&&!["rejected","cancelled"].includes(b.status)&&(!["paid"].includes(b.payment_status)||new Date(b.booking_start)>new Date(Date.now()-86400000)))||
  (filter==="pending"&&["pending","pending_payment"].includes(b.status))||
  (filter==="paid"&&b.payment_status==="paid"));
@@ -122,6 +127,7 @@ async function showBooking(id){
   return rpc("fz_staff_finalize_bill",{p_booking_id:id,p_items:items,p_discount_amount:0,p_tax_rate:0});});
  assign("receivePayment",()=>rpc("fz_staff_record_payment",{p_invoice_id:invoice.id,p_amount:Number($("#paymentAmount").value),p_payment_date:today(),...payParams(),p_request_key:crypto.randomUUID()}));
  if($("#downloadInvoice"))$("#downloadInvoice").onclick=downloadInvoice;
+  if(b.status==="approved" && window.FZVisitV25)window.FZVisitV25.render(b,invoice,()=>action(async()=>{}));
 }
 async function loadOperators(){
  const {data,error}=await db.from("player_applications").select("id,callsign,real_name,mobile,contact_email,status,created_at").order("created_at",{ascending:false}).limit(150);
@@ -161,6 +167,7 @@ function downloadInvoice(){
 $("#loginForm").onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget);msg("Signing in…",false,$("#loginMessage"));const {error}=await db.auth.signInWithPassword({email:String(f.get("email")).trim(),password:String(f.get("password"))});if(error){msg(error.message,true,$("#loginMessage"));return;}try{await initialize();}catch(err){msg(err.message,true,$("#loginMessage"));}};
 $("#logout").onclick=async()=>{await db.auth.signOut();location.reload();};
 $("#refresh").onclick=refresh;
+let findDebounce;$("#bookingSearch")?.addEventListener("input",()=>{clearTimeout(findDebounce);findDebounce=setTimeout(loadBookings,220);});
 $("#fieldFilter").onchange=refresh;$("#bookingStatusFilter").onchange=loadBookings;
 $$("[data-tab]").forEach(t=>t.onclick=()=>{$$("[data-tab]").forEach(b=>b.classList.toggle("active",b===t));$$("[data-panel]").forEach(p=>p.hidden=p.dataset.panel!==t.dataset.tab);});
 $("#generatePassword").onclick=()=>{const abc="ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#";const bytes=crypto.getRandomValues(new Uint8Array(20));$("#workerPassword").value=[...bytes].map(b=>abc[b%abc.length]).join("");};

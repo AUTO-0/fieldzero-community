@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#111a15">
 <title>FIELDZERO | Staff Operations Desk</title>
-<link rel="stylesheet" href="staff.css?v=24">
+<link rel="stylesheet" href="staff.css?v=25">
 </head><body>
 <header class="topbar"><a class="brand" href="index.html">FIELD<span>ZERO</span><small>/ OPERATIONS</small></a>
 <nav><a href="index.html">PUBLIC SITE</a><a href="staff.html" class="current">STAFF DESK</a><a href="inventory.html">INVENTORY ↗</a><button id="logout" class="ghost" hidden>SIGN OUT</button></nav></header>
@@ -20,7 +20,7 @@
 <section class="tab-content" data-panel="bookings">
 <div class="split-heading"><div><span class="kicker">RESERVATION WORKFLOW</span><h2>BOOKINGS & CHECKOUT</h2></div><label>SHOW<select id="bookingStatusFilter"><option value="active">Active / upcoming</option><option value="all">All records</option><option value="pending">Needs action</option><option value="paid">Paid</option></select></label></div>
 <p class="hint">1. Review a special request · 2. Verify the advance when required · 3. Share confirmation manually · 4. Prepare final bill · 5. Collect payment and issue invoice.</p>
-<div class="split-layout"><div id="bookingsList" class="record-list"><p>Loading bookings…</p></div>
+<div class="fz-visit-search"><label>FIND CUSTOMER BY BOOKING NUMBER, MOBILE OR CALLSIGN<input id="bookingSearch" type="search" placeholder="e.g. FZ-2026... or 07X XXX XXXX" autocomplete="off" inputmode="search"></label><small>Type at least 3 characters. Searches all FIELDZERO bookings assigned to this field.</small></div><div class="split-layout"><div id="bookingsList" class="record-list"><p>Loading bookings…</p></div>
 <div id="bookingDetail" class="panel detail"><p>Select a booking on the left to manage it.</p></div></div>
 </section>
 <section class="tab-content" data-panel="operators" hidden>
@@ -43,4 +43,4 @@
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
-<script src="config.js"></script><script src="staff.js?v=24"></script></body></html>
+<script src="config.js"></script><script src="staff.js?v=25"></script><script src="staff-visit-v25.js?v=25"></script></body></html>

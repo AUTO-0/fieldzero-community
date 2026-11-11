@@ -1,0 +1,49 @@
+name: FIELDZERO V25 Release Checks
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'staff.html'
+      - 'staff.js'
+      - 'staff-visit-v25.js'
+      - 'staff-visit-v25.css'
+      - 'inventory.html'
+      - 'inventory.js'
+      - 'stats.html'
+      - 'stats-v25.js'
+      - 'stats-v25.css'
+      - 'shop.html'
+      - 'shop-v25.js'
+      - 'shop-admin.html'
+      - 'shop-admin-v25.js'
+      - 'partners.html'
+      - 'partners-v25.js'
+      - 'supply-v25.css'
+      - 'editorial-v25.css'
+      - 'index.html'
+      - 'admin.html'
+      - 'scripts/fieldzero-v25-qa.mjs'
+      - '.github/workflows/fieldzero-v25-check.yml'
+jobs:
+  release-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate all new browser scripts
+        run: |
+          node --check staff.js
+          node --check staff-visit-v25.js
+          node --check inventory.js
+          node --check stats-v25.js
+          node --check shop-v25.js
+          node --check shop-admin-v25.js
+          node --check partners-v25.js
+          node --check app.js
+      - name: Test V25 links, page identity and security guardrails
+        run: node scripts/fieldzero-v25-qa.mjs

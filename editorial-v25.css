@@ -1,0 +1,55 @@
+
+/* FIELDZERO 2026 / Editorial V25 — arena + supply + allied network.
+   Original treatment; does not copy retailer branding or imagery. */
+body.fz26{--fz25-acid:#d1ee93;--fz25-bone:#efefe4;--fz25-orange:#df865e}
+body.fz26 .site-header{border-bottom:1px solid #90a67736;background:#0b1511ed;backdrop-filter:blur(18px)}
+body.fz26 .brand-mark{background:linear-gradient(135deg,#cadf9a,#85b35a);color:#122015;clip-path:polygon(0 0,88% 0,100% 16%,100% 100%,0 100%);font-weight:900}
+body.fz26 .site-header nav a[href="shop.html"],body.fz26 .site-header nav a[href="partners.html"]{color:#d9eac3}
+body.fz26 .site-header nav a[href="shop.html"]:hover,body.fz26 .site-header nav a[href="partners.html"]:hover{color:var(--fz25-acid)}
+body.fz26 .fz26-hero{background:#08120d}
+body.fz26 .fz26-hero:before{content:"";position:absolute;z-index:0;inset:0;background:linear-gradient(120deg,#0000001a,#00000005 55%,#a2c9650b),repeating-linear-gradient(90deg,transparent 0 99px,#daedb909 100px,#daedb909 101px);pointer-events:none}
+body.fz26 .fz26-hero .hero-content{position:relative;z-index:2}
+body.fz26 .fz26-hero h1{letter-spacing:-.025em;text-shadow:0 8px 35px #03070455}
+body.fz26 .fz26-overline{letter-spacing:.2em}
+body.fz26 .fz26-hero-grid{position:relative;z-index:2}
+body.fz26 .fz25-hero-shop{color:#d6e8bc;display:inline-flex;align-items:center;gap:8px;padding:11px 3px;text-decoration:underline;text-underline-offset:5px;font-size:10px;font-weight:900;letter-spacing:.08em}
+body.fz26 .fz25-hero-shop:hover{color:#fff}
+body.fz26 .fz25-hero-shop span{font-size:14px}
+body.fz26 .fz26-hero-trust{border-top:1px solid #d9ecc02b;padding-top:15px}
+body.fz26 .fz26-route-panel{box-shadow:0 25px 75px #0006;border:1px solid #879d7166}
+body.fz26 .fz26-route-panel .fz26-panel-live{color:var(--fz25-acid)}
+.fz25-ecosystem{position:relative;background:#0d1811;overflow:hidden;padding:90px clamp(20px,6vw,92px) 95px;border-top:1px solid #3e5442;border-bottom:1px solid #344737}
+.fz25-ecosystem:before{content:"FIELDZERO";position:absolute;right:-15px;top:30px;font:900 min(15vw,240px)/1 "Barlow Condensed",sans-serif;color:#efffd004;letter-spacing:-.05em;pointer-events:none}
+.fz25-ecosystem-heading{position:relative;display:grid;grid-template-columns:1fr minmax(200px,330px);gap:12px 60px;max-width:1400px;margin:0 auto 30px}
+.fz25-ecosystem-heading>span{grid-column:1/-1;font-size:10px;font-weight:900;letter-spacing:.19em;color:#c9ee90}
+.fz25-ecosystem-heading h2{font:900 clamp(62px,8vw,135px)/.84 "Barlow Condensed",sans-serif;text-transform:uppercase;letter-spacing:-.025em;color:#f3f5e9;margin:11px 0}
+.fz25-ecosystem-heading h2 em{font-style:normal;color:#c4e88b}
+.fz25-ecosystem-heading p{align-self:end;font-size:13px;color:#a7b9a7;max-width:320px}
+.fz25-ecosystem-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:17px;max-width:1400px;margin:auto}
+.fz25-ecosystem-grid article{position:relative;isolation:isolate;min-height:425px;padding:clamp(22px,4vw,48px);display:flex;flex-direction:column;align-items:start;overflow:hidden}
+.fz25-ecosystem-grid article:before{content:"";position:absolute;right:-25%;top:-50%;width:80%;aspect-ratio:1;border:1px solid #57795477;border-radius:50%;box-shadow:0 0 0 50px #7899640b,0 0 0 105px #7899640a;z-index:-1}
+.fz25-eco-supply{background:linear-gradient(115deg,#e0e1d0,#d3d9bd);color:#182719;border:1px solid #d8e5c2}
+.fz25-eco-alliance{background:linear-gradient(125deg,#193125,#12231a);color:#eef5e2;border:1px solid #5e7a4f}
+.fz25-eco-index{font-size:9px;letter-spacing:.14em;font-weight:900;color:#51704a}
+.fz25-eco-alliance .fz25-eco-index{color:#b4d59c}
+.fz25-eco-stamp{position:absolute;top:18px;right:22px;width:82px;height:82px;border:2px solid #486a42;display:flex;flex-direction:column;align-items:center;justify-content:center;font:900 37px/.9 "Barlow Condensed",sans-serif;transform:rotate(8deg);color:#597950;opacity:.65}
+.fz25-eco-stamp small{font:900 9px "DM Sans",sans-serif;letter-spacing:.1em;margin-top:6px}
+.fz25-eco-alliance .fz25-eco-stamp{border-color:#a0ca83;color:#a0ca83}
+.fz25-ecosystem-grid h3{font:900 clamp(53px,6vw,101px)/.83 "Barlow Condensed",sans-serif;text-transform:uppercase;letter-spacing:-.03em;margin:85px 0 17px}
+.fz25-ecosystem-grid h3 em{font-style:normal;color:#547c3f}
+.fz25-eco-alliance h3 em{color:#bce18e}
+.fz25-ecosystem-grid p{font-size:12px;line-height:1.65;max-width:520px;color:#4d624d;margin:0 0 24px}
+.fz25-eco-alliance p{color:#a1b7a3}
+.fz25-ecosystem-grid a{display:inline-flex;align-items:center;justify-content:space-between;gap:16px;min-width:min(100%,290px);padding:14px 17px;border:1px solid #587345;font-weight:900;font-size:10px;letter-spacing:.07em;color:#192b17;text-decoration:none;margin-top:auto;transition:transform .2s,background .2s}
+.fz25-ecosystem-grid a:hover{background:#bdde8d;transform:translateY(-2px)}
+.fz25-eco-alliance a{color:#e2f4cd;border-color:#86a677}
+body.fz26 .fz-opening-card{box-shadow:0 26px 110px #000d;border:1px solid #a2c88768;background:radial-gradient(circle at 105% 8%,#5f8b4d44,transparent 40%),linear-gradient(128deg,#15231a,#09140f);position:relative;overflow:hidden}
+body.fz26 .fz-opening-card:before{content:"F/Z";position:absolute;right:0;bottom:10px;font:900 140px/1 "Barlow Condensed",sans-serif;color:#c8ed9b12;pointer-events:none}
+body.fz26 .fz-opening-card .fz-opening-count{position:relative;z-index:1}
+body.fz26 .fz-opening-card .fz-opening-close{background:#29402c;border:1px solid #87a577;color:#fff}
+body.fz26 .fz-opening-card .fz-opening-actions a:first-child{background:#cee99a;color:#132216}
+body.fz26 .fz-opening-card .fz-opening-actions a:last-child{border-color:#a0c28a}
+@media(max-width:1100px){.fz25-ecosystem-grid h3{margin-top:75px}.fz25-ecosystem-heading{gap:20px}.fz25-ecosystem-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:800px){.fz25-ecosystem-heading{grid-template-columns:1fr}.fz25-ecosystem-grid{grid-template-columns:1fr}.fz25-ecosystem-grid article{min-height:380px}.fz25-ecosystem-grid h3{margin-top:50px}}
+@media(max-width:520px){body.fz26 .fz25-hero-shop{width:100%;justify-content:center;padding-top:10px}.fz25-ecosystem{padding:65px 16px}.fz25-ecosystem-heading h2{font-size:clamp(62px,15vw,85px)}.fz25-ecosystem-grid article{min-height:355px;padding:25px}.fz25-ecosystem-grid h3{font-size:clamp(63px,14vw,90px)}.fz25-eco-stamp{width:65px;height:65px;font-size:29px}.fz25-ecosystem-heading p{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.fz25-ecosystem-grid a{transition:none}}

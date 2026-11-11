@@ -12,7 +12,10 @@ async function inspect(view, width,height){
  await page.goto(base,{waitUntil:"domcontentloaded",timeout:25000});
  await page.locator(".fz26-category-tile").first().waitFor();
  assert.equal(await page.locator(".fz26-category-tile").count(),8,"Must display eight shop categories");
- assert.equal(await page.locator(".fz26-cat-art").count(),8,"Every shop category must have own SVG art");
+ assert.equal(await page.locator(".fz27-category-media img").count(),8,"Every shop category must have real equipment photography");
+ assert.equal(await page.locator(".fz26-cat-art").count(),0,"Remove old flat SVG icon graphics");
+ assert.equal(await page.locator(".fz27-real-gear-stage img").count(),1,"Hero must contain real gel blaster photograph");
+ assert.equal(await page.locator(".fz27-promo-real-gear img").count(),1,"Promotion must contain real gel blaster photograph");
  const hero=await page.locator(".supply-hero").boundingBox();
  assert.ok(hero&&hero.height>=440,"Flagship shop hero must render at useful size");
  await page.waitForSelector("#fz26PromoScreen:not([hidden])",{timeout:9000});
@@ -34,7 +37,7 @@ try{
  await inspect("desktop",1440,900);
  await inspect("mobile",390,844);
  assert.equal(problems.length,0,"Uncaught browser script errors: "+problems.join("; "));
- console.log("FIELDZERO Supply flagship browser checks PASSED; 8 categories, working popup and filters, desktop/mobile.");
+ console.log("FIELDZERO Supply photography browser checks PASSED; 8 real-photo categories, licensed hero, popup and filters, desktop/mobile.");
 }finally{
  await browser.close();
 }

@@ -12,7 +12,7 @@ function cat(p){
  const v=(p.category+" "+p.title).toLowerCase();
  if(/safety|mask|goggle|eye|protect|vest/.test(v))return "safety";
  if(/gel ball|gel bead|ammunit|gel ammo/.test(v))return "ammo";
- if(/accessor|battery|charger|target|bag|strap|scope|attachment/.test(v))return "accessory";
+ if(/accessor|battery|charger|target|bag|strap|scope|attachment|apparel|shirt|jersey|patch|uniform|glove|cap|hat|merch/.test(v))return "accessory";
  return "gel";
 }
 function productPhoto(p){
@@ -116,7 +116,7 @@ async function loadProducts(){
  const {data,error}=await db.from("fz_shop_products").select("id,sku,title,category,short_description,details,price_lkr,stock_qty,image_url,featured,published,status_label")
   .eq("published",true).order("featured",{ascending:false}).order("created_at",{ascending:false});
  if(error){$("#productsGrid").innerHTML='<div class="supply-empty-catalogue"><h3>COLLECTION UNAVAILABLE.</h3><p>Please retry or contact FIELDZERO.</p></div>';$("#productCount").textContent="CATALOGUE TEMPORARILY UNAVAILABLE";return;}
- products=data||[];display();syncCart();
+ products=data||[];display();syncCart();window.dispatchEvent(new CustomEvent("fz:supply:catalogue",{detail:{products}}));
 }
 loadProducts();
 })();

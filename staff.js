@@ -166,7 +166,7 @@ async function loadWorkers(){
  try{data=await staffWorkerRequest({action:"list"});}
  catch(e){msg(e.message,true);return;}
  $("#workersList").innerHTML=(data.workers||[]).map(w=>'<article class="record"><b>'+esc(w.display_name)+'</b><small>'+esc(w.email)+' · '+esc(fields.find(f=>f.id===w.field_id)?.name||w.field_id)+'</small><div class="meta"><span class="pill">'+(w.active?"ACTIVE":"DISABLED")+'</span><button class="ghost" data-worker-toggle="'+esc(w.id)+'" data-worker-active="'+(!w.active)+'">'+(w.active?"DISABLE ACCESS":"ENABLE ACCESS")+'</button></div></article>').join("")||"<p>No worker accounts yet.</p>";
- $("[data-worker-toggle]").forEach(button=>button.onclick=()=>action(async()=>{
+ $$("[data-worker-toggle]").forEach(button=>button.onclick=()=>action(async()=>{
   await staffWorkerRequest({action:"set_active",id:button.dataset.workerToggle,active:button.dataset.workerActive==="true"});
   await loadWorkers();
  }));

@@ -1,0 +1,46 @@
+name: FIELDZERO Supply Flagship V26 Browser QA
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'shop.html'
+      - 'shop-v25.js'
+      - 'shop-showcase-v26.js'
+      - 'shop-flagship-v26.css'
+      - 'supply-v25.css'
+      - 'assets/fieldzero-supply-hero-v26.svg'
+      - 'scripts/fieldzero-shop-v26-visual-qa.mjs'
+      - '.github/workflows/fieldzero-shop-v26-check.yml'
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate shop browser scripts
+        run: |
+          node --check shop-v25.js
+          node --check shop-showcase-v26.js
+          node --check scripts/fieldzero-shop-v26-visual-qa.mjs
+      - name: Install browser automation
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Start site
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/fz-shop-v26.log 2>&1 &
+          sleep 2
+      - name: Test desktop/mobile visuals, category filters and promo dismissal
+        run: node scripts/fieldzero-shop-v26-visual-qa.mjs
+      - name: Save browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fieldzero-shop-v26-visuals
+          path: shop-v26-artifacts/
+          retention-days: 14

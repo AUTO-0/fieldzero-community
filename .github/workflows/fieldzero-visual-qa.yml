@@ -4,6 +4,13 @@ on:
   push:
     paths:
       - 'index.html'
+      - 'staff.html'
+      - 'inventory.html'
+      - 'staff.js'
+      - 'inventory.js'
+      - 'staff.css'
+      - 'social-preview.png'
+      - 'scripts/fieldzero-staff-smoke.mjs'
       - 'styles.css'
       - 'franchise.css'
       - 'experience-2026.css'
@@ -31,6 +38,9 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Syntax-check customer and admin scripts
         run: |
+          node --check staff.js
+          node --check inventory.js
+          node --check scripts/fieldzero-staff-smoke.mjs
           node --check app.js
           node --check admin.js
           node --check scripts/fieldzero-visual-qa.mjs
@@ -38,6 +48,8 @@ jobs:
         run: |
           python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/fz-static.log 2>&1 &
           sleep 2
+      - name: Test staff and inventory access, responsive layout and preview image
+        run: node scripts/fieldzero-staff-smoke.mjs
       - name: Test responsive layouts and booking UI
         run: node scripts/fieldzero-visual-qa.mjs
       - name: Save desktop and mobile screenshots

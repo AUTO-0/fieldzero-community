@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 const files=[
  "staff.html","staff.js","staff-visit-v25.js","staff-visit-v25.css",
  "inventory.html","stats.html","stats-v25.js","stats-v25.css",
- "shop.html","shop-v25.js","supply-v25.css","shop-admin.html","shop-admin-v25.js",
+ "shop.html","shop-v25.js","supply-v25.css","shop-showcase-v26.js","shop-flagship-v26.css","assets/fieldzero-supply-hero-v26.svg","shop-admin.html","shop-admin-v25.js",
  "partners.html","partners-v25.js","partners-v25.css","index.html","editorial-v25.css"
 ];
 for(const f of files)assert.ok(fs.existsSync(f),"Missing release file: "+f);
@@ -12,8 +12,9 @@ const needs=[
  ["staff.html",["bookingSearch","staff-visit-v25.js","staff-visit-v25.css"]],
  ["staff-visit-v25.js",["fz_staff_checkin_bundle","fz_staff_finish_visit","fz_staff_finalize_bill","fz_staff_record_payment","visitMarkPaid","navigator.share"]],
  ["staff.js",["fz_staff_search_bookings","bookingSearch"]],
- ["shop.html",["productOverlay","cartOverlay","shopRequestForm","supply-v25.css"]],
- ["shop-v25.js",["fz_submit_shop_order","fz_shop_products","published"]],
+ ["shop.html",["productOverlay","cartOverlay","shopRequestForm","supply-v25.css","fz26PromoScreen","fz26ShopCategories","shop-showcase-v26.js"]],
+ ["shop-v25.js",["fz_submit_shop_order","fz_shop_products","published","fz:supply:catalogue"]],
+ ["shop-showcase-v26.js",["data-featured-cat","fz26PromoScreen","sessionStorage","fz:supply:catalogue"]],
  ["shop-admin-v25.js",["fz_owner_upsert_shop_product","fz_owner_review_shop_order","fz-shop-images"]],
  ["partners-v25.js",["fz_partner_leads"]],
  ["stats-v25.js",["fz_inventory_issues","fz_game_sessions","fz_inventory_forecast"]],

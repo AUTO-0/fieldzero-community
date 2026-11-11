@@ -139,15 +139,36 @@ async function loadOperators(){
  $("#operatorsList").innerHTML=applications.length?applications.map(a=>'<article class="record"><b>'+esc(a.callsign)+' '+(a.status==="pending"?'<span class="pill">PENDING</span>':'<span class="pill">'+esc(a.status)+'</span>')+'</b><small>'+esc(a.real_name)+' / '+esc(a.mobile)+' / '+esc(a.contact_email||"")+'</small><small>'+dt(a.created_at)+'</small>'+(a.status==="pending"?'<div class="button-row"><button class="primary" data-operator-decision="approve" data-id="'+esc(a.id)+'">APPROVE</button><button class="danger" data-operator-decision="reject" data-id="'+esc(a.id)+'">REJECT</button></div>':"")+'</article>').join(""):'<p>No operator requests yet.</p>';
  $$("[data-operator-decision]").forEach(btn=>btn.onclick=()=>action(()=>rpc("fz_staff_review_operator",{application_id:btn.dataset.id,decision:btn.dataset.operatorDecision})));
 }
+async function staffWorkerRequest(body){
+ const {data,error}=await db.functions.invoke("fieldzero-worker-admin",{body});
+ if(error){
+   let detail=null;
+   const response=error.context;
+   if(response&&typeof response.json==="function"){
+     try{detail=await response.clone().json();}catch(_){}
+   }
+   const text=detail?.error||error.message||"Worker service unavailable";
+   const serviceError=new Error(text);
+   serviceError.code=detail?.code||"WORKER_SERVICE_ERROR";
+   serviceError.status=response?.status||null;
+   throw serviceError;
+ }
+ if(data?.error){
+   const serviceError=new Error(data.error);
+   serviceError.code=data.code||"WORKER_SERVICE_ERROR";
+   throw serviceError;
+ }
+ return data||{};
+}
 async function loadWorkers(){
  if(!owner)return;
- const {data,error}=await db.functions.invoke("fieldzero-worker-admin",{body:{action:"list"}});
- if(error||data?.error){msg(data?.error||error?.message||"Worker service unavailable",true);return;}
+ let data;
+ try{data=await staffWorkerRequest({action:"list"});}
+ catch(e){msg(e.message,true);return;}
  $("#workersList").innerHTML=(data.workers||[]).map(w=>'<article class="record"><b>'+esc(w.display_name)+'</b><small>'+esc(w.email)+' · '+esc(fields.find(f=>f.id===w.field_id)?.name||w.field_id)+'</small><div class="meta"><span class="pill">'+(w.active?"ACTIVE":"DISABLED")+'</span><button class="ghost" data-worker-toggle="'+esc(w.id)+'" data-worker-active="'+(!w.active)+'">'+(w.active?"DISABLE ACCESS":"ENABLE ACCESS")+'</button></div></article>').join("")||"<p>No worker accounts yet.</p>";
- $$("[data-worker-toggle]").forEach(button=>button.onclick=()=>action(async()=>{
- const {data,error}=await db.functions.invoke("fieldzero-worker-admin",{body:{action:"set_active",id:button.dataset.workerToggle,active:button.dataset.workerActive==="true"}});
- if(error||data?.error)throw Error(data?.error||error.message);
- await loadWorkers();
+ $("[data-worker-toggle]").forEach(button=>button.onclick=()=>action(async()=>{
+  await staffWorkerRequest({action:"set_active",id:button.dataset.workerToggle,active:button.dataset.workerActive==="true"});
+  await loadWorkers();
  }));
 }
 function downloadInvoice(){
@@ -174,12 +195,47 @@ let findDebounce;$("#bookingSearch")?.addEventListener("input",()=>{clearTimeout
 $("#fieldFilter").onchange=refresh;$("#bookingStatusFilter").onchange=loadBookings;
 $$("[data-tab]").forEach(t=>t.onclick=()=>{$$("[data-tab]").forEach(b=>b.classList.toggle("active",b===t));$$("[data-panel]").forEach(p=>p.hidden=p.dataset.panel!==t.dataset.tab);});
 $("#generatePassword").onclick=()=>{const abc="ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#";const bytes=crypto.getRandomValues(new Uint8Array(20));$("#workerPassword").value=[...bytes].map(b=>abc[b%abc.length]).join("");};
+const workerData=()=>{
+ const f=new FormData($("#workerForm"));
+ return {
+  email:String(f.get("email")||"").trim(),
+  display_name:String(f.get("display_name")||"").trim(),
+  field_id:String(f.get("field_id")||"")
+ };
+};
 $("#workerForm").onsubmit=async e=>{
- e.preventDefault();const f=new FormData(e.currentTarget);const body={action:"create",email:String(f.get("email")).trim(),display_name:String(f.get("display_name")).trim(),password:String(f.get("password")),field_id:String(f.get("field_id"))};
- msg("Creating staff account…",false,$("#workerFormStatus"));
- const {data,error}=await db.functions.invoke("fieldzero-worker-admin",{body});
- if(error||data?.error){msg(data?.error||error.message,true,$("#workerFormStatus"));return;}
- msg("Worker created. Share their email and temporary password privately. This password is not shown again.",false,$("#workerFormStatus"));e.currentTarget.reset();await loadWorkers();
+ e.preventDefault();
+ const button=e.currentTarget.querySelector('button[type="submit"]');
+ const body={action:"create",...workerData(),password:$("#workerPassword").value};
+ msg("Creating staff login…",false,$("#workerFormStatus"));
+ button.disabled=true;
+ try{
+  const result=await staffWorkerRequest(body);
+  msg(result.message||"Worker created. Share the temporary password privately.",false,$("#workerFormStatus"));
+  e.currentTarget.reset();
+  await loadWorkers();
+ }catch(err){
+  if(err.code==="EMAIL_EXISTS")$("#workerPassword").value="";
+  msg(err.message+(err.code==="EMAIL_EXISTS"?" Use the ASSIGN AN EXISTING FIELDZERO ACCOUNT button below.":""),true,$("#workerFormStatus"));
+ }finally{button.disabled=false;}
+};
+$("#attachExistingWorker").onclick=async()=>{
+ const fields=workerData();
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email)||fields.display_name.length<2||!fields.field_id){
+  msg("Enter the existing account's email, worker name and assigned field first.",true,$("#workerFormStatus"));
+  return;
+ }
+ if(!confirm("Assign this EXISTING FIELDZERO account as a staff worker? Its current login, password and player profile will be retained, but it will gain worker access to the selected field."))return;
+ const button=$("#attachExistingWorker");
+ button.disabled=true;
+ msg("Assigning existing worker account…",false,$("#workerFormStatus"));
+ try{
+  const result=await staffWorkerRequest({action:"attach_existing",...fields});
+  msg(result.message||"Existing account assigned successfully. The worker can sign in with their own password.",false,$("#workerFormStatus"));
+  $("#workerForm").reset();
+  await loadWorkers();
+ }catch(err){msg(err.message,true,$("#workerFormStatus"));}
+ finally{button.disabled=false;}
 };
 $("#forgotStaffPassword").onclick=async()=>{
  const address=$("#loginForm [name=email]").value.trim()||prompt("Enter your FIELDZERO worker email address:");

@@ -35,7 +35,9 @@
 <label>TEMPORARY PASSWORD <small>12 characters minimum. Share privately.</small><input id="workerPassword" name="password" type="text" minlength="12" maxlength="72" required autocomplete="off"></label>
 <button type="button" id="generatePassword" class="ghost">GENERATE STRONG PASSWORD</button>
 <label>ASSIGNED FIELD<select name="field_id" id="workerField" required></select></label>
-<button type="submit" class="primary">CREATE WORKER ACCOUNT</button><p id="workerFormStatus" class="message" role="status"></p>
+<button type="submit" class="primary">CREATE WORKER ACCOUNT</button>
+<button type="button" id="attachExistingWorker" class="ghost">ASSIGN AN EXISTING FIELDZERO ACCOUNT ↗</button>
+<p class="hint">If this email already belongs to a FIELDZERO Operator or other existing login, select <strong>Assign an existing account</strong> instead. The worker keeps their current password and player profile; only field-worker permissions are added.</p><p id="workerFormStatus" class="message" role="status"></p>
 <p class="hint">Workers can access bookings, applicant requests, session stock issues and their field's invoices. They cannot set prices, add inventory stock or create other workers.</p>
 </form><div class="panel"><h3>ACTIVE & DISABLED WORKERS</h3><div id="workersList" class="record-list"></div></div></div>
 </section>
@@ -43,4 +45,4 @@
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
-<script src="config.js"></script><script src="staff.js?v=25"></script><script src="staff-visit-v25.js?v=25"></script></body></html>
+<script src="config.js"></script><script src="staff.js?v=26"></script><script src="staff-visit-v25.js?v=25"></script></body></html>

@@ -1,0 +1,30 @@
+
+.partner-hero{min-height:620px;display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,.5fr);align-items:center;gap:6vw;padding:75px clamp(20px,7vw,110px);background:radial-gradient(circle at 75% 40%,#4b6b4142,transparent 35%),linear-gradient(120deg,#0a120d,#1b291d);overflow:hidden}
+.partner-hero h1,.partner-lanes h2,.partner-principles h2,.partner-contact h2{font:900 clamp(76px,10vw,155px)/.86 "Barlow Condensed",sans-serif;margin:20px 0 30px;text-transform:uppercase}
+.partner-hero h1 em,.partner-principles h2 em,.partner-contact h2 em{color:var(--s-acid);font-style:normal}
+.partner-hero-copy>p:not(.supply-kicker){max-width:650px;color:#bed0ba;margin:0 0 30px}
+.partner-hero-symbol{border:1px solid #83a86a;aspect-ratio:1;display:flex;align-items:center;justify-content:center;flex-direction:column;transform:rotate(10deg);background:#b0d3790e}
+.partner-hero-symbol>span{font:900 clamp(150px,22vw,360px)/.8 "Barlow Condensed",sans-serif;color:#bde497}.partner-hero-symbol small{font-size:11px;letter-spacing:.2em;color:#b8d3ad}
+.partner-lanes{padding:90px clamp(20px,7vw,110px)}.partner-lanes h2{font-size:clamp(65px,8vw,125px);margin:12px 0}.partner-lanes .supply-section-head p{max-width:410px}
+.partner-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}
+.partner-cards article{background:#19261b;border:1px solid #465b46;padding:32px;min-height:450px;display:flex;flex-direction:column;align-items:start}
+.partner-cards article.featured{background:#c5e994;color:#19241a;border-color:#c5e994}
+.partner-no{font-size:10px;font-weight:900;letter-spacing:.14em;color:#b6d4a2}.partner-cards .featured .partner-no{color:#375635}
+.partner-glyph{font-size:55px;color:#c9e9a7;margin:13px 0}.partner-cards .featured .partner-glyph{color:#507945}
+.partner-cards h3{font:900 clamp(52px,5vw,85px)/.84 "Barlow Condensed",sans-serif;margin:10px 0 15px}
+.partner-cards p{font-size:13px;color:#a5b5a5;max-width:350px}.partner-cards .featured p{color:#49604a}
+.partner-cards a{margin-top:auto;border-bottom:1px solid #a0c17e;font-size:11px;font-weight:900;letter-spacing:.07em;padding:14px 0;color:#d1ecab!important}.partner-cards .featured a{color:#1d351e!important;border-color:#43613d}
+.partner-principles{padding:90px clamp(20px,7vw,110px);background:#e3e5d7;color:#18261b;display:grid;grid-template-columns:1fr 1fr;gap:30px}
+.partner-principles h2{font-size:clamp(65px,6vw,115px)}.partner-principles h2 em{color:#627c43}
+.partner-principle-list{padding-top:35px}.partner-principle-list p{padding:20px 0;border-bottom:1px solid #889984;color:#4c5f4c}.partner-principle-list b{display:block;color:#1e331f;font-size:11px;letter-spacing:.14em;margin-bottom:8px}
+.partner-contact{padding:100px clamp(20px,7vw,110px);display:grid;grid-template-columns:1fr 1fr;gap:min(8vw,100px);background:radial-gradient(circle at 5% 100%,#485c333d,transparent 40%),#111a14}
+.partner-contact h2{font-size:clamp(75px,8vw,137px)}.partner-contact-copy>p:not(.partner-footnote){max-width:500px;color:#a6b9a4}
+.partner-footnote{margin-top:55px;font-size:10px;font-weight:900;letter-spacing:.15em;color:#82a170}
+.partner-form{display:grid;gap:17px;align-content:start;background:#1c2a1d;padding:clamp(23px,4vw,45px);border:1px solid #54714d}
+.partner-form label{display:grid;gap:7px;font-size:11px;font-weight:900;letter-spacing:.12em;color:#b6cbaa}
+.partner-form input,.partner-form textarea,.partner-form select{font:400 14px "DM Sans",sans-serif}
+.partner-form-pair{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.partner-form .partner-consent{display:flex;align-items:start;gap:9px;font-size:12px;line-height:1.5;letter-spacing:0;font-weight:400}
+.partner-consent input{width:18px;min-height:18px}
+@media(max-width:980px){.partner-hero{grid-template-columns:1fr}.partner-hero-symbol{display:none}.partner-cards{grid-template-columns:1fr 1fr}.partner-principles,.partner-contact{grid-template-columns:1fr}}
+@media(max-width:620px){.partner-hero{min-height:530px;padding:65px 20px}.partner-hero h1{font-size:clamp(70px,15vw,104px)}.partner-cards{grid-template-columns:1fr}.partner-lanes{padding:65px 18px}.partner-cards article{min-height:360px}.partner-cards h3{font-size:68px}.partner-principles{padding:65px 20px}.partner-contact{padding:70px 18px}.partner-form-pair{grid-template-columns:1fr}.partner-contact h2{font-size:80px}}

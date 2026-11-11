@@ -1,0 +1,13 @@
+
+/* FIELDZERO SUPPLY — owner-only shop control */
+.shop-owner-photo{background:linear-gradient(140deg,#2d4730,#111d16);border:1px solid #5d725a;width:90px;height:90px;display:grid;place-items:center;overflow:hidden}
+.shop-owner-photo img{width:100%;height:100%;object-fit:cover}.shop-owner-photo span{font:900 37px "Arial Narrow",system-ui;color:#c6e894}
+.supply-owner-item{display:grid;grid-template-columns:90px minmax(0,1fr);gap:16px;align-items:center}
+.shop-owner-order-head{display:flex;justify-content:space-between;gap:10px;align-items:start}
+.shop-order-lines{background:#0e1d14;border-left:2px solid #b7d98a;padding:12px 14px;font-size:13px;line-height:1.75;white-space:normal}
+.shop-owner-total{color:#cceba4;font-weight:850}
+.shop-owner-link{display:inline-flex;align-items:center;padding:10px 14px;background:#253629;border:1px solid #496347;font-size:12px;color:#edf6e8!important;border-radius:8px;text-decoration:none}
+#shopAdminWorkspace .split-layout{grid-template-columns:minmax(320px,.9fr) minmax(300px,1.1fr)}
+#shopAdminWorkspace textarea{min-height:100px}
+@media(max-width:850px){#shopAdminWorkspace .split-layout{grid-template-columns:1fr}}
+@media(max-width:500px){.supply-owner-item{grid-template-columns:70px minmax(0,1fr)}.shop-owner-photo{width:70px;height:70px}.shop-owner-order-head{display:grid}}

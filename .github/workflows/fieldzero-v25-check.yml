@@ -14,6 +14,9 @@ on:
       - 'stats-v25.css'
       - 'shop.html'
       - 'shop-v25.js'
+      - 'shop-showcase-v26.js'
+      - 'shop-flagship-v26.css'
+      - 'assets/fieldzero-supply-hero-v26.svg'
       - 'shop-admin.html'
       - 'shop-admin-v25.js'
       - 'partners.html'
@@ -42,6 +45,7 @@ jobs:
           node --check inventory.js
           node --check stats-v25.js
           node --check shop-v25.js
+          node --check shop-showcase-v26.js
           node --check shop-admin-v25.js
           node --check partners-v25.js
           node --check app.js

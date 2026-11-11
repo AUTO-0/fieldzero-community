@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#111a15">
+<title>FIELDZERO | Staff Operations Desk</title>
+<link rel="stylesheet" href="staff.css?v=24">
+</head><body>
+<header class="topbar"><a class="brand" href="index.html">FIELD<span>ZERO</span><small>/ OPERATIONS</small></a>
+<nav><a href="index.html">PUBLIC SITE</a><a href="staff.html" class="current">STAFF DESK</a><a href="inventory.html">INVENTORY ↗</a><button id="logout" class="ghost" hidden>SIGN OUT</button></nav></header>
+<main class="layout">
+<section class="intro"><p class="kicker">FZ // FIELD OPERATIONS / V24</p><h1>DAILY <em>OPERATIONS.</em></h1>
+<p>Process bookings, verify payments, send confirmations and review operator applications. Only the owner can manage workers and stock quantities.</p></section>
+<section id="loginSection" class="panel login">
+<div><span class="kicker">ACCESS CONTROL</span><h2>WORKER / OWNER LOGIN</h2><p>Use the field worker email and password issued by the owner. Your access is limited to your assigned field.</p></div>
+<form id="loginForm" class="form-grid"><label>WORK EMAIL<input name="email" type="email" required autocomplete="username"></label><label>PASSWORD<input name="password" type="password" required autocomplete="current-password"></label><button class="primary" type="submit">SIGN IN ↗</button></form><p id="loginMessage" class="message" role="status"></p>
+</section>
+<section id="workspace" hidden>
+<div class="workspace-head"><span id="signedInAs"></span><label>ACTIVE FIELD<select id="fieldFilter"></select></label><button id="refresh" class="ghost">REFRESH DATA ↻</button></div>
+<div class="tabs"><button class="tab active" data-tab="bookings">01 / BOOKINGS</button><button class="tab" data-tab="operators">02 / OPERATOR REQUESTS</button><button class="tab" data-tab="workers" id="workerTab" hidden>03 / WORKER ACCOUNTS · OWNER</button></div>
+<p id="workMessage" class="message" role="status"></p>
+<section class="tab-content" data-panel="bookings">
+<div class="split-heading"><div><span class="kicker">RESERVATION WORKFLOW</span><h2>BOOKINGS & CHECKOUT</h2></div><label>SHOW<select id="bookingStatusFilter"><option value="active">Active / upcoming</option><option value="all">All records</option><option value="pending">Needs action</option><option value="paid">Paid</option></select></label></div>
+<p class="hint">1. Review a special request · 2. Verify the advance when required · 3. Share confirmation manually · 4. Prepare final bill · 5. Collect payment and issue invoice.</p>
+<div class="split-layout"><div id="bookingsList" class="record-list"><p>Loading bookings…</p></div>
+<div id="bookingDetail" class="panel detail"><p>Select a booking on the left to manage it.</p></div></div>
+</section>
+<section class="tab-content" data-panel="operators" hidden>
+<div class="split-heading"><div><span class="kicker">COMMUNITY ONBOARDING</span><h2>OPERATOR REQUESTS</h2></div></div>
+<p class="hint">Review player registrations before approving or rejecting them. An approved operator appears publicly under their callsign, not their real name.</p>
+<div id="operatorsList" class="record-list"></div></section>
+<section class="tab-content" data-panel="workers" hidden>
+<div class="split-heading"><div><span class="kicker">OWNER ACCESS ONLY</span><h2>FIELD WORKER ACCOUNTS</h2></div></div>
+<div class="split-layout"><form id="workerForm" class="panel form-grid">
+<h3>CREATE A WORKER LOGIN</h3><label>WORKER NAME<input name="display_name" minlength="2" maxlength="80" required></label>
+<label>EMAIL<input name="email" type="email" required></label>
+<label>TEMPORARY PASSWORD <small>12 characters minimum. Share privately.</small><input id="workerPassword" name="password" type="text" minlength="12" maxlength="72" required autocomplete="off"></label>
+<button type="button" id="generatePassword" class="ghost">GENERATE STRONG PASSWORD</button>
+<label>ASSIGNED FIELD<select name="field_id" id="workerField" required></select></label>
+<button type="submit" class="primary">CREATE WORKER ACCOUNT</button><p id="workerFormStatus" class="message" role="status"></p>
+<p class="hint">Workers can access bookings, applicant requests, session stock issues and their field's invoices. They cannot set prices, add inventory stock or create other workers.</p>
+</form><div class="panel"><h3>ACTIVE & DISABLED WORKERS</h3><div id="workersList" class="record-list"></div></div></div>
+</section>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<script src="config.js"></script><script src="staff.js?v=24"></script></body></html>

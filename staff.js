@@ -62,9 +62,12 @@ function summarize(b){
 async function loadBookings(){
  const raw=String($("#bookingSearch")?.value||"").trim();
  const q=raw.replace(/[^A-Za-z0-9_+\-]/g,"");
- let request=db.from("arena_bookings").select("*").eq("field_id",fieldId());
- if(q.length>=3)request=request.or("booking_reference.ilike.%"+q+"%,mobile.ilike.%"+q+"%,callsign.ilike.%"+q+"%");
- const {data,error}=await request.order("booking_start",{ascending:false}).limit(q.length>=3?100:300);
+ let data,error;
+ if(q.length>=3){
+   ({data,error}=await db.rpc("fz_staff_search_bookings",{p_field_id:fieldId(),p_query:raw}));
+ }else{
+   ({data,error}=await db.from("arena_bookings").select("*").eq("field_id",fieldId()).order("booking_start",{ascending:false}).limit(300));
+ }
  if(error){msg(error.message,true);return;}
  bookings=data||[];
  const {data:sent}=await db.from("fz_booking_confirmations").select("booking_id").in("booking_id",bookings.map(x=>x.id).length?bookings.map(x=>x.id):["00000000-0000-0000-0000-000000000000"]);

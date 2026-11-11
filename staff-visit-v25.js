@@ -77,12 +77,12 @@ async function render(booking,knownInvoice,afterChange){
      :'<p class="hint">Game record closed. All issued gear and consumption remain in usage statistics.</p>')
   :'<p class="fz-visit-lead">Enter actual attendance and the equipment given to this group. One tap records the game and updates inventory statistics automatically.</p>'+
     '<div class="fz-visit-grid"><label>ACTUAL PLAYERS<input id="visitPlayers" type="number" min="1" max="100" required value="'+Number(booking.player_count||1)+'"></label><label>SESSION NOTES<input id="visitCheckinNote" maxlength="600" placeholder="Optional referee notes"></label></div>'+
-    '<div class="fz-visit-stock">'+stock.length?stock.map(i=>{
+    '<div class="fz-visit-stock">'+(stock.length?stock.map(i=>{
       const group=classify(i);
       const suggestion=i.kind==="reusable"&&(/BLASTERS/.test(group)||/SAFETY/.test(group))?Math.min(Number(booking.player_count||1),available(i)):0;
       return '<label class="fz-visit-item"><span><strong>'+esc(i.name)+'</strong><small>'+esc(group)+' · '+(i.kind==="reusable"?"RETURNABLE":"CONSUMABLE")+" · "+amount(available(i))+" "+esc(i.unit)+" available</small></span>"+
        '<input data-visit-stock="'+esc(i.id)+'" type="number" min="0" max="'+available(i)+'" step="'+(i.kind==="reusable"?"1":"0.01")+'" value="'+suggestion+'"></label>';
-     }).join(""):'<p class="hint">No stock items have been configured. The owner can add guns, safety equipment and gel balls under Inventory.</p>'+'</div>'+
+     }).join(""):'<p class="hint">No stock items have been configured. The owner can add guns, safety equipment and gel balls under Inventory.</p>')+'</div>'+
     '<button type="button" class="primary fz-visit-wide" id="visitCheckin">CHECK IN CUSTOMER & ISSUE ALL SELECTED EQUIPMENT ↗</button>';
  const bill=invoice
   ?'<div class="fz-visit-status '+(isPaid?"fz-paid":"")+'"><strong>'+esc(invoice.invoice_number)+'</strong><span>'+esc(isPaid?"PAID / CLOSED":"AWAITING CHECKOUT")+' · Total LKR '+amount(invoice.total_amount)+' · Paid LKR '+amount(invoice.amount_paid)+'</span></div>'

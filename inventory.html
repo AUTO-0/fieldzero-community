@@ -1,0 +1,50 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#111a15"><title>FIELDZERO | Inventory & Game Usage</title>
+<link rel="stylesheet" href="staff.css?v=24"></head><body>
+<header class="topbar"><a href="index.html" class="brand">FIELD<span>ZERO</span><small>/ INVENTORY COMMAND</small></a>
+<nav><a href="index.html">PUBLIC WEBSITE</a><a href="staff.html">STAFF DESK</a><a class="current" href="inventory.html">INVENTORY</a><button id="logout" class="ghost" hidden>SIGN OUT</button></nav></header>
+<main class="layout">
+<section class="intro"><span class="kicker">FIELDZERO / SESSION INVENTORY / V24</span><h1>GEAR. AMMO.<br><em>ACCOUNTABILITY.</em></h1>
+<p>Track what equipment goes into each game, what comes back and how much consumable stock remains. Estimates use recorded session usage and confirmed upcoming games.</p></section>
+<section id="accessMessage" class="panel">Checking FIELDZERO worker access… <a href="staff.html">Sign in at Staff Desk</a>.</section>
+<div id="inventoryWorkspace" hidden>
+<div class="workspace-head"><span id="inventoryIdentity"></span><label>FIELD<select id="inventoryField"></select></label><button id="reload" class="ghost">REFRESH ↻</button></div>
+<p id="inventoryMessage" class="message" role="status"></p>
+<div class="metrics" id="inventoryMetrics"></div>
+<div class="split-heading"><div><span class="kicker">FIELD STOCK / AVAILABLE VS. ALLOCATED</span><h2>INVENTORY CONTROL</h2></div><span class="pill">OWNER SETS STOCK · STAFF ISSUES TO GAMES</span></div>
+<div class="inventory-grid">
+<div class="panel stock-table"><h3>ITEMS & REORDER ESTIMATES</h3><p class="hint">Reusable items remain in total stock while checked-out units reduce availability. Consumables are deducted from remaining stock immediately when issued.</p><div id="stockTable"></div></div>
+<div class="panel" id="ownerInventory" hidden><span class="kicker">OWNER ONLY</span><h3>ADD / EDIT STOCK ITEM</h3>
+<form id="stockForm" class="form-grid">
+<input type="hidden" name="id"><label>SKU / IDENTIFIER<input name="sku" maxlength="40" required placeholder="FZ-M4-001"></label>
+<label>ITEM NAME<input name="name" maxlength="100" required placeholder="Rental M4 blaster"></label>
+<label>CATEGORY<input name="category" maxlength="60" value="Equipment" required placeholder="Blasters / Safety / Ammunition"></label>
+<label>INVENTORY TYPE<select name="kind"><option value="reusable">Reusable: blasters / masks / batteries</option><option value="consumable">Consumable: gel balls / disposables</option></select></label>
+<label>UNIT<input name="unit" maxlength="15" value="pcs" placeholder="pcs / balls / packs / kg"></label>
+<label>TOTAL QUANTITY / CURRENT STOCK<input name="stock_on_hand" type="number" min="0" step=".01" value="0" required></label>
+<label>LOW-STOCK THRESHOLD<input name="reorder_point" type="number" min="0" step=".01" value="0"></label>
+<label>NOTES<input name="notes" maxlength="1000" placeholder="Supplier, condition, shelf"></label>
+<label class="checkbox-label"><input type="checkbox" name="active" checked> ACTIVE ITEM</label>
+<div class="button-row"><button type="submit" class="primary">SAVE ITEM & STOCK</button><button type="button" class="ghost" id="clearStock">CLEAR FORM</button></div>
+</form><p class="hint">Changing stock creates an auditable movement. Do not include damaged or unavailable reusable units in total stock.</p></div>
+</div>
+<section class="action-block">
+<div class="split-heading"><div><span class="kicker">SESSION / CHECK-OUT → CHECK-IN</span><h2>GAME USAGE REGISTER</h2></div></div>
+<div class="inventory-grid">
+<div class="panel">
+<h3>START OR OPEN A GAME</h3><p class="hint">Only approved arena/target bookings can have a session record. Use the same game record for multiple inventory issues.</p>
+<form id="openGameForm" class="form-grid"><label>CONFIRMED BOOKING<select id="gameBooking" required></select></label><label>ACTUAL PLAYERS<input id="gamePlayers" type="number" min="1" max="100" placeholder="Defaults to booked players"></label><label>SESSION NOTES<textarea id="gameNotes" maxlength="1000" placeholder="Referee / mission notes"></textarea></label><button type="submit" class="primary">OPEN GAME RECORD</button></form>
+<h3 style="margin-top:22px">RECENT GAMES</h3><div class="session-list" id="gameHistory"></div>
+</div>
+<div class="panel"><h3 id="activeGameTitle">SELECT A SESSION</h3><p id="activeGameMeta" class="hint">Choose an approved booking, then issue or return stock.</p>
+<div id="activeGameActions" hidden>
+<form id="issueForm" class="form-grid"><label>ITEM<select id="issueItem" required></select></label><label>QUANTITY TO ISSUE<input id="issueQuantity" type="number" min=".01" step=".01" value="1" required></label><label>NOTE<input id="issueNote" maxlength="600" placeholder="Optional"></label><button type="submit" class="primary">ISSUE TO THIS GAME</button></form>
+<h3 style="margin-top:20px">SESSION ITEM LOG</h3><div class="usage-list" id="gameIssues"></div>
+<div class="action-block"><label>GAME RESULT / FINAL NOTES<textarea id="endNotes" placeholder="Game outcome, incidents, comments"></textarea></label><button id="completeGame" class="ghost">COMPLETE GAME AFTER RETURNS</button><p class="hint">Closing requires every reusable item to be returned. Gel balls and other consumables remain deducted.</p></div>
+</div></div></div>
+</section>
+<section class="action-block"><div class="split-heading"><div><span class="kicker">EVIDENCE-BASED FORECAST / NOT A GUARANTEE</span><h2>USAGE & DEMAND FORECAST</h2></div></div>
+<p class="hint">Predictions use average item usage per recorded game in the last 30 days multiplied by confirmed bookings in the next 30 days. Before enough usage is recorded, forecasts remain unavailable. They do not include unexpected walk-ins, waste or stock lead times.</p>
+<div id="forecastTable" class="panel stock-table"></div>
+</section>
+</div></main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="inventory.js?v=24"></script></body></html>

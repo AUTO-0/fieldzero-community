@@ -9,7 +9,7 @@ const files=[
 for(const f of files)assert.ok(fs.existsSync(f),"Missing release file: "+f);
 const read=f=>fs.readFileSync(f,"utf8");
 const needs=[
- ["staff.html",["bookingSearch","staff-visit-v25.js","shop-admin"]],
+ ["staff.html",["bookingSearch","staff-visit-v25.js","staff-visit-v25.css"]],
  ["staff-visit-v25.js",["fz_staff_checkin_bundle","fz_staff_finish_visit","fz_staff_finalize_bill","fz_staff_record_payment","visitMarkPaid","navigator.share"]],
  ["staff.js",["fz_staff_search_bookings","bookingSearch"]],
  ["shop.html",["productOverlay","cartOverlay","shopRequestForm","supply-v25.css"]],

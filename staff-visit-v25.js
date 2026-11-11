@@ -64,6 +64,7 @@ async function render(booking,knownInvoice,afterChange){
   if(res.error){notify(panel,res.error.message,true);return;}gear=res.data||[];
  }
  if(rid!==revision||!panel.isConnected)return;
+ const suggestedGroups=new Set();
  const details=game
   ?'<div class="fz-visit-status"><strong>'+esc(game.status==="completed"?"GAME COMPLETED":"CUSTOMER CHECKED IN")+'</strong><span>'+time(game.started_at)+' · '+Number(game.player_count)+' players</span></div>'+
     '<div class="fz-visit-gear">'+(gear.length?gear.map(x=>{
@@ -79,7 +80,9 @@ async function render(booking,knownInvoice,afterChange){
     '<div class="fz-visit-grid"><label>ACTUAL PLAYERS<input id="visitPlayers" type="number" min="1" max="100" required value="'+Number(booking.player_count||1)+'"></label><label>SESSION NOTES<input id="visitCheckinNote" maxlength="600" placeholder="Optional referee notes"></label></div>'+
     '<div class="fz-visit-stock">'+(stock.length?stock.map(i=>{
       const group=classify(i);
-      const suggestion=i.kind==="reusable"&&(/BLASTERS/.test(group)||/SAFETY/.test(group))?Math.min(Number(booking.player_count||1),available(i)):0;
+      const firstSuitable=i.kind==="reusable"&&(/BLASTERS/.test(group)||/SAFETY/.test(group))&&!suggestedGroups.has(group);
+      if(firstSuitable)suggestedGroups.add(group);
+      const suggestion=firstSuitable?Math.min(Number(booking.player_count||1),available(i)):0;
       return '<label class="fz-visit-item"><span><strong>'+esc(i.name)+'</strong><small>'+esc(group)+' · '+(i.kind==="reusable"?"RETURNABLE":"CONSUMABLE")+" · "+amount(available(i))+" "+esc(i.unit)+" available</small></span>"+
        '<input data-visit-stock="'+esc(i.id)+'" type="number" min="0" max="'+available(i)+'" step="'+(i.kind==="reusable"?"1":"0.01")+'" value="'+suggestion+'"></label>';
      }).join(""):'<p class="hint">No stock items have been configured. The owner can add guns, safety equipment and gel balls under Inventory.</p>')+'</div>'+

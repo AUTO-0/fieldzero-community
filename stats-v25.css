@@ -1,0 +1,16 @@
+
+.stats-layout{display:grid;grid-template-columns:1.25fr .75fr;gap:16px;margin:18px 0}.stats-layout .panel{min-width:0}
+.stats-bars{min-height:260px;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:9px;align-items:end;padding:20px 5px 4px}
+.stats-bar-col{height:240px;display:flex;flex-direction:column;align-items:center;justify-content:end;gap:7px}
+.stats-bar-col>span{font-size:11px;font-weight:900;color:#c7eb8e}
+.stats-bar-track{height:180px;width:100%;border:1px solid #3d523d;display:flex;flex-direction:column;justify-content:end;background:linear-gradient(180deg,#203326,#0e1b13)}
+.stats-bar-fill{min-height:3px;background:linear-gradient(180deg,#c6e994,#6d9a5c);width:100%;transition:height .3s ease}
+.stats-bar-col small{font-size:10px;color:#a3b7a1;text-transform:uppercase}
+.stats-mode-row{display:flex;align-items:center;justify-content:space-between;gap:13px}.stats-mode-row b{font-size:13px}
+.stats-section{margin:22px 0}.stats-section h2,.stats-layout h2{font-size:clamp(22px,3vw,34px)}
+.stats-game summary{display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;list-style:none}
+.stats-game summary::-webkit-details-marker{display:none}.stats-game summary small{display:block;color:#a6b7a5}
+.stats-game-issues{border-top:1px solid #506049;padding-top:10px;margin-top:12px}
+.stats-game-issues p{font-size:12px;color:#c0d4b8;margin:5px 0}
+@media(max-width:800px){.stats-layout{grid-template-columns:1fr}}
+@media(max-width:500px){.stats-bars{gap:4px}.stats-bar-col{height:190px}.stats-bar-track{height:125px}.stats-section{padding:12px}}

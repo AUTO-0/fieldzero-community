@@ -1,0 +1,33 @@
+name: FIELDZERO Supply licensed photography
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/fieldzero-shop-media-v27.py'
+      - '.github/workflows/fieldzero-shop-media-v27.yml'
+jobs:
+  licensed-media:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 17
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install image optimization
+        run: pip install Pillow==11.3.0
+      - name: Download only license-verified Commons photos
+        run: python scripts/fieldzero-shop-media-v27.py
+      - name: Commit compressed first-party site assets
+        run: |
+          git config user.name "fieldzero-assets-bot"
+          git config user.email "fieldzero-assets-bot@users.noreply.github.com"
+          git add assets/fieldzero-shop-media-v27/*.webp
+          if git diff --cached --quiet; then echo "All licensed photos already on branch"; exit 0; fi
+          git commit -m "Add optimized license-verified FIELDZERO Supply photographic media"
+          git pull --rebase origin main
+          git push origin HEAD:main

@@ -1,0 +1,189 @@
+/* FIELDZERO SUPPLY / V27 PHOTOGRAPHIC MERCHANDISING
+ * Real photographs of gel-blaster replicas and sporting equipment, not illustrations.
+ * Licensed files and proper image credits listed in shop-media-credits.html.
+ */
+.supply-body .supply-hero{min-height:740px;background:#0c1710;overflow:hidden}
+.supply-body .supply-hero::before{
+  background:
+    linear-gradient(90deg,#0a130d 0%,#0b170f 44%,rgba(9,20,12,.38) 71%,transparent 100%),
+    radial-gradient(ellipse at 77% 54%,rgba(145,194,102,.23) 0%,transparent 59%),
+    repeating-linear-gradient(90deg,transparent 0 92px,rgba(176,204,156,.048) 92px 93px),
+    linear-gradient(112deg,#06100a,#1b2d1d 74%,#0b150f);
+  opacity:1;
+}
+.supply-body .supply-hero::after{
+  background:linear-gradient(0deg,#07120a 0%,transparent 18%),
+    radial-gradient(ellipse at 87% 50%,rgba(205,241,162,.09),transparent 40%);
+}
+.supply-body .supply-hero-decoration{display:none}
+.fz27-real-gear-stage{
+  position:absolute;z-index:1;inset:5% -4% 2% 40%;
+  isolation:isolate;pointer-events:none;display:flex;align-items:center;justify-content:center;
+}
+.fz27-stage-glow{
+  position:absolute;inset:12% 2% 5%;
+  background:radial-gradient(ellipse,#aec67a44 0%,#80ab5c24 35%,transparent 72%);
+  filter:blur(20px);z-index:-1;
+}
+.fz27-stage-ring{
+  position:absolute;width:min(62vw,830px);aspect-ratio:1;border-radius:50%;
+  border:1px solid #bfe7a543;box-shadow:
+    0 0 0 65px #bddeaa12,
+    0 0 0 140px #b9d9a608,
+    inset 0 0 0 110px #b4dda50a;
+  transform:translateX(6%);
+}
+.fz27-stage-ring::before,.fz27-stage-ring::after{
+  content:"";position:absolute;top:50%;left:-12%;width:124%;border-top:1px solid #d9f6bc40;
+}
+.fz27-stage-ring::after{transform:rotate(90deg)}
+.fz27-real-gear-stage img{
+  width:min(100%,1150px);max-height:86%;object-fit:contain;object-position:center;
+  filter:drop-shadow(0 32px 50px rgba(0,0,0,.77)) brightness(.94) contrast(1.13) saturate(.85);
+  transform:rotate(-8deg) scale(1.18) translateX(3%);
+}
+.fz27-stage-serial{
+  position:absolute;right:11%;bottom:7%;
+  color:#d1e7c0;font:800 10px "DM Sans",sans-serif;letter-spacing:.2em;opacity:.72;
+}
+.supply-body .supply-hero-content{max-width:700px}
+.supply-body .supply-hero-content h1{
+  font-size:clamp(80px,8vw,142px);line-height:.82;
+  max-width:760px;color:#fff;
+}
+.supply-body .supply-hero-content>p:not(.supply-kicker){
+  color:#e1edda;max-width:420px;text-shadow:0 3px 22px #06100ce8;
+}
+.supply-body .supply-hero-index{display:none}
+.fz27-photo-tile{
+  min-height:310px;
+  padding:18px 12px 20px;
+  background:linear-gradient(160deg,#101711,#040806);
+  text-align:center;
+  position:relative;
+}
+.fz27-photo-tile .fz26-category-num{
+  z-index:2;left:17px;top:15px;color:#a8c1a0;
+}
+.fz27-photo-tile .fz27-category-media{
+  display:flex;align-items:center;justify-content:center;
+  width:100%;height:208px;position:relative;overflow:hidden;
+  flex:1;min-height:180px;
+  background:radial-gradient(ellipse at center,rgba(122,161,100,.12),transparent 69%);
+}
+.fz27-photo-tile .fz27-category-media::before{
+  position:absolute;content:"";inset:0;z-index:0;
+  background:linear-gradient(0deg,#050a05 0%,transparent 40%),
+  radial-gradient(ellipse at 56% 36%,#b3f0a315 0%,transparent 65%);
+}
+.fz27-photo-tile .fz27-category-media img{
+  position:relative;width:100%;height:100%;
+  object-fit:contain;object-position:center;
+  mix-blend-mode:normal;
+  filter:brightness(.88) contrast(1.15) saturate(.78) drop-shadow(0 12px 20px #0008);
+  transform:scale(.9);
+  transition:transform .32s ease,filter .3s ease;
+}
+.fz27-photo-tile:hover .fz27-category-media img,
+.fz27-photo-tile:focus-visible .fz27-category-media img{
+  transform:scale(.99);
+  filter:brightness(1.02) contrast(1.12) saturate(.9) drop-shadow(0 13px 26px #000a);
+}
+.fz27-photo-tile .fz26-category-name{
+  margin-top:10px;position:relative;z-index:2;
+  font-family:"Barlow Condensed",sans-serif;
+  font-size:17px;line-height:1.05;font-weight:900;letter-spacing:.07em;
+  color:#f1f6ea;
+}
+.fz27-photo-tile .fz26-category-go{
+  background:#e4b95d;color:#182011;
+}
+.fz27-photo-tile>small{
+  position:relative;z-index:2;font-size:9px;letter-spacing:.12em;
+  margin-top:9px;color:#a5b9a1;
+}
+.fz27-photo-tile:hover{background:#132016}
+.fz27-photo-tile:focus-visible{outline:2px solid #d8efb1;outline-offset:-4px}
+.fz27-media-notice{
+  display:flex;align-items:center;gap:30px;
+  padding:17px clamp(18px,5vw,85px);
+  background:#122017;color:#becbb8;border-top:1px solid #52654e;
+  border-bottom:1px solid #344b39;
+}
+.fz27-media-notice span{
+  flex:none;font:800 9px "DM Sans",sans-serif;letter-spacing:.16em;color:#bfe898;
+}
+.fz27-media-notice p{font-size:11px;line-height:1.7;margin:0}
+.fz27-media-notice a{
+  color:#d7f2b7!important;text-decoration:underline!important;text-underline-offset:3px;
+}
+.fz26-promo-visual.fz27-promo-real-gear{
+  background:radial-gradient(ellipse at 77% 40%,#536d4939,transparent 70%),#0b1910;
+  display:flex;align-items:center;justify-content:flex-end;
+}
+.fz27-promo-real-gear::before{
+  content:"";position:absolute;width:74%;aspect-ratio:1;border-radius:50%;right:-3%;top:-25%;
+  border:1px solid #9eb78d39;box-shadow:0 0 0 80px #b9e1a408,0 0 0 150px #b9e1a408;
+}
+.fz27-promo-real-gear img{
+  width:73%;height:100%;object-fit:contain;object-position:center;
+  transform:rotate(-8deg) scale(1.25);
+  filter:brightness(.94) contrast(1.2) saturate(.88) drop-shadow(0 28px 45px #010601e0);
+}
+.fz26-promo-shade{
+  background:linear-gradient(90deg,#071009 0%,rgba(7,17,10,.95) 24%,rgba(8,18,10,.63) 45%,rgba(5,14,8,.03) 90%),
+  linear-gradient(0deg,rgba(5,11,7,.79),transparent 25%);
+}
+@media(min-width:1500px){
+ .fz27-photo-tile{min-height:325px}
+ .fz27-photo-tile .fz27-category-media{height:215px}
+ .fz27-photo-tile .fz26-category-name{font-size:19px}
+}
+@media(max-width:1000px){
+ .supply-body .supply-hero-content{max-width:590px}
+ .supply-body .supply-hero h1{font-size:clamp(75px,9vw,110px)}
+ .fz27-real-gear-stage{inset:14% -19% 13% 42%;opacity:.87}
+ .fz27-stage-serial{display:none}
+ .fz27-photo-tile{min-height:266px}
+ .fz27-photo-tile .fz27-category-media{height:175px;min-height:156px}
+ .fz27-photo-tile .fz26-category-name{font-size:14px}
+}
+@media(max-width:800px){
+ .fz27-real-gear-stage{inset:17% -28% 2% 21%;opacity:.7}
+ .fz27-real-gear-stage img{transform:rotate(-8deg) scale(1.2) translateX(12%)}
+ .supply-body .supply-hero::before{
+   background:linear-gradient(90deg,#071009 0%,rgba(8,19,10,.89) 62%,rgba(9,18,12,.43) 100%),
+   radial-gradient(circle at 69% 45%,#7db65b33,transparent 62%),#0b1710;
+ }
+ .fz27-photo-tile{min-height:270px}
+ .fz27-photo-tile .fz27-category-media{height:176px}
+ .fz27-media-notice{flex-direction:column;align-items:start;gap:6px}
+ .fz27-promo-real-gear img{width:94%;transform:rotate(-9deg) scale(1.07)}
+}
+@media(max-width:540px){
+ .supply-body .supply-hero{min-height:720px}
+ .supply-body .supply-hero-content{z-index:3}
+ .supply-body .supply-hero h1{font-size:clamp(69px,15.2vw,100px)}
+ .fz27-real-gear-stage{inset:25% -44% 0% 6%;opacity:.47}
+ .fz27-stage-ring{width:105vw}
+ .fz27-real-gear-stage img{
+   width:100%;max-width:none;transform:rotate(-8deg) scale(1.38) translateX(12%);
+ }
+ .fz27-photo-tile{min-height:245px;padding:15px 7px 17px}
+ .fz27-photo-tile .fz27-category-media{height:155px;min-height:147px}
+ .fz27-photo-tile .fz26-category-name{font-size:13px}
+ .fz27-photo-tile>small{font-size:8px}
+ .fz26-promo-visual.fz27-promo-real-gear{
+   align-items:flex-start;justify-content:center;
+ }
+ .fz27-promo-real-gear::before{width:100%;right:0;top:7%}
+ .fz27-promo-real-gear img{
+   width:125%;height:65%;object-position:center 25%;transform:rotate(-8deg) scale(1.02);
+ }
+ .fz26-promo-shade{
+   background:linear-gradient(0deg,#09140c 0%,rgba(7,15,9,.98) 33%,rgba(7,15,9,.73) 55%,transparent 90%);
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .fz27-photo-tile .fz27-category-media img{transition:none}
+}

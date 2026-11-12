@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="FIELDZERO Operator App logo">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#25442d"/><stop offset=".48" stop-color="#142b1c"/><stop offset="1" stop-color="#050e09"/></linearGradient><linearGradient id="acid" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#e1ffb5"/><stop offset="1" stop-color="#a5d275"/></linearGradient></defs>
+<rect x="0" y="0" width="512" height="512" rx="106" fill="url(#bg)"/>
+<circle cx="256" cy="256" r="205" stroke="#97bc71" stroke-opacity=".19" stroke-width="3" fill="none"/>
+<circle cx="256" cy="256" r="170" stroke="#9dc181" stroke-opacity=".23" stroke-width="3" fill="none"/>
+<path d="M256 48v47m0 322v47M48 256h47m322 0h47" stroke="#afd58f" opacity=".39" stroke-width="8"/>
+<path d="M110 119h292v274H110z" fill="#0c1d12" stroke="#517a4e" stroke-width="8"/>
+<path d="M135 142h242v228H135z" fill="#c3eb92"/>
+<path d="M159 175h99v34h-59v29h52v32h-52v63h-40z" fill="#0e2013"/>
+<path d="M282 175h75v34h-44l41 124h-40l-12-40-12 40h-40l41-124h-41v-34z" fill="#0e2013"/>
+<path d="M135 377h242" stroke="#0b2111" stroke-width="13"/>
+<text x="256" y="425" font-family="Arial,sans-serif" fill="#e3f2d3" font-size="25" font-weight="900" text-anchor="middle" letter-spacing="6">FIELDZERO</text>
+</svg>

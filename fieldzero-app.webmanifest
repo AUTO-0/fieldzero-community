@@ -1,0 +1,53 @@
+{
+  "id": "./app.html",
+  "name": "FIELDZERO — Operator App",
+  "short_name": "FIELDZERO",
+  "description": "Book FIELDZERO gel blaster games, manage your Operator profile, join squads and see your private bookings.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "./app.html?source=installed",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#08120d",
+  "theme_color": "#0b160f",
+  "orientation": "portrait-primary",
+  "categories": [
+    "sports",
+    "entertainment",
+    "lifestyle"
+  ],
+  "icons": [
+    {
+      "src": "./assets/fieldzero-app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./assets/fieldzero-app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Book a Game",
+      "short_name": "Book",
+      "url": "./app.html#book",
+      "description": "Reserve a FIELDZERO session"
+    },
+    {
+      "name": "My Games",
+      "short_name": "Bookings",
+      "url": "./app.html#games",
+      "description": "View your private FIELDZERO bookings"
+    },
+    {
+      "name": "My Operator",
+      "short_name": "Profile",
+      "url": "./app.html#profile",
+      "description": "View callsign and membership"
+    }
+  ]
+}

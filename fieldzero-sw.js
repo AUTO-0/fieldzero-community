@@ -7,7 +7,7 @@ const SHELL_PATHS=[
  "./assets/fieldzero-shop-media-v27/category-gel-blasters.webp",
  "./assets/fieldzero-shop-media-v27/category-safety-masks.webp"
 ];
-const SHELL_URLS=new Set(SHELL_PATHS.map(path=>new URL(path,self.registration.scope).href));
+const SHELL_URLS=new Set(SHELL_PATHS.map(path=>new URL(path,self.registration.scope).pathname));
 self.addEventListener("install",event=>{
  event.waitUntil(caches.open(SHELL_CACHE).then(cache=>cache.addAll(SHELL_PATHS.map(path=>new Request(path,{cache:"reload"})))).then(()=>self.skipWaiting()));
 });
@@ -18,7 +18,7 @@ self.addEventListener("fetch",event=>{
  const req=event.request;
  if(req.method!=="GET"||req.mode==="navigate"&&new URL(req.url).pathname.endsWith("admin.html"))return;
  const url=new URL(req.url);
- if(url.origin!==self.location.origin||!SHELL_URLS.has(url.href))return;
+ if(url.origin!==self.location.origin||!SHELL_URLS.has(url.pathname))return;
  // Network-first to pick up new UI/bug fixes; stale cached shell when offline.
  event.respondWith(fetch(req).then(response=>{
   if(response.ok&&response.type==="basic"){
@@ -26,5 +26,5 @@ self.addEventListener("fetch",event=>{
    event.waitUntil(caches.open(SHELL_CACHE).then(cache=>cache.put(req,copy)));
   }
   return response;
- }).catch(()=>caches.match(req).then(cached=>cached||Response.error())));
+ }).catch(()=>caches.match(req).then(cached=>cached||caches.match(new Request(new URL(url.pathname,self.location.origin).href)).then(fallback=>fallback||Response.error()))));
 });

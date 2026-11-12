@@ -1,0 +1,20 @@
+
+.fz28-download-feature{background:radial-gradient(ellipse at 85% 5%,#5f924b3c,transparent 56%),linear-gradient(105deg,#101f15,#1e3625);padding:70px clamp(18px,7vw,104px);border-top:1px solid #6c8a58;border-bottom:1px solid #618258;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(240px,.7fr);align-items:center;gap:5vw;overflow:hidden}
+.fz28-download-info>span{font:900 10px "DM Sans",sans-serif;letter-spacing:.2em;color:#b9e795}
+.fz28-download-info h2{font:900 clamp(71px,8vw,128px)/.83 "Barlow Condensed",sans-serif;text-transform:uppercase;letter-spacing:-.02em;margin:22px 0;color:#f4f8ef}
+.fz28-download-info h2 em{font-style:normal;color:#d0f39b}
+.fz28-download-info p{color:#bccebc;max-width:690px;font-size:14px;line-height:1.8}
+.fz28-download-points{display:flex;flex-wrap:wrap;gap:11px;margin:25px 0}
+.fz28-download-points span{font:800 10px "DM Sans",sans-serif;letter-spacing:.08em;border:1px solid #6c8e60;padding:9px 12px;color:#c9e8b7}
+.fz28-download-info>a{display:inline-flex;justify-content:space-between;gap:35px;align-items:center;min-width:min(100%,360px);padding:16px 22px;background:#d0ef98;color:#17251c!important;text-decoration:none;font:900 12px "DM Sans",sans-serif;letter-spacing:.08em;margin:10px 0 14px;transition:background .2s}
+.fz28-download-info>a:hover{background:#edffcc}
+.fz28-download-info>a b{font-size:19px}
+.fz28-download-info small{display:block;color:#9db99e;font-size:10px}
+.fz28-download-mock{justify-self:center;display:flex;flex-direction:column;align-items:center;width:min(100%,320px);min-height:440px;border-radius:36px;padding:52px 24px 24px;background:linear-gradient(#243c2b,#091a10);border:5px solid #4b6e4d;box-shadow:0 25px 95px #010804a0,inset 0 0 0 1px #9bc1813e;transform:rotate(5deg)}
+.fz28-download-mock img{width:145px;height:145px;border-radius:29px;box-shadow:0 22px 35px #010902b0}
+.fz28-download-mock strong{font:900 55px/.9 "Barlow Condensed",sans-serif;margin-top:28px;color:#fff}
+.fz28-download-mock>small{font:900 9px "DM Sans",sans-serif;color:#a9cc97;letter-spacing:.19em;margin-top:9px}
+.fz28-download-mock>div{display:grid;gap:8px;margin-top:28px;width:100%}
+.fz28-download-mock>div span{font:900 10px "DM Sans",sans-serif;letter-spacing:.1em;background:#1f3a28;border:1px solid #5d8256;color:#c8eaaa;padding:11px;text-align:center}
+@media(max-width:850px){.fz28-download-feature{grid-template-columns:1fr;gap:30px}.fz28-download-mock{min-height:380px;transform:rotate(1deg);width:270px;padding:30px 20px}.fz28-download-mock img{width:120px;height:120px}}
+@media(max-width:540px){.fz28-download-feature{padding:57px 18px}.fz28-download-info h2{font-size:clamp(64px,13vw,87px)}.fz28-download-mock{min-height:340px;width:230px}.fz28-download-mock img{width:103px;height:103px}.fz28-download-mock strong{font-size:47px}.fz28-download-info p{font-size:12px}}

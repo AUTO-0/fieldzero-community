@@ -1,0 +1,50 @@
+name: FIELDZERO Customer App V28 Quality Checks
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'app.html'
+      - 'fieldzero-app.js'
+      - 'fieldzero-app.css'
+      - 'fieldzero-sw.js'
+      - 'fieldzero-app.webmanifest'
+      - 'fieldzero-download-v28.css'
+      - 'assets/fieldzero-app-icon.svg'
+      - 'assets/fieldzero-app-icon-*.png'
+      - 'scripts/fieldzero-app-v28-qa.mjs'
+      - 'scripts/fieldzero-app-v28-mock.js'
+      - '.github/workflows/fieldzero-app-v28-check.yml'
+jobs:
+  app-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate JavaScript
+        run: |
+          node --check fieldzero-app.js
+          node --check fieldzero-sw.js
+          node --check scripts/fieldzero-app-v28-qa.mjs
+          node --check scripts/fieldzero-app-v28-mock.js
+      - name: Install Chromium test runner
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Launch local static site
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/fieldzero-app-v28.log 2>&1 &
+          sleep 2
+      - name: Check guest and signed-in app flows (mock accounts only)
+        run: node scripts/fieldzero-app-v28-qa.mjs
+      - name: Save browser screenshots
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fieldzero-app-v28-screenshots
+          path: app-v28-artifacts/
+          retention-days: 14

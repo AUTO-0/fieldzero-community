@@ -1,30 +1,17 @@
-/* FIELDZERO v28 Service Worker: app shell only, never private Supabase data. */
-const SHELL_CACHE="fieldzero-app-shell-v28";
-const SHELL_PATHS=[
- "./app.html","./fieldzero-app.css","./fieldzero-app.js",
- "./config.js","./fieldzero-app.webmanifest",
- "./assets/fieldzero-app-icon.svg",
- "./assets/fieldzero-shop-media-v27/category-gel-blasters.webp",
- "./assets/fieldzero-shop-media-v27/category-safety-masks.webp"
-];
-const SHELL_URLS=new Set(SHELL_PATHS.map(path=>new URL(path,self.registration.scope).pathname));
-self.addEventListener("install",event=>{
- event.waitUntil(caches.open(SHELL_CACHE).then(cache=>cache.addAll(SHELL_PATHS.map(path=>new Request(path,{cache:"reload"})))).then(()=>self.skipWaiting()));
-});
+/* FIELDZERO app temporarily unpublished. Clear previous installable app shell cache. */
+const APP_CACHE_PREFIX="fieldzero-app-shell-";
+self.addEventListener("install", event=>{event.waitUntil(self.skipWaiting());});
 self.addEventListener("activate",event=>{
- event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith("fieldzero-app-shell-")&&k!==SHELL_CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
+  event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith(APP_CACHE_PREFIX)).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));
 });
 self.addEventListener("fetch",event=>{
- const req=event.request;
- if(req.method!=="GET"||req.mode==="navigate"&&new URL(req.url).pathname.endsWith("admin.html"))return;
- const url=new URL(req.url);
- if(url.origin!==self.location.origin||!SHELL_URLS.has(url.pathname))return;
- // Network-first to pick up new UI/bug fixes; stale cached shell when offline.
- event.respondWith(fetch(req).then(response=>{
-  if(response.ok&&response.type==="basic"){
-   const copy=response.clone();
-   event.waitUntil(caches.open(SHELL_CACHE).then(cache=>cache.put(req,copy)));
+  if(event.request.method!=="GET")return;
+  const url=new URL(event.request.url);
+  if(url.origin!==self.location.origin)return;
+  if(url.pathname.endsWith("/app.html")){
+    event.respondWith(fetch(new Request(event.request,{cache:"no-store"})).catch(()=>new Response(
+      "<!doctype html><html><meta name='viewport' content='width=device-width, initial-scale=1'><title>FIELDZERO App Unavailable</title><body style='font-family:sans-serif;padding:3rem;background:#08120d;color:white'><h1>FIELDZERO App coming soon</h1><p>Visit the FIELDZERO website for bookings.</p><a style='color:#badb92' href='./'>Go to website</a></body></html>",
+      {headers:{"Content-Type":"text/html;charset=UTF-8"}}
+    )));
   }
-  return response;
- }).catch(()=>caches.match(req).then(cached=>cached||caches.match(new Request(new URL(url.pathname,self.location.origin).href)).then(fallback=>fallback||Response.error()))));
 });

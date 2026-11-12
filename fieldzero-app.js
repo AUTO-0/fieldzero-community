@@ -267,3 +267,143 @@ function renderSquads(){
  }
 }
 $("#squadSearch").oninput=renderSquads;
+
+function renderProfile(){
+ const signed=!!state.user,ctx=state.context||{};
+ $("#profileSignedOut").hidden=signed;$("#profileSignedIn").hidden=!signed;
+ if(!signed)return;
+ const account=ctx.account||{},op=ctx.operator||{},p=ctx.player||{},team=ctx.team;
+ const title=(p.callsign||op.callsign||account.display_name||state.user.email||"OPERATOR").toUpperCase();
+ $("#profileName").textContent=title;
+ $("#profileSubtitle").textContent=ctx.state==="active"?(team?.name||"INDEPENDENT PLAYER"):ctx.state==="pending"?"APPLICATION PENDING APPROVAL":ctx.state==="rejected"?"APPLICATION REQUIRES REVIEW":"PROFILE LINK PENDING";
+ $("#profileRank").textContent=ctx.state==="active"?(p.player_rank||"RECRUIT"):(ctx.state||"PROFILE").toUpperCase();
+ const avatar=$("#profileAvatar");if(account.avatar_url){avatar.innerHTML='<img src="'+esc(account.avatar_url)+'" alt="Your Operator avatar">';}else avatar.textContent=title.slice(0,2);
+ $("#profileStatGrid").innerHTML=[["XP",Number(p.player_points||0).toLocaleString()],["MATCHES",String(p.matches_played||0)],["WINS",String(p.wins||0)]].map(([n,v])=>'<div><strong>'+esc(v)+'</strong><small>'+n+'</small></div>').join("");
+ const pending=$("#profilePending");pending.hidden=ctx.state==="active";
+ if(!pending.hidden){
+  pending.innerHTML='<span class="fz-card-kicker">ACCOUNT STATUS</span><h3>'+esc((ctx.state||"NOT LINKED").toUpperCase())+'</h3><p>'+(ctx.state==="pending"?"Your Operator application is awaiting FIELDZERO approval. Bookings remain available after email verification.":ctx.state==="rejected"?"Your Operator application was not approved. Contact FIELDZERO for help.":"Your account is not linked to an active Operator profile. Contact FIELDZERO admin if you had a profile before.")+'</p>';
+ }
+ $("#profileEditForm").hidden=ctx.state!=="active";
+ if(ctx.state==="active"){
+  $("#profileEditForm [name=callsign]").value=p.callsign||"";
+  $("#profileEditForm [name=display_name]").value=account.display_name||"";
+ }
+ const m=state.membership||{};
+ $("#membershipName").textContent=m.plan_name||"COMMUNITY ACCOUNT";
+ $("#membershipStatus").textContent=String(m.status||"none").toUpperCase();
+ $("#membershipExpiry").textContent=m.expires_at?new Date(m.expires_at).toLocaleDateString("en-LK"):"NO EXPIRY SET";
+ $("#membershipCredits").textContent=m.status==="active"?"Sessions remaining: "+Number(m.sessions_remaining??0)+" of "+Number(m.sessions_included??0):"View membership options and purchase details on the FIELDZERO website.";
+}
+function switchAuth(mode){
+ state.authMode=mode;$("#appLoginForm").hidden=mode!=="login";$("#appRegisterForm").hidden=mode!=="register";
+ $$("[data-auth-mode]").forEach(b=>b.classList.toggle("active",b.dataset.authMode===mode));
+}
+$$("[data-auth-mode]").forEach(b=>b.onclick=()=>switchAuth(b.dataset.authMode));
+$("#appLoginForm").onsubmit=async e=>{
+ e.preventDefault();const form=e.currentTarget,fd=new FormData(form),username=String(fd.get("username")||"").trim().toLowerCase(),password=String(fd.get("password")||""),btn=form.querySelector('button[type="submit"]');
+ if(!/^[a-z0-9_-]{3,24}$/.test(username)){msg($("#loginStatus"),"Use your Operator callsign / username.","error");return;}
+ btn.disabled=true;msg($("#loginStatus"),"Signing in…");
+ try{
+  const {data,error}=await db.functions.invoke("member-login",{body:{username,password}});
+  if(error||!data?.access_token||!data?.refresh_token)throw Error("Sign-in failed. Check your callsign and password.");
+  const {error:sessionError}=await db.auth.setSession({access_token:data.access_token,refresh_token:data.refresh_token});
+  if(sessionError)throw Error(sessionError.message);
+  form.reset();await refreshPersonalData();toast("Welcome to FIELDZERO, Operator");
+ }catch(e){msg($("#loginStatus"),e.message,"error");}finally{btn.disabled=false;}
+};
+$("#appRegisterForm").onsubmit=async e=>{
+ e.preventDefault();const fd=new FormData(e.currentTarget),form=e.currentTarget,btn=form.querySelector('button[type="submit"]');
+ const callsign=String(fd.get("callsign")||"").trim(),email=String(fd.get("email")||"").trim(),password=String(fd.get("password")||"");
+ if(!/^[A-Za-z0-9_-]{3,24}$/.test(callsign)||password.length<8){msg($("#registerStatus"),"Callsign must be 3–24 characters; password at least 8.","error");return;}
+ btn.disabled=true;msg($("#registerStatus"),"Creating Operator account…");
+ const {data,error}=await db.auth.signUp({email,password,options:{
+  data:{fz_member_signup:"true",real_name:String(fd.get("real_name")||"").trim(),
+    callsign,username:callsign.toLowerCase(),mobile:String(fd.get("mobile")||"").trim(),
+    primary_blaster:String(fd.get("primary_blaster")||"Not decided"),
+    team_preference:String(fd.get("team_preference")||"Looking for a squad"),
+    play_style:String(fd.get("play_style")||"All-rounder")},
+  emailRedirectTo:location.origin+location.pathname+"#profile"
+ }});
+ btn.disabled=false;
+ if(error||(Array.isArray(data?.user?.identities)&&data.user.identities.length===0)){
+  msg($("#registerStatus"),error?.message||"Account may already exist. Try signing in or resetting the password.","error");return;
+ }
+ form.reset();
+ msg($("#registerStatus"),data.session?"Account created. Operator approval may still be pending.":"Check your email and verify the address, then sign in using your callsign.","success");
+ if(data.session)await refreshPersonalData();
+};
+$("#resetPassword").onclick=async()=>{
+ const email=prompt("Enter the email address registered with FIELDZERO:");
+ if(!email)return;
+ const {error}=await db.auth.resetPasswordForEmail(email.trim(),{redirectTo:location.origin+location.pathname+"#profile"});
+ msg($("#loginStatus"),error?error.message:"If this email exists, a recovery email was requested. Check your inbox and junk folder.",error?"error":"success");
+};
+$("#appSignOut").onclick=async()=>{await db.auth.signOut();state.user=null;state.context=null;state.membership=null;state.bookings=[];renderEverything();showScreen("home");toast("Signed out");};
+$("#appProfileDelete").onclick=async()=>{
+ if(!state.user||!confirm("Deactivate your public Operator profile? This removes you from active squads. Historical verified results remain; booking records may be retained for operations."))return;
+ try{await invoke("fz_member_delete_profile");await db.auth.signOut();state.user=null;state.context=null;state.membership=null;state.bookings=[];renderEverything();toast("Operator profile deactivated");}
+ catch(e){toast(e.message);}
+};
+$("#profileEditForm").onsubmit=async e=>{
+ e.preventDefault();const form=e.currentTarget,fd=new FormData(form),btn=form.querySelector('button[type="submit"]');
+ btn.disabled=true;msg($("#editProfileStatus"),"Updating profile…");
+ try{
+  let avatar=state.context?.account?.avatar_url||"";
+  const file=fd.get("avatar");
+  if(file instanceof File&&file.size){
+   if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>5*1024*1024)throw Error("Choose JPG, PNG or WebP up to 5 MB.");
+   const ext=file.type==="image/png"?"png":file.type==="image/webp"?"webp":"jpg";
+   const path=state.user.id+"/"+crypto.randomUUID()+"."+ext;
+   const {error:uploadError}=await db.storage.from("fz-member-avatars").upload(path,file,{contentType:file.type,upsert:false});
+   if(uploadError)throw Error(uploadError.message);
+   avatar=db.storage.from("fz-member-avatars").getPublicUrl(path).data.publicUrl;
+  }
+  await invoke("fz_member_update_profile",{p_callsign:String(fd.get("callsign")||"").trim(),p_display_name:String(fd.get("display_name")||"").trim(),p_avatar_url:avatar});
+  msg($("#editProfileStatus"),"Your profile was updated.","success");await refreshPersonalData();
+ }catch(e){msg($("#editProfileStatus"),e.message,"error");}finally{btn.disabled=false;}
+};
+async function refreshPersonalData(){
+ const {data:{user},error}=await db.auth.getUser();
+ if(error||!user){state.user=null;state.context=null;state.membership=null;state.bookings=[];renderEverything();return;}
+ state.user=user;
+ const [context,membership]=await Promise.all([db.rpc("fz_member_get_context"),db.rpc("fz_member_get_membership")]);
+ state.context=context.error?{state:"not_linked"}:context.data||{state:"not_linked"};
+ state.membership=membership.error?{status:"unavailable"}:membership.data||{status:"none"};
+ const op=state.context?.operator||{},account=state.context?.account||{},player=state.context?.player||{};
+ if((op.real_name||account.display_name)&&!$("#appRealName").value)$("#appRealName").value=op.real_name||account.display_name;
+ if((player.callsign||op.callsign)&&!$("#appCallsign").value)$("#appCallsign").value=player.callsign||op.callsign;
+ if(op.mobile&&!$("#appMobile").value)$("#appMobile").value=op.mobile;
+ await refreshBookings();renderEverything();
+}
+function renderEverything(){renderProfile();renderHome();renderBookings();renderSquads();drawBookingAccess();}
+let authRefreshPending=false;
+db.auth.onAuthStateChange(event=>{
+ if(event==="SIGNED_IN"||event==="SIGNED_OUT"){
+  if(authRefreshPending)return;authRefreshPending=true;
+  window.setTimeout(()=>{authRefreshPending=false;refreshPersonalData().catch(e=>toast(e.message));},0);
+ }
+});
+$("#appInstallHead").onclick=()=>showScreen("install");
+let installPrompt=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installPrompt=e;renderInstallHelp();});
+window.addEventListener("appinstalled",()=>{installPrompt=null;toast("FIELDZERO installed");renderInstallHelp();});
+function renderInstallHelp(){
+ const isIos=/iPad|iPhone|iPod/.test(navigator.userAgent),standalone=window.matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+ const btn=$("#installAppPrimary"),text=$("#installHelp");
+ if(standalone){btn.disabled=true;btn.textContent="FIELDZERO IS INSTALLED ✓";text.textContent="FIELDZERO is running as an app on this device. Use its Home Screen icon next time.";return;}
+ btn.disabled=false;btn.textContent=installPrompt?"INSTALL FIELDZERO APP ↗":"SHOW INSTALL INSTRUCTIONS ↗";
+ text.textContent=isIos?"iPhone: Open this page in Safari → Page Menu/Share → Add to Home Screen → Open as Web App → Add. FIELDZERO will appear on your Home Screen.":"Android: Open in Chrome, tap the browser menu (⋮), choose Install app or Add to Home Screen. Use the green Install button if offered.";
+}
+$("#installAppPrimary").onclick=async()=>{
+ if(installPrompt){
+  const e=installPrompt;installPrompt=null;
+  try{await e.prompt();const choice=await e.userChoice;toast(choice.outcome==="accepted"?"FIELDZERO added to your phone":"You can install from the browser menu");}catch(_){toast("Use Add to Home Screen from your browser menu");}
+ }else{$("#installHelp").scrollIntoView({behavior:"smooth",block:"center"});toast("See the installation instructions below");}
+ renderInstallHelp();
+};
+if("serviceWorker" in navigator&&location.protocol==="https:"){
+ navigator.serviceWorker.register("./fieldzero-sw.js",{scope:"./"}).catch(()=>{});
+}
+loadPublicData().catch(e=>toast(e.message));
+refreshPersonalData().catch(e=>toast(e.message));
+})();

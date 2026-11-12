@@ -1,0 +1,38 @@
+name: FIELDZERO Customer App Icons
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'assets/fieldzero-app-icon.svg'
+      - '.github/workflows/fieldzero-app-icons.yml'
+jobs:
+  render-icons:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install icon tools
+        run: pip install "CairoSVG==2.7.1" "Pillow==11.3.0"
+      - name: Render icon at PWA and Apple resolutions
+        run: |
+          python - <<'PY'
+          import cairosvg
+          for size in (192,512,180):
+              cairosvg.svg2png(url="assets/fieldzero-app-icon.svg",write_to=f"assets/fieldzero-app-icon-{size}.png",output_width=size,output_height=size)
+          PY
+      - name: Add generated icons to the site
+        run: |
+          git config user.name "fieldzero-assets-bot"
+          git config user.email "fieldzero-assets-bot@users.noreply.github.com"
+          git add assets/fieldzero-app-icon-*.png
+          if git diff --cached --quiet; then echo "Icons already present"; exit 0; fi
+          git commit -m "Generate FIELDZERO app icons for Android and iPhone installs"
+          git pull --rebase origin main
+          git push origin HEAD:main

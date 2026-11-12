@@ -1,0 +1,100 @@
+/* FIELDZERO OPERATOR APP / V28 / Premium military sports interface */
+:root{--fz-app-bg:#08120d;--fz-app-panel:#14231a;--fz-app-soft:#1e3023;--fz-app-border:#415b43;--fz-app-text:#eff6e9;--fz-app-muted:#a5baa5;--fz-app-lime:#d3f49b;--fz-app-yellow:#ecbb59;--fz-app-red:#ee967f}
+*{box-sizing:border-box}
+html{background:var(--fz-app-bg);scroll-behavior:smooth}
+body.fz-app{background:var(--fz-app-bg);color:var(--fz-app-text);margin:0;font:400 14px/1.65 "DM Sans",system-ui,sans-serif}
+body.fz-app button,body.fz-app input,body.fz-app textarea,body.fz-app select{font:inherit}
+body.fz-app button{cursor:pointer}body.fz-app button:disabled{opacity:.5;cursor:not-allowed}
+body.fz-app a{color:inherit;text-decoration:none}
+body.fz-app [hidden]{display:none!important}
+.fz-app-shell{max-width:100%;min-height:100svh;overflow-x:clip}
+.fz-app-header{position:sticky;z-index:30;top:0;min-height:76px;display:flex;align-items:center;justify-content:space-between;gap:15px;padding:13px max(20px,calc((100% - 1180px)/2));padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env(safe-area-inset-right));background:#09150ff5;backdrop-filter:blur(17px);border-bottom:1px solid #3b533d}
+.fz-app-brand{display:flex;align-items:center;gap:10px}.fz-brand-icon{display:grid;place-items:center;width:45px;height:45px;clip-path:polygon(0 0,86% 0,100% 15%,100% 100%,0 100%);background:var(--fz-app-lime);color:#172318;font:900 19px "Barlow Condensed",sans-serif}
+.fz-app-brand strong{display:block;font:900 27px/.85 "Barlow Condensed",sans-serif;letter-spacing:.05em}.fz-app-brand small{display:block;font-size:8px;letter-spacing:.17em;font-weight:900;color:#bcdaaa;margin-top:7px}
+.fz-header-right{display:flex;align-items:center;gap:9px}.fz-status-led,.fz-pulse,.fz-badge-dot{display:inline-block;width:8px;height:8px;background:var(--fz-app-lime);border-radius:50%;box-shadow:0 0 0 4px #c1eca51b;flex:none}.fz-header-status{font-size:9px;letter-spacing:.12em;color:#bcd1b8;font-weight:900}.fz-icon-button{width:42px;height:42px;border:1px solid #4e694f;background:#17271c;color:#ddf0d6;border-radius:10px;display:grid;place-items:center}
+.fz-icon-button svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.fz-app-notice{padding:12px 25px;background:#5b3a24;color:#fff1e7;text-align:center;font-size:12px;position:relative;z-index:2}
+.fz-app-main{max-width:1180px;margin:0 auto;padding:0 20px 140px}
+.fz-screen{animation:screen-in .18s ease both}@keyframes screen-in{from{opacity:.72;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.fz-app-hero{min-height:575px;position:relative;isolation:isolate;overflow:hidden;margin:20px 0 38px;border:1px solid #56714a;border-radius:19px;padding:clamp(25px,6vw,63px);background:linear-gradient(92deg,#0c1c12 0%,#142b1a 44%,#203925 100%)}
+.fz-app-hero::before{content:"";position:absolute;z-index:-1;inset:0;background:linear-gradient(90deg,rgba(8,19,11,.97) 0%,rgba(8,19,11,.9) 34%,rgba(8,19,11,.34) 79%),url("assets/fieldzero-shop-media-v27/category-gel-blasters.webp") 95% center/55% auto no-repeat;filter:saturate(.92)}
+.fz-app-hero::after{content:"";position:absolute;z-index:-1;top:10%;right:-16%;width:75%;aspect-ratio:1;border-radius:50%;border:1px solid #b4de9770;box-shadow:0 0 0 52px #b4de970c,0 0 0 105px #b4de9707;opacity:.75}
+.fz-hero-eyebrow,.fz-eyebrow,.fz-card-kicker,.fz-muted-caps{font-size:10px;letter-spacing:.17em;font-weight:900;color:#c0e29b}
+.fz-hero-eyebrow{display:flex;gap:12px;align-items:center}
+.fz-app-hero h1,.fz-page-head h1,.fz-section-heading h2,.fz-link-tile strong,.fz-success-card h3{font-family:"Barlow Condensed",sans-serif;line-height:.84;text-transform:uppercase;letter-spacing:-.01em}
+.fz-app-hero h1{font-size:clamp(85px,10vw,145px);font-weight:900;margin:44px 0 21px;text-shadow:0 5px 30px #02060385}
+.fz-app-hero h1 em,.fz-page-head h1 em,.fz-section-heading h2 em,.fz-success-card h3 em{color:var(--fz-app-lime);font-style:normal}
+.fz-app-hero>p{max-width:490px;font-size:16px;color:#ccdcc9}
+.fz-hero-actions{display:flex;align-items:center;gap:12px;margin-top:25px;flex-wrap:wrap}
+.fz-hero-foot{position:absolute;bottom:23px;left:clamp(25px,6vw,63px);right:clamp(25px,6vw,63px);display:flex;gap:14px;justify-content:space-between;font-size:9px;font-weight:800;letter-spacing:.14em;color:#a4ba9c;border-top:1px solid #9dbb8b40;padding-top:14px}
+.fz-btn{border:1px solid #6c8a63;min-height:48px;padding:12px 18px;display:inline-flex;align-items:center;justify-content:center;gap:16px;font-size:11px!important;font-weight:900!important;letter-spacing:.08em!important;line-height:1.3;text-align:center;border-radius:9px}
+.fz-btn span{font-size:16px}.fz-btn-green{background:var(--fz-app-lime);border-color:var(--fz-app-lime);color:#15231a}.fz-btn-green:hover{background:#e8ffc1}.fz-btn-ghost{background:#1b2e20;color:#e6f7dd}.fz-btn-ghost:hover{border-color:#bbdca2;background:#29412e}.fz-btn-wide{width:100%}
+.fz-content-section{margin:0 0 42px}
+.fz-section-heading{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:19px}
+.fz-section-heading h2{font-size:clamp(38px,5vw,65px);margin:8px 0 0}
+.fz-link-btn{background:transparent;border:0;color:#c7eda6;font-size:10px!important;font-weight:900!important;letter-spacing:.1em!important;padding:10px 2px}
+.fz-identity-card{display:flex;gap:18px;align-items:center;padding:22px;background:linear-gradient(120deg,#1b3223,#12241a);border:1px solid #617b53;border-radius:15px}
+.fz-identity-avatar,.fz-profile-avatar{width:70px;height:70px;border:2px solid #afd48d;display:grid;place-items:center;background:linear-gradient(140deg,#2b4a36,#0e1a11);color:#d8f5b8;font:900 28px "Barlow Condensed",sans-serif;border-radius:14px;flex:none;overflow:hidden}
+.fz-identity-avatar img,.fz-profile-avatar img{width:100%;height:100%;object-fit:cover}
+.fz-identity-card>div:nth-child(2){min-width:0;flex:1;display:grid;gap:2px}.fz-identity-card strong{font-size:17px;font-weight:900;letter-spacing:.015em}.fz-identity-card small{color:#acc2ac;font-size:12px}.fz-card-arrow{border:1px solid #6e915e;border-radius:9px;background:#c1e99b;color:#102114;min-width:38px;height:38px;font-size:22px}
+.fz-quick-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0 0}.fz-quick-stats>div{min-height:104px;background:#14251a;border:1px solid #344c38;border-radius:12px;padding:19px 17px}.fz-quick-stats strong{display:block;font:900 clamp(24px,3vw,38px)/1 "Barlow Condensed",sans-serif;color:#e3f1d7}.fz-quick-stats small{display:block;color:#97b18f;font-size:9px;letter-spacing:.14em;font-weight:900;margin-top:9px}
+.fz-stack{display:grid;gap:13px}.fz-loading,.fz-empty{border:1px dashed #516852;border-radius:12px;color:#a7bfa7;padding:25px;background:#0e1912}.fz-empty p{margin:0 0 12px}.fz-empty strong{display:block;color:#e1f1d3}
+.fz-spotlight-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:26px 0}.fz-link-tile{display:flex;flex-direction:column;align-items:start;min-height:283px;border:1px solid #617755;border-radius:15px;padding:25px;isolation:isolate;overflow:hidden;position:relative;background:#223325}
+.fz-link-tile:before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(circle at 100% 30%,#abc78435,transparent 60%)}
+.fz-tile-shop{background:#dddfcc;color:#1a2819;border-color:#dfe9c6}.fz-tile-shop:before{background:linear-gradient(90deg,#e3e4d0eb,#e3e4d055),url("assets/fieldzero-shop-media-v27/category-gel-blasters.webp") right center/50% auto no-repeat}
+.fz-tile-guide:before{background:linear-gradient(90deg,#1c3027eb,#10251b80),url("assets/fieldzero-shop-media-v27/category-safety-masks.webp") right center/65% auto no-repeat}
+.fz-link-tile>span{font-size:9px;font-weight:900;letter-spacing:.14em}.fz-link-tile strong{font-size:clamp(43px,5vw,67px);margin:38px 0 13px;position:relative}.fz-link-tile small{font-size:11px;margin-bottom:20px;max-width:280px}.fz-link-tile>b{font-size:10px;letter-spacing:.08em;margin-top:auto;border-bottom:1px solid currentColor;padding-bottom:4px}
+.fz-page-head{padding:40px 0 30px;border-bottom:1px solid #3b533f;margin-bottom:24px}.fz-page-head h1{font-size:clamp(72px,9vw,135px);margin:15px 0 19px}.fz-page-head>p{color:#b4cbb4;max-width:650px;font-size:14px}
+.fz-app-card{background:#14241b;border:1px solid #3f5942;border-radius:16px;padding:clamp(20px,4vw,31px);margin:16px 0}.fz-app-card h3{font:900 clamp(31px,4vw,45px)/.95 "Barlow Condensed",sans-serif;margin:17px 0 12px;text-transform:uppercase}.fz-app-card p{color:#bfd0bb}
+.fz-info-bar{padding:14px 18px;background:#263a27;border:1px solid #6b875b;border-radius:10px;color:#d2ebbb;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-weight:900;font-size:10px;letter-spacing:.07em}
+.fz-app-form{display:grid;gap:17px}.fz-app-form label{display:grid;gap:8px;color:#bfd7bd;font-size:10px;font-weight:900;letter-spacing:.11em}
+.fz-app-form input:not([type="checkbox"]),.fz-app-form select,.fz-app-form textarea,.fz-search-label input{width:100%;min-height:49px;max-width:100%;padding:12px 13px;background:#0b1710;border:1px solid #4e664e;border-radius:9px;color:#f2f7ed;font-size:14px;outline-color:#c5e7a4}
+.fz-app-form input[type="date"]{color-scheme:dark}.fz-app-form textarea{min-height:85px;resize:vertical}
+.fz-app-form label small{font-size:10px;letter-spacing:0;font-weight:400;color:#9cac99}
+.fz-form-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fz-mode-info{border:1px solid #466848;background:#0e2013;border-radius:10px;padding:14px;color:#c2d6bd;font-size:12px;line-height:1.7}
+.fz-mode-info strong{display:block;color:#d3f2a0;font-weight:900}
+.fz-slot-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+.fz-slot{border:1px solid #456044;background:#203325;color:#cde4c8;border-radius:8px;padding:12px 5px;font-size:13px!important;font-weight:900!important;min-height:46px}
+.fz-slot.chosen{background:#c5eb9a;border-color:#c5eb9a;color:#14211a}
+.fz-slot:disabled{background:#0e1912;color:#637965;opacity:.55}
+.fz-slot-note{grid-column:1/-1;border:1px dashed #466047;padding:18px;font-size:12px;color:#adc2ad}
+.fz-form-divider{border-top:1px solid #425b43;padding-top:23px}
+.fz-check-label{display:flex!important;flex-direction:row!important;align-items:start;gap:10px!important;line-height:1.55;font-size:11px!important;letter-spacing:0!important;font-weight:400!important}
+.fz-check-label input{width:18px;height:18px;accent-color:#d3f49b;flex:none;margin-top:2px}
+.fz-booking-submit{border-top:1px solid #49604b;padding-top:19px;display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap}
+.fz-booking-submit span{color:#d2eca9;font-weight:900;font-size:12px}
+.fz-message{margin:0!important;color:#cdeaa8!important;font-size:12px}.fz-message.error{color:#f9b1a1!important}.fz-message.success{color:#bdf09a!important}
+.fz-success-card{background:linear-gradient(135deg,#213927,#13271b)}.fz-success-card h3{font-size:65px;color:#d5f4a7}.fz-confirmation-ref{font:900 clamp(21px,4vw,32px) "Barlow Condensed",sans-serif;background:#0c1a10;border:1px dashed #a6cb85;padding:20px;border-radius:8px;color:#d0f19d;letter-spacing:.12em;word-break:break-all}
+.fz-action-row{display:flex;gap:9px;flex-wrap:wrap}
+.fz-section-toolbar{display:flex;justify-content:space-between;align-items:center;gap:15px;margin:16px 0 20px}.fz-segmented{display:flex;gap:4px;border:1px solid #506950;padding:5px;background:#101d14;border-radius:12px}.fz-segmented button{padding:10px 14px;background:transparent;color:#95b095;border:0;font-size:10px;font-weight:900;letter-spacing:.05em;border-radius:8px}.fz-segmented button.active{background:#c7e79c;color:#19271b}
+.fz-booking-card{border:1px solid #496348;background:linear-gradient(120deg,#1b2c20,#102016);border-radius:13px;padding:20px;display:grid;gap:13px}
+.fz-booking-top{display:flex;gap:14px;justify-content:space-between;align-items:start}.fz-booking-top strong{font:900 30px "Barlow Condensed",sans-serif}.fz-booking-top small{display:block;color:#9cb79b;font-size:10px;letter-spacing:.12em}
+.fz-pill{font-size:9px;letter-spacing:.07em;font-weight:900;white-space:nowrap;padding:7px 9px;background:#2a432b;color:#c2e6ab;border:1px solid #678458;border-radius:6px}
+.fz-pill.pending{background:#423b23;border-color:#877344;color:#f4d38b}.fz-pill.cancelled,.fz-pill.rejected{background:#462b27;border-color:#8f564c;color:#efb3a6}
+.fz-booking-reference{font:900 17px "Barlow Condensed",sans-serif;color:#daf0b8;letter-spacing:.09em}
+.fz-booking-facts{display:flex;flex-wrap:wrap;gap:10px 19px;color:#b6cdb4;font-size:11px}
+.fz-booking-foot{border-top:1px solid #435e45;display:flex;justify-content:space-between;align-items:center;padding-top:13px;gap:12px}.fz-booking-foot small{color:#aabfa4;font-size:11px}.fz-mini-btn{background:#d3f49b;border:0;border-radius:7px;padding:9px 11px;color:#172516;font-size:9px!important;font-weight:900!important}
+.fz-claim-box summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:15px;font-weight:900;font-size:12px;color:#d0eab7;letter-spacing:.07em}
+.fz-claim-box summary::-webkit-details-marker{display:none}.fz-claim-box>p{font-size:12px;margin:13px 0}
+.fz-search-label{display:grid;gap:7px;font-size:10px;color:#b4cca9;letter-spacing:.1em;font-weight:900;margin:15px 0}
+.fz-squad-card{border:1px solid #486144;background:#15241b;border-radius:13px;padding:20px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.fz-squad-card strong{display:block;font:900 27px "Barlow Condensed",sans-serif}.fz-squad-card small{display:block;color:#94b397;font-size:11px}.fz-squad-card .fz-btn{min-height:41px;padding:10px 12px}
+.fz-squad-personal{background:linear-gradient(125deg,#223d29,#15231b)}.fz-squad-personal h3{font-size:44px}
+.fz-auth-switch{display:flex;padding:5px;background:#122219;border:1px solid #3d563d;border-radius:12px;margin-top:25px}.fz-auth-switch button{flex:1;min-height:48px;border:0;background:transparent;color:#aabda8;font-size:11px;font-weight:900;letter-spacing:.06em;border-radius:8px}.fz-auth-switch button.active{background:#d0f098;color:#1a2a1b}
+.fz-text-button{border:0;background:transparent;color:#c3e3a8;text-align:left;padding:3px 0;font-size:11px!important;font-weight:900!important;letter-spacing:.08em!important}
+.fz-operator-banner{display:flex;flex-direction:column;align-items:start;gap:13px;background:radial-gradient(circle at 93% 17%,#82ae5f3d,transparent 49%),linear-gradient(120deg,#203523,#112118);padding:28px;border:1px solid #618152;border-radius:16px}
+.fz-profile-avatar{width:96px;height:96px;font-size:37px}.fz-operator-banner>strong{font:900 clamp(38px,6vw,60px)/.95 "Barlow Condensed",sans-serif}.fz-operator-banner>span:not(.fz-card-kicker){color:#acc5a9}.fz-rank-badge{background:#c7eaa2;border-radius:5px;padding:5px 11px;font-size:10px!important;font-weight:900;color:#172615!important}
+.fz-membership-card{background:linear-gradient(140deg,#203421,#111e17);border-color:#779869}.fz-membership-card h3{font-size:47px}.fz-membership-strip{display:flex;flex-wrap:wrap;justify-content:space-between;gap:15px;padding:10px 0;border-top:1px solid #5f785a;border-bottom:1px solid #5f785a;font-size:10px;font-weight:900;letter-spacing:.07em;color:#d8edc2}
+.fz-profile-actions{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 0}
+.fz-install-appicon{display:flex;gap:20px;align-items:center;padding:24px;background:linear-gradient(140deg,#223b25,#112217);border:1px solid #65865b;border-radius:15px;margin:15px 0}.fz-install-appicon img{width:95px;height:95px;border-radius:22px}.fz-install-appicon h3{font:900 37px "Barlow Condensed",sans-serif;margin:0}.fz-install-appicon p{margin:0;color:#bdceba}.fz-install-appicon span{color:#c3ec96;font-size:10px;font-weight:900}
+.fz-app-bottomnav{position:fixed;z-index:55;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:0;min-height:76px;padding:8px max(8px,env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom));background:#0a150ff7;border-top:1px solid #536b4c;backdrop-filter:blur(17px)}
+.fz-app-bottomnav button{max-width:160px;flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;background:transparent;border:0;color:#88a287;padding:4px 2px;border-radius:10px;font-size:9px!important;font-weight:900!important;letter-spacing:.06em!important}
+.fz-app-bottomnav button.active{color:#dcf6bf;background:#253a29}.fz-nav-icon{height:28px;display:grid;place-items:center}
+.fz-nav-icon svg{height:25px;width:25px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.fz-app-bottomnav button.active .fz-nav-icon{color:#d0f198}
+.fz-toast{position:fixed;bottom:104px;left:50%;z-index:100;transform:translateX(-50%);max-width:calc(100% - 25px);background:#def5be;color:#173018;border-radius:12px;padding:12px 18px;font-size:12px;font-weight:900;box-shadow:0 8px 30px #0009}
+@media(min-width:1100px){.fz-app-header{padding-left:calc((100% - 1140px)/2);padding-right:calc((100% - 1140px)/2)}}
+@media(max-width:750px){.fz-app-main{padding:0 13px 125px}.fz-app-header{padding:12px 14px;min-height:70px}.fz-header-status{display:none}.fz-app-hero{margin-top:12px;min-height:565px;padding:35px 26px}.fz-app-hero::before{background:linear-gradient(90deg,#08150cf2 0%,rgba(7,17,10,.88) 54%,rgba(8,19,11,.52) 100%),url("assets/fieldzero-shop-media-v27/category-gel-blasters.webp") 85% 55%/105% auto no-repeat}.fz-app-hero h1{font-size:clamp(76px,12vw,110px)}.fz-hero-foot{left:26px;right:26px}.fz-spotlight-grid{grid-template-columns:1fr}.fz-link-tile{min-height:250px}.fz-content-section{margin-bottom:28px}}
+@media(max-width:480px){.fz-app-brand strong{font-size:25px}.fz-app-brand small{font-size:7px}.fz-app-hero{min-height:592px;padding:29px 19px}.fz-app-hero h1{font-size:clamp(70px,16vw,94px);margin-top:63px}.fz-app-hero>p{font-size:13px;max-width:290px}.fz-hero-actions{gap:9px}.fz-hero-actions .fz-btn{padding:11px 13px;min-height:45px}.fz-hero-foot{left:19px;right:19px;font-size:7px;gap:10px}.fz-hero-foot span:last-child{display:none}.fz-section-heading h2{font-size:45px}.fz-section-heading{align-items:center}.fz-link-btn{font-size:9px!important}.fz-identity-card{padding:14px;gap:10px}.fz-identity-avatar{width:54px;height:54px;font-size:23px}.fz-identity-card strong{font-size:14px}.fz-identity-card small{font-size:10px}.fz-card-arrow{min-width:34px;width:34px;height:34px}.fz-quick-stats{gap:7px}.fz-quick-stats>div{padding:14px 10px;min-height:88px}.fz-page-head h1{font-size:76px}.fz-form-pair{grid-template-columns:1fr}.fz-slot-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.fz-booking-top strong{font-size:24px}.fz-booking-foot{flex-wrap:wrap}.fz-app-bottomnav button{font-size:8px!important}.fz-app-bottomnav{min-height:75px}.fz-nav-icon svg{width:23px;height:23px}.fz-squad-card{align-items:start;flex-direction:column}.fz-quick-stats small{font-size:8px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.fz-screen{animation:none}}

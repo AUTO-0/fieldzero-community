@@ -322,14 +322,14 @@ $("#appRegisterForm").onsubmit=async e=>{
     primary_blaster:String(fd.get("primary_blaster")||"Not decided"),
     team_preference:String(fd.get("team_preference")||"Looking for a squad"),
     play_style:String(fd.get("play_style")||"All-rounder")},
-  emailRedirectTo:location.origin+location.pathname+"#profile"
+  emailRedirectTo:location.origin+location.pathname.replace(/app\.html$/,"")+"#memberArea"
  }});
  btn.disabled=false;
  if(error||(Array.isArray(data?.user?.identities)&&data.user.identities.length===0)){
   msg($("#registerStatus"),error?.message||"Account may already exist. Try signing in or resetting the password.","error");return;
  }
  form.reset();
- msg($("#registerStatus"),data.session?"Account created. Operator approval may still be pending.":"Check your email and verify the address, then sign in using your callsign.","success");
+ msg($("#registerStatus"),data.session?"Account created. Operator approval may still be pending.":"Check your email and verify your address through the FIELDZERO website, then return to this app and sign in using your callsign.","success");
  if(data.session)await refreshPersonalData();
 };
 $("#resetPassword").onclick=async()=>{

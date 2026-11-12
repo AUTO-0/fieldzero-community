@@ -16,7 +16,7 @@ on:
       - '.github/workflows/fieldzero-app-v28-check.yml'
 jobs:
   app-check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 18
     permissions:
       contents: read

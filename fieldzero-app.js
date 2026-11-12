@@ -6,7 +6,7 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const money=n=>"LKR "+Number(n||0).toLocaleString("en-LK",{maximumFractionDigits:0});
 const fmtDate=d=>new Date(d).toLocaleString("en-LK",{timeZone:"Asia/Colombo",dateStyle:"medium",timeStyle:"short"});
-const today=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Colombo",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+const today=()=>{const p=Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Colombo",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date()).filter(x=>x.type!=="literal").map(x=>[x.type,x.value]));return p.year+"-"+p.month+"-"+p.day;};
 const localDateTime=(date,time)=>new Date(date+"T"+time+":00+05:30");
 const state={screen:"home",user:null,context:null,membership:null,bookings:[],fields:[],modes:[],squads:[],gamesFilter:"upcoming",siteSettings:null,slotsReq:0,authMode:"login"};
 const msg=(el,value,type="")=>{if(!el)return;el.textContent=value;el.className="fz-message"+(type?" "+type:"");};
@@ -23,7 +23,7 @@ function showScreen(name){
   if(on)btn.setAttribute("aria-current","page");else btn.removeAttribute("aria-current");
  });
  try{history.replaceState(null,"","#"+name);}catch(_){}
- window.scrollTo({top:0,behavior:"instant"});
+ window.scrollTo({top:0,behavior:"auto"});
  if(name==="games")renderBookings();
  if(name==="squads")renderSquads();
  if(name==="book")drawBookingAccess();
@@ -335,8 +335,8 @@ $("#appRegisterForm").onsubmit=async e=>{
 $("#resetPassword").onclick=async()=>{
  const email=prompt("Enter the email address registered with FIELDZERO:");
  if(!email)return;
- const {error}=await db.auth.resetPasswordForEmail(email.trim(),{redirectTo:location.origin+location.pathname+"#profile"});
- msg($("#loginStatus"),error?error.message:"If this email exists, a recovery email was requested. Check your inbox and junk folder.",error?"error":"success");
+ const {error}=await db.auth.resetPasswordForEmail(email.trim(),{redirectTo:location.origin+location.pathname.replace(/app\.html$/,"")});
+ msg($("#loginStatus"),error?error.message:"If this email exists, a recovery email was sent. Follow its link to the FIELDZERO website to set a new password, then return to this app.",error?"error":"success");
 };
 $("#appSignOut").onclick=async()=>{await db.auth.signOut();state.user=null;state.context=null;state.membership=null;state.bookings=[];renderEverything();showScreen("home");toast("Signed out");};
 $("#appProfileDelete").onclick=async()=>{

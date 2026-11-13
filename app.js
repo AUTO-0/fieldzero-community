@@ -215,7 +215,7 @@
       const dur=Number(mode.duration_minutes)||60,hr=dur/60,validDur=[...duration.options].some(o=>Number(o.value)===hr);
       if(!validDur){const opt=document.createElement('option');opt.value=String(hr);opt.textContent=dur+' minutes';duration.append(opt);}
       duration.value=String(hr);
-      duration.disabled=special?.value!=='true';
+      duration.disabled=false; // Customers can choose 30, 60, 120 or 180 minutes for regular sessions.
       if(host){
         host.hidden=false;host.replaceChildren();
         const title=document.createElement('strong');title.textContent=mode.package_name;

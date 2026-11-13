@@ -639,52 +639,52 @@
 
   $("#registrationForm").addEventListener("submit", async (event) => {
     event.preventDefault();
-    const form = event.currentTarget, submit = $("#submitApplication"), statusEl = $("#formStatus");
-    if (!db) { status(statusEl, "Registration is not live yet. Please try again later.", "error"); return; }
-    const fd = new FormData(form);
-    const realName = String(fd.get("realName") || "").trim();
-    const callsign = String(fd.get("callsign") || "").trim().replace(/\s+/g, " ");
-    const mobile = String(fd.get("mobile") || "").trim();
-    const email = String(fd.get("memberEmail") || "").trim();
-    const password = String(fd.get("memberPassword") || "");
-    if (fd.get("consent") !== "on" || realName.length < 2 || !/^[A-Za-z0-9_-]{3,24}$/.test(callsign) || mobile.length < 7 || !email || password.length < 8) {
-      status(statusEl, "Check your details. Username must be 3–24 letters, numbers or underscores; password must be at least 8 characters.", "error"); return;
+    const form=event.currentTarget, submit=$("#submitApplication"), statusEl=$("#formStatus");
+    if(!db){status(statusEl,"Registration is temporarily unavailable. Please try again later.","error");return;}
+    const fd=new FormData(form);
+    const realName=String(fd.get("realName")||"").trim();
+    const callsign=String(fd.get("callsign")||"").trim();
+    const mobile=String(fd.get("mobile")||"").trim();
+    const email=String(fd.get("memberEmail")||"").trim();
+    const password=String(fd.get("memberPassword")||"");
+    if(fd.get("consent")!=="on" || realName.length<2 || realName.length>100 ||
+      !/^[A-Za-z0-9_-]{3,24}$/.test(callsign) || !/^[+0-9 ()-]{7,24}$/.test(mobile) ||
+      password.length<8 || password.length>72 ||
+      (email && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length>160))){
+      status(statusEl,"Check your details. Callsign must be 3–24 letters, numbers, hyphens or underscores. Password must have at least 8 characters. Email is optional.","error");
+      return;
     }
-    submit.disabled = true; submit.textContent = "CREATING OPERATOR ACCOUNT…";
-    const { data, error } = await db.auth.signUp({
-      email, password,
-      options: { data: {
-        fz_member_signup: "true", real_name: realName, callsign, username: callsign.toLowerCase(), mobile,
-        primary_blaster: fd.get("gun"), team_preference: fd.get("teamPreference"),
-        play_style: fd.get("playStyle")
-      }, emailRedirectTo: `${location.origin}${location.pathname}#memberArea` }
-    });
-    submit.disabled = false; submit.innerHTML = "CREATE MY PLAYER PROFILE <span>↗</span>";
-    if (error || (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0)) {
-      const message = error?.message?.toLowerCase().includes("already registered") || data?.user?.identities?.length === 0
-        ? "This email may already have an account. Try signing in or use password reset."
-        : (error?.message || "We could not create your account. Check the details and try again.");
-      status(statusEl, message, "error"); return;
+    submit.disabled=true;submit.textContent="CREATING OPERATOR ACCOUNT…";
+    try{
+      const {data,error}=await db.functions.invoke("member-register",{body:{
+        realName,callsign,mobile,email,password,
+        gun:String(fd.get("gun")||"Need a rental"),
+        teamPreference:String(fd.get("teamPreference")||"No team yet"),
+        playStyle:String(fd.get("playStyle")||"Both"),
+        consent:true,website:String(fd.get("website")||"")
+      }});
+      if(error || !data?.success){
+        let message=data?.error||"Could not create the account. Check your details or contact FIELDZERO.";
+        if(error?.context?.json){try{const info=await error.context.json();message=info?.error||message;}catch{}}
+        status(statusEl,message,"error");return;
+      }
+      form.reset();
+      showOperatorTab("login");
+      const loginName=String(data.callsign||callsign).toLowerCase();
+      const loginField=$("#memberLoginForm [name=username]");
+      if(loginField)loginField.value=loginName;
+      status($("#memberLoginStatus"),"Operator "+loginName+" successfully registered. No email confirmation is needed. Your public player profile will be activated after admin approval.","success");
+      const {data:auth,error:loginError}=await db.functions.invoke("member-login",{body:{username:loginName,password}});
+      if(!loginError && auth?.access_token && auth?.refresh_token){
+        const {error:sessionError}=await db.auth.setSession({access_token:auth.access_token,refresh_token:auth.refresh_token});
+        if(!sessionError){await loadMemberAccount();return;}
+      }
+      status($("#memberLoginStatus"),"Operator account created. Sign in with your callsign and password. Your profile will appear publicly after admin approval.","success");
+    }catch(err){
+      status(statusEl,"The registration request could not be completed. Please retry or contact FIELDZERO.","error");
+    }finally{
+      submit.disabled=false;submit.innerHTML='CREATE MY PLAYER PROFILE <span>↗</span>';
     }
-    pendingOperatorEmail = email;
-    form.reset();
-    if (data.session) {
-      status(statusEl, "Player profile created. Your Operator profile will appear in the public roster after admin approval. You can now view your account.", "success");
-      await loadMemberAccount();
-    } else {
-      status(statusEl, "NEXT STEP: Verify the email sent to " + email + ". Then return to FIELDZERO and sign in. Your player profile will be reviewed by the admin before appearing publicly. Check Spam/Junk if needed.", "success");
-      const resend=$("#resendOperatorConfirmation");if(resend)resend.hidden=false;
-    }
-  });
-
-
-  $("#resendOperatorConfirmation")?.addEventListener("click", async () => {
-    const email = pendingOperatorEmail || String(prompt("Enter the private email address used during OPERATOR REGISTRATION:") || "").trim();
-    if (!email) { status($("#formStatus"), "Enter the email address used during registration.", "error"); return; }
-    const button = $("#resendOperatorConfirmation"); button.disabled = true; button.textContent = "SENDING…";
-    const { error } = await db.auth.resend({ type: "signup", email, options: { emailRedirectTo: `${location.origin}${location.pathname}#memberArea` } });
-    button.disabled = false; button.textContent = "RESEND VERIFICATION EMAIL ↗";
-    status($("#formStatus"), error ? `Could not resend verification email: ${error.message}` : `A new verification email has been requested for ${email}. Check Spam/Junk too.`, error ? "error" : "success");
   });
 
 
@@ -1148,7 +1148,7 @@
   showOperatorTab(currentOperatorTab);
 
   const memberLoginForm = $('#memberLoginForm');
-  let memberContext = null, memberSquads = [], pendingOperatorEmail = "";
+  let memberContext = null, memberSquads = [];
   const memberMsg = (el, text, kind='') => { if(el) status(el,text,kind); };
   function showMemberRecoveryForm(){
     const form=$('#memberPasswordUpdate');
@@ -1172,7 +1172,7 @@
     if(error){memberMsg($('#memberLoginStatus'),`Operator profile service error: ${error.message||'Unknown database error'}. Ask admin to check V18/V21 migrations and RPC permissions.`,'error');return;}
     memberContext=data;$('#memberMembershipPanel').hidden=true;
     if(data?.state==='pending'){
-      const op=data.operator||{}; $('#memberWelcome').textContent=(op.callsign||'OPERATOR').toUpperCase(); $('#memberAccountStatus').textContent='APPLICATION RECEIVED · WAITING FOR EMAIL VERIFICATION / ADMIN REVIEW'; $('#memberRealName').textContent=(op.real_name||'NAME NOT AVAILABLE').toUpperCase(); $('#memberCallsignTag').textContent='CALLSIGN / '+(op.callsign||'—'); $('#memberRankTag').textContent='STATUS / PENDING'; $('#memberOperatorStatusTag').textContent='PENDING REVIEW'; $('#memberPrivateEmail').textContent=op.contact_email||'—'; $('#memberPrivateMobile').textContent=op.mobile||'—'; $('#memberBlaster').textContent=op.primary_blaster||'—'; $('#memberPlayStyle').textContent=op.play_style||'—'; $('#memberApplicationState').textContent='PENDING ADMIN REVIEW'; $('#memberStats').innerHTML='<p class="empty-state">Your operator application is in the FIELDZERO queue. Confirm your email, then wait for admin approval before your player statistics and squad access are activated.</p>'; $('#memberTeamInfo').textContent='Squad access unlocks after approval.'; $('#memberTeamActions').innerHTML=''; $('#memberSquadResults').innerHTML=''; return;
+      const op=data.operator||{}; $('#memberWelcome').textContent=(op.callsign||'OPERATOR').toUpperCase(); $('#memberAccountStatus').textContent='APPLICATION RECEIVED · WAITING FOR ADMIN REVIEW'; $('#memberRealName').textContent=(op.real_name||'NAME NOT AVAILABLE').toUpperCase(); $('#memberCallsignTag').textContent='CALLSIGN / '+(op.callsign||'—'); $('#memberRankTag').textContent='STATUS / PENDING'; $('#memberOperatorStatusTag').textContent='PENDING REVIEW'; $('#memberPrivateEmail').textContent=op.contact_email||'—'; $('#memberPrivateMobile').textContent=op.mobile||'—'; $('#memberBlaster').textContent=op.primary_blaster||'—'; $('#memberPlayStyle').textContent=op.play_style||'—'; $('#memberApplicationState').textContent='PENDING ADMIN REVIEW'; $('#memberStats').innerHTML='<p class="empty-state">Your operator application is in the FIELDZERO queue. Wait for admin approval before your player statistics and squad access are activated.</p>'; $('#memberTeamInfo').textContent='Squad access unlocks after approval.'; $('#memberTeamActions').innerHTML=''; $('#memberSquadResults').innerHTML=''; return;
     }
     if(data?.state==='rejected'){const op=data.operator||{};$('#memberWelcome').textContent=(op.callsign||'OPERATOR').toUpperCase();$('#memberAccountStatus').textContent='APPLICATION NOT APPROVED · CONTACT FIELDZERO ADMIN';$('#memberRealName').textContent=(op.real_name||'OPERATOR').toUpperCase();$('#memberCallsignTag').textContent='CALLSIGN / '+(op.callsign||'—');$('#memberRankTag').textContent='STATUS / REVIEW REQUIRED';$('#memberOperatorStatusTag').textContent='REVIEW REQUIRED';$('#memberPrivateEmail').textContent=op.contact_email||'—';$('#memberApplicationState').textContent='REJECTED';$('#memberStats').innerHTML='<p class="empty-state">Your application was not approved. Contact FIELDZERO admin for clarification before submitting another application.</p>';$('#memberTeamInfo').textContent='Squad access is not active.';$('#memberTeamActions').innerHTML='';return;}
     if(data?.state==='not_linked'){
@@ -1252,7 +1252,7 @@
     $('#memberArea')?.scrollIntoView({behavior:'smooth',block:'start'});
   });
   $('#memberSignOut')?.addEventListener('click',async()=>{await db.auth.signOut();memberMsg($('#memberLoginStatus'),'You have signed out.','success');await loadMemberAccount();});
-  $('#memberForgotPassword')?.addEventListener('click',async()=>{const email=prompt('Enter the private email address used when you created your FIELDZERO account:');if(!email)return;const {error}=await db.auth.resetPasswordForEmail(email.trim(),{redirectTo:`${location.origin}${location.pathname}`});memberMsg($('#memberLoginStatus'),error?error.message:'If the address is registered, a password reset email will be sent. Check your inbox.',error?'error':'success');});
+  $('#memberForgotPassword')?.addEventListener('click',async()=>{const email=prompt('Only older FIELDZERO accounts used email for login. Enter the original verified email to reset an older account. New callsign accounts: use WhatsApp support instead.');if(!email)return;const {error}=await db.auth.resetPasswordForEmail(email.trim(),{redirectTo:`${location.origin}${location.pathname}`});memberMsg($('#memberLoginStatus'),error?error.message:'If the address is registered, a password reset email will be sent. Check your inbox.',error?'error':'success');});
   $('#memberSquadSearch')?.addEventListener('input',renderMemberSquads);
   $('#memberProfileForm')?.addEventListener('submit',async e=>{e.preventDefault();if(!db)return;const btn=e.currentTarget.querySelector('button[type=submit]');btn.disabled=true;let avatarUrl=memberContext?.account?.avatar_url||'';const file=$('#memberAvatarFile').files[0];if(file){if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>5*1024*1024){memberMsg($('#memberProfileStatus'),'Choose a JPG, PNG or WEBP image up to 5 MB.','error');btn.disabled=false;return;}const {data:{user}}=await db.auth.getUser();const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';const path=`${user.id}/${crypto.randomUUID()}.${ext}`;const {error:uploadError}=await db.storage.from('fz-member-avatars').upload(path,file,{contentType:file.type,upsert:false});if(uploadError){memberMsg($('#memberProfileStatus'),uploadError.message,'error');btn.disabled=false;return;}avatarUrl=db.storage.from('fz-member-avatars').getPublicUrl(path).data.publicUrl;}
     const {error}=await db.rpc('fz_member_update_profile',{p_callsign:$('#memberCallsign').value.trim(),p_display_name:$('#memberDisplayName').value.trim(),p_avatar_url:avatarUrl});btn.disabled=false;if(error){memberMsg($('#memberProfileStatus'),error.message,'error');return;}memberMsg($('#memberProfileStatus'),'Profile saved.','success');await loadMemberAccount();await loadRoster();await loadTeams();});

@@ -113,8 +113,7 @@
       const days=new Map();
       hourly.time.forEach((stamp,i)=>{
         const day=stamp.slice(0,10), hour=Number(stamp.slice(11,13)), minute=hour*60;
-        const date=new Date(day+"T12:00:00+05:30"), weekday=date.getUTCDay();
-        const operating=weekday===0||weekday===6 ? ((hour>=9&&hour<12)||(hour>=15&&hour<22)) : (hour>=15&&hour<22);
+        const operating=day==='2026-12-10' ? (hour>=15&&hour<22) : (hour>=9&&hour<22);
         if(!operating || (day===today&&minute<Math.floor(currentMinute/60)*60))return;
         if(!days.has(day))days.set(day,[]);
         days.get(day).push({temp:Number(hourly.temperature_2m?.[i]),prob:Number(hourly.precipitation_probability?.[i]??0),rain:Number(hourly.precipitation?.[i]??0),code:Number(hourly.weather_code?.[i]??0)});
@@ -695,8 +694,7 @@
   if (dateInput) { const earliest=String(siteSettings?.launch_date||'2026-12-10'); const today=localISO(new Date());dateInput.min=earliest>today?earliest:today;dateInput.value=dateInput.min; }
   function openingPeriods(dateStr) {
     if (!dateStr) return [];
-    const day=new Date(dateStr+'T12:00:00Z').getUTCDay();
-    return day===0||day===6?[[9,12],[15,22]]:[[15,22]];
+    return dateStr==='2026-12-10' ? [[15,22]] : [[9,22]];
   }
   function openingHours(dateStr) {
     return openingPeriods(dateStr).flatMap(([start,end])=>Array.from({length:Math.round((end-start)*2)},(_,i)=>start+i*.5));
@@ -880,8 +878,11 @@
     }
     const date=dateInput?.value,parts=(special&&specialTime?specialTime:chosen||'09:00').split(':').map(Number);
     const start=slDateTime(date,parts[0],parts[1]||0),end=new Date(start.getTime()+Number($("#arenaDuration").value||1)*3600000);
+    if(date==='2026-12-10' && start<slDateTime(date,15)){
+      status(el,'Opening day (10 December) bookings start at 15:00. Choose 15:00 or later.','error');return;
+    }
     if(!Number.isFinite(start.getTime())||start<=new Date()||(!special&&(start<slDateTime(date,9)||end>slDateTime(date,22)))){
-      status(el,'Choose a future session between 09:00 and 22:00.','error');return;
+      status(el,'Choose a future session between 09:00 and 22:00. On 10 December, sessions begin at 15:00.','error');return;
     }
     const fieldId=$("#arenaFieldSelect")?.value||null;
     const payload={

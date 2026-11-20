@@ -438,3 +438,24 @@ body{background:#0c120d;color:#edf1e9}
  .booking-next-heading{align-items:flex-start;flex-direction:column}
  .faq-grid{grid-template-columns:1fr}
 }
+
+
+/* FIELDZERO GRAND OPENING / GROUP PRICING */
+.fz-launch-pricing{margin:28px 0 30px;padding:clamp(22px,3vw,38px);border:1px solid rgba(184,237,83,.38);border-radius:20px;background:radial-gradient(ellipse at top right,rgba(184,237,83,.09),transparent 55%),linear-gradient(145deg,#141a16 0%,#0c100f 100%);box-shadow:0 20px 60px rgba(0,0,0,.23);color:#f0f4eb}
+.fz-launch-pricing-head{display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:25px}
+.fz-launch-pricing-head h3{font-size:clamp(1.8rem,3.4vw,3.1rem);line-height:1.08;letter-spacing:-.04em;margin:8px 0 13px}
+.fz-launch-pricing-head h3 em{font-style:normal;color:#c4f15f}
+.fz-launch-pricing-head p{max-width:620px;color:#b9c4b5;line-height:1.65;margin:0}
+.fz-launch-price-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.fz-launch-price-block{padding:24px;border:1px solid #394538;border-radius:14px;background:rgba(255,255,255,.025)}
+.fz-launch-price-block>span{color:#c5e890;font-size:.68rem;font-weight:800;letter-spacing:.14em}
+.fz-launch-price-block h4{font-size:clamp(1.25rem,2vw,1.9rem);letter-spacing:-.025em;margin:10px 0 20px}
+.fz-price-row{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:13px 0;border-top:1px solid rgba(255,255,255,.12)}
+.fz-price-row span{color:#d7dfd2;font-weight:700;font-size:.85rem}
+.fz-price-row strong{white-space:nowrap;color:#c7f56c;font-size:clamp(1.15rem,1.7vw,1.7rem);font-weight:850;letter-spacing:-.03em}
+.fz-launch-price-block>small{display:block;color:#abb5a7;line-height:1.6;margin-top:15px}
+.fz-price-footer{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,.16);margin-top:20px;padding-top:20px}
+.fz-price-footer span{font-size:.75rem;letter-spacing:.04em;color:#bdc7b7;font-weight:700}
+.fz-price-footer b{color:#d4f78b;font-size:.94rem;margin-left:7px}
+.fz-price-footnote{color:#acb6a7;font-size:.77rem;line-height:1.65;margin:16px 0 0}
+@media(max-width:780px){.fz-launch-pricing{padding:22px 16px}.fz-launch-pricing-head{align-items:flex-start;flex-direction:column}.fz-launch-price-grid{grid-template-columns:1fr}.fz-launch-price-block{padding:18px}.fz-price-row span{font-size:.75rem}.fz-price-footer{gap:12px 24px}}

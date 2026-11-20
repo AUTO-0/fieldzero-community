@@ -459,3 +459,16 @@ body{background:#0c120d;color:#edf1e9}
 .fz-price-footer b{color:#d4f78b;font-size:.94rem;margin-left:7px}
 .fz-price-footnote{color:#acb6a7;font-size:.77rem;line-height:1.65;margin:16px 0 0}
 @media(max-width:780px){.fz-launch-pricing{padding:22px 16px}.fz-launch-pricing-head{align-items:flex-start;flex-direction:column}.fz-launch-price-grid{grid-template-columns:1fr}.fz-launch-price-block{padding:18px}.fz-price-row span{font-size:.75rem}.fz-price-footer{gap:12px 24px}}
+
+/* FIELDZERO V26 LIVE GROUP QUOTE / FIELD SELECTION */
+#calendar .fz-field-load-status{padding:12px 15px;margin:10px 0 16px;border-radius:10px;border:1px solid rgba(200,243,106,.22);background:rgba(8,17,11,.62);color:#deebd6;font-size:.82rem;line-height:1.5}
+#calendar #arenaFieldSelect{appearance:auto;cursor:pointer;min-height:48px;position:relative;z-index:2;color:#152016!important;background:#f5f7f1!important}
+#calendar #arenaFieldSelect:focus{outline:3px solid rgba(199,243,107,.54);outline-offset:3px}
+#calendar .fz-booking-total{display:flex;align-items:flex-start;flex-direction:column;gap:7px;padding:20px clamp(17px,3vw,26px);margin:18px 0;border:1px solid rgba(199,243,107,.55);border-radius:14px;background:linear-gradient(120deg,#19261b,#0d170e);color:#fff;box-shadow:0 14px 34px rgba(0,0,0,.12)}
+#calendar .fz-booking-total>span{font-size:11px;letter-spacing:.15em;font-weight:750;color:#adc67f}
+#calendar .fz-booking-total>strong{font-family:"Barlow Condensed","DM Sans",sans-serif;font-size:clamp(29px,4vw,44px);line-height:1.05;font-weight:800;color:#d1fa80}
+#calendar .fz-booking-total>p{color:#dae5d2;line-height:1.65;margin:0;font-size:13px;max-width:760px}
+#calendar .calendar-controls{position:relative;isolation:isolate;align-items:end}
+#calendar .calendar-controls>label.field{min-width:0}
+#calendar .calendar-controls>label.field select{cursor:pointer}
+@media(max-width:700px){#calendar .fz-booking-total{padding:18px}#calendar .calendar-controls{grid-template-columns:1fr}#calendar #arenaFieldSelect{font-size:15px}}

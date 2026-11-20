@@ -39,7 +39,7 @@ async function refresh(){
  const p=await Promise.all([
   db.from("fz_inventory_forecast").select("*").eq("field_id",field()).order("name"),
   db.from("fz_game_sessions").select("*").eq("field_id",field()).order("started_at",{ascending:false}).limit(80),
-  db.from("arena_bookings").select("id,booking_reference,booking_start,booking_end,experience,player_count,quoted_amount,status").eq("field_id",field()).eq("status","approved").order("booking_start",{ascending:false}).limit(180)
+  db.from("arena_bookings").select("id,booking_reference,booking_start,booking_end,experience,player_count,quoted_amount,base_session_fee,status").eq("field_id",field()).eq("status","approved").order("booking_start",{ascending:false}).limit(180)
  ]);
  for(const q of p){if(q.error){message(q.error.message,true);return;}}
  items=p[0].data||[];sessions=p[1].data||[];bookings=p[2].data||[];
@@ -78,7 +78,7 @@ function drawForecast(){
  }).join("")+'</tbody></table>':'<p>Inventory records will appear here once the owner adds stock items.</p>';
 }
 function drawBookings(){
- $("#gameBooking").innerHTML=bookings.length?bookings.map(b=>'<option value="'+esc(b.id)+'">'+esc(b.booking_reference||"GAME")+' / '+esc(b.experience||"")+' / '+b.player_count+' players / '+(Number(b.quoted_amount)>0?'LKR '+fmt(b.quoted_amount):'Custom quote')+' / '+dt(b.booking_start)+'</option>').join(""):'<option value="">No approved bookings</option>';
+ $("#gameBooking").innerHTML=bookings.length?bookings.map(b=>'<option value="'+esc(b.id)+'">'+esc(b.booking_reference||"GAME")+' / '+esc(b.experience||"")+' / '+b.player_count+' players / '+(Number(b.base_session_fee??b.quoted_amount)>0?'LKR '+fmt(b.base_session_fee??b.quoted_amount):'Custom quote')+' / '+dt(b.booking_start)+'</option>').join(""):'<option value="">No approved bookings</option>';
  if(game){const b=bookings.find(x=>x.id===game.booking_id);if(b)$("#gameBooking").value=b.id;}
 }
 function drawGames(){

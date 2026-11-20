@@ -182,6 +182,23 @@
   }
   const announcementPopup = $("#announcementPopup");
   let fzModeCatalog=[];
+  let fzGroupTiers=[];
+  const fzTeamKeys=new Set(['battle-mix','team-deathmatch','capture-the-flag','king-of-the-hill','elimination']);
+  const fzGroupKind=key=>key==='battle-mix'?'battle_mix':fzTeamKeys.has(key)?'single_mode':null;
+  function fzGroupPrice(key,players){
+    const kind=fzGroupKind(key),n=Number(players);
+    const tier=fzGroupTiers.find(t=>t.package_kind===kind&&n>=Number(t.min_players)&&n<=Number(t.max_players));
+    if(tier)return Number(tier.price_amount);
+    if(!kind||n<6||n>12)return null;
+    return kind==='battle_mix'?(n===6?2500:n<=10?3000:3500):(n===6?1500:n<=10?1800:2100);
+  }
+  function fzRefreshTierLabels(){
+    document.querySelectorAll('[data-fz-tier]').forEach(el=>{
+      const [kind,start]=el.dataset.fzTier.split(':');
+      const tier=fzGroupTiers.find(t=>t.package_kind===kind&&Number(t.min_players)===Number(start));
+      if(tier)el.textContent='Rs. '+Number(tier.price_amount).toLocaleString('en-LK');
+    });
+  }
   const fzModeByName=name=>fzModeCatalog.find(m=>m.package_name===name);
   const fzTodaySL=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Colombo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
   const fzIsBeforeOpening=fieldId=>{const f=publicFields.find(x=>x.id===fieldId);return (f?.is_main||(!fieldId&&!publicFields.length))&&fzTodaySL()<String(siteSettings?.launch_date||'2026-12-10');};
@@ -208,6 +225,7 @@
     const host=$("#fzSelectedModeDetails"),resource=$("#fzResourceNote");
     if(!experience||!players||!duration)return;
     if(mode){
+      const isTeam=fzTeamKeys.has(mode.package_key);
       if(mode.package_key==='birthday-private-event'&&special)special.value='true';
       const min=Number(mode.min_players)||1,max=Number(mode.max_players)||16,oldPlayers=Number(players.value)||min;
       players.innerHTML=Array.from({length:max-min+1},(_,i)=>'<option value="'+(min+i)+'">'+(min+i)+'</option>').join('');
@@ -215,19 +233,29 @@
       const dur=Number(mode.duration_minutes)||60,hr=dur/60,validDur=[...duration.options].some(o=>Number(o.value)===hr);
       if(!validDur){const opt=document.createElement('option');opt.value=String(hr);opt.textContent=dur+' minutes';duration.append(opt);}
       duration.value=String(hr);
-      duration.disabled=false; // Customers can choose 30, 60, 120 or 180 minutes for regular sessions.
+      if(isTeam){duration.innerHTML='<option value="'+hr+'">'+dur+' minutes · fixed package</option>';duration.value=String(hr);}
+      else {duration.innerHTML='<option value="0.5">30 minutes</option><option value="1">1 hour</option><option value="2">2 hours</option><option value="3">3 hours</option>';duration.value=String(hr);}
+      duration.disabled=false;
       if(host){
         host.hidden=false;host.replaceChildren();
         const title=document.createElement('strong');title.textContent=mode.package_name;
         const meta=document.createElement('span');meta.textContent=min===max?min+' player · '+dur+' min':min+'–'+max+' players · '+dur+' min';
-        const price=document.createElement('b');price.textContent=mode.price_amount==null?'Custom quote':(mode.price_currency||'LKR')+' '+Number(mode.price_amount).toLocaleString('en-LK')+(mode.price_note?' · '+mode.price_note:' · Confirm pricing terms with FIELDZERO');
+        const price=document.createElement('b');
+        const amount=isTeam?fzGroupPrice(mode.package_key,players.value):mode.price_amount;
+        price.textContent=amount==null?'Custom quote':(isTeam?'TOTAL TEAM PRICE · ':'')+(mode.price_currency||'LKR')+' '+Number(amount).toLocaleString('en-LK');
+        if(isTeam&&special){
+          if(Number(players.value)>10){special.value='true';special.dataset.fzAutoLarge='true';}
+          else if(special.dataset.fzAutoLarge==='true'){special.value='false';delete special.dataset.fzAutoLarge;}
+        }
         const desc=document.createElement('p');desc.textContent=mode.mode_details||'Follow the marshal guidance for this session.';
+        if(isTeam)desc.textContent+=' · 11–12 player bookings require approval.';
         host.append(title,meta,price,desc);
       }
       if(resource)resource.textContent=mode.venue_resource==='target'
         ?'SOLO TARGET BAY · Separate from the main arena. Target reservations never block arena matches. Only available target times are shown.'
         :'MAIN ARENA · Existing confirmed arena matches block overlapping starts. Solo target practice uses a separate bay.';
     }else{
+      duration.innerHTML='<option value="0.5">30 minutes</option><option value="1">1 hour</option><option value="2">2 hours</option><option value="3">3 hours</option>';
       duration.disabled=false;
       players.innerHTML=[1,2,3,4,5,6,7,8,9,10,12,16].map(v=>'<option>'+v+'</option>').join('');
       if(host)host.hidden=true;
@@ -241,10 +269,9 @@
     (rows || []).forEach(item => {
       const el = document.querySelector(`[data-session-price="${item.package_key}"]`);
       if (!el) return;
-      const label = item.price_amount !== null && item.price_amount !== undefined
-        ? `${escapeHtml(item.price_currency || "LKR")} <b>${formatPrice(item.price_amount)}</b>`
-        : `<b>${escapeHtml(item.display_label || "Custom")}</b>`;
-      el.innerHTML = `${label}${item.price_note ? `<small>${escapeHtml(item.price_note)}</small>` : ""}`;
+      const isTeam=fzTeamKeys.has(item.package_key),amount=isTeam?fzGroupPrice(item.package_key,6):item.price_amount;
+      const label=amount!=null?`${isTeam?'FROM ':''}${escapeHtml(item.price_currency||'LKR')} <b>${formatPrice(amount)}</b>`:`<b>${escapeHtml(item.display_label||'Custom')}</b>`;
+      el.innerHTML=`${label}<small>${isTeam?'per group · player tiers shown above':escapeHtml(item.price_note||'')}</small>`;
       el.closest(".package-card")?.toggleAttribute("hidden", item.active === false);
     });
     const visibleKeys = new Set((rows || []).filter(item => item.active !== false).map(item => item.package_key));
@@ -278,6 +305,9 @@
   $('#fzMembershipVerifyModal')?.addEventListener('click',e=>{if(e.target.id==='fzMembershipVerifyModal')e.currentTarget.hidden=true;});
   async function loadSessionPrices() {
     if (!db) return;
+    const groupResponse=await db.from('fz_group_price_tiers').select('package_kind,min_players,max_players,price_amount');
+    if(!groupResponse.error){fzGroupTiers=groupResponse.data||[];fzRefreshTierLabels();}
+    else console.warn('Group prices not loaded',groupResponse.error.message);
     const {data,error} = await db.from("public_session_prices").select("package_key,package_name,price_amount,price_currency,display_label,price_note,active,min_players,max_players,duration_minutes,venue_resource,mode_details,requestable");
     if (error) { console.warn("FIELDZERO session prices unavailable; static prices remain visible.", error.message); return; }
     renderSessionPrices(data || []);
@@ -763,6 +793,7 @@
   if(dateInput){dateInput.addEventListener('change',loadArenaSlots);$("#arenaDuration").addEventListener('change',loadArenaSlots);loadArenaSlots();}
   const specialToggle=$("#specialRequest"); if(specialToggle) specialToggle.addEventListener("change",()=>{const slot=$("#arenaStartTime");slot.required=specialToggle.value!=="true";fzRenderModeInfo();});
   $("#bookingExperience")?.addEventListener('change',fzRenderModeInfo);
+  document.querySelector('#arenaBookingForm [name="playerCount"]')?.addEventListener('change',fzRenderModeInfo);
   fzUpdateBookingPaymentCopy();
   async function generateCustomerBookingPdf(b){
     if(!window.jspdf?.jsPDF)throw new Error('PDF library unavailable');

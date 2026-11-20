@@ -834,6 +834,7 @@
       ['ARRIVE FOR BRIEFING',fmt(new Date(new Date(b.booking_start).getTime()-15*60000))],
       ['END TIME',fmt(b.booking_end)],
       ['EXPERIENCE',`${b.experience||'Field session'} · ${Number(b.player_count||1)} player(s)`],
+      ['TEAM SESSION FEE',b.quoted_amount!=null?money(b.quoted_amount):'Price on request'],
       ['REQUEST TYPE',b.special_request?'SPECIAL REQUEST · FIELD REVIEW REQUIRED':'STANDARD BOOKING REQUEST']
     ];
     let y=133;
@@ -955,7 +956,8 @@
       }
       await generateCustomerBookingPdf({...payload,...booking,...paymentInfo,
         field_name:paymentInfo.field_name||$("#arenaFieldSelect")?.selectedOptions?.[0]?.textContent||'FIELDZERO FIELD',
-        advance_required:advance});
+        advance_required:advance,
+        quoted_amount:mode?(fzGroupPrice(mode.package_key,payload.player_count)??(mode.price_amount!=null?Number(mode.price_amount)*payload.player_count:null)):null});
     }catch(err){console.warn('Booking reference PDF could not be created',err);}
     arenaForm.reset();
     if(referralFromUrl&&arenaReferralInput)arenaReferralInput.value=referralFromUrl.trim().toUpperCase().replace(/[^A-Z0-9-]/g,'').slice(0,24);

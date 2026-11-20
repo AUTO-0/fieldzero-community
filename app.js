@@ -934,21 +934,6 @@
     modal.hidden=false;
     sessionStorage.setItem('fzSpotlightSeen','1');
   }
-  // Update displayed group price immediately when a player count is selected.
-  document.querySelector('#arenaBookingForm [name="playerCount"]')?.addEventListener('change',()=>{
-    fzRenderBookingQuote();
-    const mode=fzModeByName($('#bookingExperience')?.value);
-    if(!mode||!fzTeamKeys.has(mode.package_key))return;
-    const count=Number(document.querySelector('#arenaBookingForm [name="playerCount"]').value);
-    const fee=fzGroupPrice(mode.package_key,count);
-    const label=$('#fzSelectedModeDetails b');
-    if(label)label.textContent=fee==null?'Contact FIELDZERO for price':'TOTAL TEAM PRICE · LKR '+fee.toLocaleString('en-LK');
-    const special=$('#specialRequest');
-    if(special){
-      if(count>10){special.value='true';special.dataset.fzAutoLarge='true';}
-      else if(special.dataset.fzAutoLarge==='true'){special.value='false';delete special.dataset.fzAutoLarge;}
-    }
-  });
   $('#arenaFieldSelect')?.addEventListener('change',()=>loadPublicSpotlight());
   $('#fzSpotlightClose')?.addEventListener('click',()=>{$('#fzSpotlightModal').hidden=true});
   const arenaReferralInput=$('#arenaReferralCode'),arenaReferralStatus=$('#arenaReferralStatus');

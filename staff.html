@@ -8,7 +8,7 @@
 <nav><a href="index.html">PUBLIC SITE</a><a href="staff.html" class="current">STAFF DESK</a><a href="inventory.html">INVENTORY ↗</a><a href="stats.html">USAGE STATS ↗</a><button id="logout" class="ghost" hidden>SIGN OUT</button></nav></header>
 <main class="layout">
 <section class="intro"><p class="kicker">FZ // FIELD OPERATIONS / V24</p><h1>DAILY <em>OPERATIONS.</em></h1>
-<p>Process bookings, verify payments, send confirmations and review operator applications. Only the owner can manage workers and stock quantities.</p></section>
+<p>Process team bookings using the total group fee, verify payments, add Rs. 150 ammo refills, send confirmations and review operator applications. Only the owner can manage workers and stock quantities.</p></section>
 <section id="loginSection" class="panel login">
 <div><span class="kicker">ACCESS CONTROL</span><h2>WORKER / OWNER LOGIN</h2><p>Use the field worker email and password issued by the owner. Your access is limited to your assigned field.</p></div>
 <form id="loginForm" class="form-grid"><label>WORK EMAIL<input name="email" type="email" required autocomplete="username"></label><label>PASSWORD<input name="password" type="password" required autocomplete="current-password"></label><button class="primary" type="submit">SIGN IN ↗</button></form><button type="button" id="forgotStaffPassword" class="ghost">FORGOT PASSWORD / EMAIL RESET</button><p id="loginMessage" class="message" role="status"></p>
@@ -19,7 +19,7 @@
 <p id="workMessage" class="message" role="status"></p>
 <section class="tab-content" data-panel="bookings">
 <div class="split-heading"><div><span class="kicker">RESERVATION WORKFLOW</span><h2>BOOKINGS & CHECKOUT</h2></div><label>SHOW<select id="bookingStatusFilter"><option value="active">Active / upcoming</option><option value="all">All records</option><option value="pending">Needs action</option><option value="paid">Paid</option></select></label></div>
-<p class="hint">1. Review a special request · 2. Verify the advance when required · 3. Share confirmation manually · 4. Prepare final bill · 5. Collect payment and issue invoice.</p>
+<p class="hint">1. Check team size and the booked total group price · 2. Verify any advance · 3. Confirm the reservation · 4. Invoice the group fee and any Rs. 150 ammo refills · 5. Collect and record payment.</p>
 <div class="fz-visit-search"><label>FIND CUSTOMER BY BOOKING NUMBER, MOBILE OR CALLSIGN<input id="bookingSearch" type="search" placeholder="e.g. FZ-2026... or 07X XXX XXXX" autocomplete="off" inputmode="search"></label><small>Type at least 3 characters. Searches all FIELDZERO bookings assigned to this field.</small></div><div class="split-layout"><div id="bookingsList" class="record-list"><p>Loading bookings…</p></div>
 <div id="bookingDetail" class="panel detail"><p>Select a booking on the left to manage it.</p></div></div>
 </section>
@@ -45,4 +45,4 @@
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
-<script src="config.js"></script><script src="staff.js?v=27"></script><script src="staff-visit-v25.js?v=25"></script></body></html>
+<script src="config.js"></script><script src="staff.js?v=fz-group-booking-20261120b"></script><script src="staff-visit-v25.js?v=25"></script></body></html>

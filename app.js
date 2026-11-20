@@ -200,6 +200,21 @@
     });
   }
   const fzModeByName=name=>fzModeCatalog.find(m=>m.package_name===name);
+  function fzRenderBookingQuote(){
+    const amount=$('#fzBookingTotalAmount'),detail=$('#fzBookingTotalDetail');
+    if(!amount||!detail)return;
+    const mode=fzModeByName($('#bookingExperience')?.value);
+    const count=Number(document.querySelector('#arenaBookingForm [name="playerCount"]')?.value||0);
+    if(!mode){amount.textContent='Select a game mode';detail.textContent='Choose your experience to see your total group price.';return;}
+    if(fzTeamKeys.has(mode.package_key)){
+      const quote=fzGroupPrice(mode.package_key,count);
+      amount.textContent=quote==null?'Price unavailable':'Rs. '+quote.toLocaleString('en-LK')+' TOTAL';
+      detail.textContent=count+' players · '+Number(mode.duration_minutes)+' minutes · '+(mode.package_key==='battle-mix'?'All four game modes · four standard cartridges per player':'One game mode · one standard cartridge per player')+(count>10?' · Staff approval required':'')+'. Extra ammo bottle: Rs. 150.';
+    }else{
+      amount.textContent=mode.price_amount==null?'Price on request':'Rs. '+Number(mode.price_amount).toLocaleString('en-LK');
+      detail.textContent=mode.package_name+' · '+(mode.mode_details||'Ask FIELDZERO for details.');
+    }
+  }
   const fzTodaySL=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Colombo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
   const fzIsBeforeOpening=fieldId=>{const f=publicFields.find(x=>x.id===fieldId);return (f?.is_main||(!fieldId&&!publicFields.length))&&fzTodaySL()<String(siteSettings?.launch_date||'2026-12-10');};
   const fzAdvanceAmount=fieldId=>fzIsBeforeOpening(fieldId)?0:500;
@@ -264,6 +279,7 @@
       if(resource)resource.textContent='Choose an experience to see its duration, player limits, price and separate arena/target availability.';
       if(experience?.value==='Other / Need advice'&&special)special.value='true';
     }
+    fzRenderBookingQuote();
     loadArenaSlots();
   }
   const formatPrice = (amount) => Number(amount).toLocaleString("en-LK", {minimumFractionDigits:0,maximumFractionDigits:2});
@@ -574,14 +590,32 @@
     else if (fields.length) select.value = fields.find(f => f.is_main)?.id || fields[0].id;
   }
   async function loadFields() {
-    const grid = $("#fieldsGrid"); if (!grid) return;
-    if (!db) { grid.innerHTML = '<div class="empty-state">Field locations will appear here once Supabase is configured.</div>'; return; }
-    const {data,error}=await db.from("public_arena_fields").select("id,name,address,google_maps_url,latitude,longitude,slug,is_main,booking_deposit_percent");
-    if(error){grid.innerHTML='<div class="empty-state">Field locations could not load. Check the V8 and V15 fields migrations.</div>';return;}
+    const grid = $("#fieldsGrid");
+    if (!db) { if(grid)grid.innerHTML = '<div class="empty-state">Field locations are temporarily unavailable.</div>';const notice=$('#fzFieldLoadStatus');if(notice)notice.textContent='Field verification unavailable. Please refresh before booking.';return; }
+    let {data,error}=await db.from("public_arena_fields").select("id,name,address,google_maps_url,latitude,longitude,slug,is_main,booking_deposit_percent");
+    if(error){
+      // Permission or view errors must not leave the customer at "Loading fields".
+      const retry=await db.from('arena_fields').select('id,name,address,google_maps_url,latitude,longitude,slug,is_main,booking_deposit_percent').eq('active',true).eq('network_status','active');
+      if(!retry.error){data=retry.data;error=null;}
+    }
+    const notice=$('#fzFieldLoadStatus'),select=$('#arenaFieldSelect');
+    if(error){
+      if(grid)grid.innerHTML='<div class="empty-state">Field listings could not refresh. Check your connection and retry.</div>';
+      if(notice)notice.textContent='Could not refresh field availability. Please reload the page before booking.';
+      if(select)select.setAttribute('aria-invalid','true');
+      return;
+    }
     publicFields=(data||[]).sort((a,b)=>(b.is_main?1:0)-(a.is_main?1:0)||String(a.name).localeCompare(String(b.name)));
-    publicFields.forEach(f=>fieldNames.set(f.id,f.name));
-    if(!publicFields.length){grid.innerHTML='<div class="empty-state">No active fields have been published yet.</div>';return;}
+    fieldNames.clear();publicFields.forEach(f=>fieldNames.set(f.id,f.name));
+    if(!publicFields.length){
+      if(select){select.innerHTML='<option value="">No active FIELDZERO fields</option>';select.value='';}
+      if(notice)notice.textContent='This field is not accepting bookings currently.';
+      if(grid)grid.innerHTML='<div class="empty-state">No active fields have been published yet.</div>';
+      return;
+    }
     fillFieldSelect($("#arenaFieldSelect"),publicFields,'Choose a field…');
+    if(select){select.removeAttribute('aria-invalid');select.disabled=false;}
+    if(notice)notice.textContent='Selected field: '+(publicFields.find(f=>f.id===select?.value)?.name||'Choose a field')+' · booking calendar ready.';
     fzUpdateBookingPaymentCopy();
     fillFieldSelect($("#feedbackFieldSelect"),publicFields,'Choose the field you visited');
     const feedbackFilter=$("#feedbackFieldFilter");
@@ -593,10 +627,10 @@
       const all=document.createElement('option');all.value='all';all.textContent='ALL FIELDS';select.insertBefore(all,select.firstChild);select.value='all';
     });
     const fieldSelect=$("#arenaFieldSelect");
-    if(fieldSelect&&!fieldSelect.dataset.v15Bound){fieldSelect.dataset.v15Bound='1';fieldSelect.addEventListener('change',()=>{if(dateInput)loadArenaSlots();fzUpdateBookingPaymentCopy();});}
+    if(fieldSelect&&!fieldSelect.dataset.v15Bound){fieldSelect.dataset.v15Bound='1';fieldSelect.addEventListener('change',()=>{const n=$('#fzFieldLoadStatus');if(n)n.textContent='Selected field: '+(publicFields.find(f=>f.id===fieldSelect.value)?.name||'Choose a field');if(dateInput)loadArenaSlots();fzUpdateBookingPaymentCopy();});}
     document.dispatchEvent(new CustomEvent('fieldzero:fields-ready',{detail:{mainFieldId:publicFields.find(f=>f.is_main)?.id||publicFields[0]?.id||'',selectedFieldId:fieldSelect?.value||''}}));
     loadPublicSpotlight();
-    grid.innerHTML=publicFields.map(f=>{const q=encodeURIComponent((f.latitude!=null&&f.longitude!=null)?`${f.latitude},${f.longitude}`:f.address||f.name);const mapSrc=`https://www.google.com/maps?q=${q}&output=embed`;const url=/^https:\/\//i.test(f.google_maps_url||"")?f.google_maps_url:"";return `<article class="field-card ${f.is_main?'main-field-card':''}"><iframe title="Map for ${escapeHtml(f.name)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${mapSrc}"></iframe><div class="field-card-copy"><span class="event-type">${f.is_main?'MAIN FIELD':'FIELDZERO NETWORK'}</span><h3>${escapeHtml(f.name)}</h3><p>${escapeHtml(f.address||"Address to be announced")}</p><small class="field-deposit-rate">Fixed booking advance: LKR 500 · Balance and extras paid at checkout</small><div class="field-card-actions">${url?`<a class="button button-lime" href="${escapeAttr(url)}" target="_blank" rel="noopener noreferrer">OPEN IN GOOGLE MAPS ↗</a>`:""}</div></div></article>`}).join("");
+    if(grid)grid.innerHTML=publicFields.map(f=>{const q=encodeURIComponent((f.latitude!=null&&f.longitude!=null)?`${f.latitude},${f.longitude}`:f.address||f.name);const mapSrc=`https://www.google.com/maps?q=${q}&output=embed`;const url=/^https:\/\//i.test(f.google_maps_url||"")?f.google_maps_url:"";return `<article class="field-card ${f.is_main?'main-field-card':''}"><iframe title="Map for ${escapeHtml(f.name)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${mapSrc}"></iframe><div class="field-card-copy"><span class="event-type">${f.is_main?'MAIN FIELD':'FIELDZERO NETWORK'}</span><h3>${escapeHtml(f.name)}</h3><p>${escapeHtml(f.address||"Address to be announced")}</p><small class="field-deposit-rate">Fixed booking advance: LKR 500 · Balance and extras paid at checkout</small><div class="field-card-actions">${url?`<a class="button button-lime" href="${escapeAttr(url)}" target="_blank" rel="noopener noreferrer">OPEN IN GOOGLE MAPS ↗</a>`:""}</div></div></article>`}).join("");
     if(dateInput)loadArenaSlots();
   }
 
@@ -902,6 +936,7 @@
   }
   // Update displayed group price immediately when a player count is selected.
   document.querySelector('#arenaBookingForm [name="playerCount"]')?.addEventListener('change',()=>{
+    fzRenderBookingQuote();
     const mode=fzModeByName($('#bookingExperience')?.value);
     if(!mode||!fzTeamKeys.has(mode.package_key))return;
     const count=Number(document.querySelector('#arenaBookingForm [name="playerCount"]').value);
@@ -943,6 +978,8 @@
       status(el,'Choose a future session between 09:00 and 22:00. On 10 December, sessions begin at 15:00.','error');return;
     }
     const fieldId=$("#arenaFieldSelect")?.value||null;
+    if(!fieldId||!publicFields.some(f=>f.id===fieldId)){status(el,'Choose an available FIELDZERO field before booking. If the field list is still loading, refresh the page.','error');return;}
+    if(mode&&fzTeamKeys.has(mode.package_key)&&fzGroupPrice(mode.package_key,Number(fd.get('playerCount')))==null){status(el,'Could not calculate this group fee. Please select 6–12 players and try again.','error');return;}
     const payload={
       field_id:fieldId,real_name:String(fd.get('realName')||'').trim(),
       callsign:String(fd.get('callsign')||'').trim(),mobile:String(fd.get('mobile')||'').trim(),

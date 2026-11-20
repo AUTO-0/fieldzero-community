@@ -46,8 +46,10 @@ async function render(booking,knownInvoice,afterChange){
  const stock=(stockResult.data||[]).filter(x=>x.active);
  let game=gameResult.data,invoice=knownInvoice||null;
  const price=priceResult.data;
- const basePrice=price?.price_amount==null?Number(booking.quoted_amount||0):
- Number(price.price_amount)*((price.price_note||"").toLowerCase().includes("per player")?Number(booking.player_count):1);
+ const bookedGroupFee=booking.base_session_fee==null?null:Number(booking.base_session_fee);
+ const teamPackage=["1-Hour Battle Mix","Team Deathmatch","Capture the Flag","King of the Hill","Elimination"].includes(booking.experience);
+ const basePrice=bookedGroupFee!=null&&bookedGroupFee>0?bookedGroupFee:Number(booking.quoted_amount)>0?Number(booking.quoted_amount):teamPackage?0:price?.price_amount==null?0:Number(price.price_amount)*((price.price_note||"").toLowerCase().includes("per player")?Number(booking.player_count):1);
+ const lockedGroupRate=teamPackage&&bookedGroupFee!=null&&bookedGroupFee>0;
  const accounts=accountResult.data||[];
  const isPaid=invoice&&invoice.status==="paid"&&Number(invoice.balance_due)===0;
  let lines=[],receipts=[],gear=[];
@@ -89,12 +91,12 @@ async function render(booking,knownInvoice,afterChange){
     '<button type="button" class="primary fz-visit-wide" id="visitCheckin">CHECK IN CUSTOMER & ISSUE ALL SELECTED EQUIPMENT ↗</button>';
  const bill=invoice
   ?'<div class="fz-visit-status '+(isPaid?"fz-paid":"")+'"><strong>'+esc(invoice.invoice_number)+'</strong><span>'+esc(isPaid?"PAID / CLOSED":"AWAITING CHECKOUT")+' · Total LKR '+amount(invoice.total_amount)+' · Paid LKR '+amount(invoice.amount_paid)+'</span></div>'
-  :'<div class="fz-visit-grid"><label>SESSION CHARGE (LKR)<input id="visitSessionCharge" type="number" step=".01" min="1" value="'+(basePrice||"")+'"></label><p class="hint">Session charge is checked against the owner-set price. A private custom quote must first be set by the owner.</p></div>'+
+  :'<div class="fz-visit-grid"><label>BOOKED TEAM CHARGE (LKR)<input id="visitSessionCharge" type="number" step=".01" min="1" '+(lockedGroupRate?'readonly ':'')+'value="'+(basePrice||"")+'"></label><p class="hint">One price for the entire team. Battle Mix includes four cartridges per player, 30-minute games include one. Extra ammunition is charged separately.</p></div>'+
     '<button type="button" class="primary" id="visitCreateInvoice" '+(!game?'disabled':'')+'>CREATE CUSTOMER INVOICE</button>'+(game?'':'<p class="hint">Check in the customer and record issued equipment first.</p>');
  const addOns=!isPaid&&invoice
  ?'<div class="fz-visit-extras"><h4>ITEMISE THE FINAL BILL</h4><p class="hint">Keep the standard session charge; add optional rentals, retail items or other additional charges before payment.</p>'+
-   '<div id="visitExtraRows"></div><button class="ghost" id="visitAddExtra" type="button">+ ADD EXTRA ITEM</button>'+
-   '<label>BASE SESSION CHARGE (LKR)<input id="visitBaseCharge" type="number" step=".01" min="1" value="'+(basePrice||Number(lines[0]?.unit_price||invoice.total_amount))+'"></label>'+
+   '<div id="visitExtraRows"></div><button class="ghost" id="visitAddExtra" type="button">+ ADD EXTRA ITEM</button> <button class="ghost" id="visitAddAmmo" type="button">+ AMMO BOTTLE · RS. 150</button>'+
+   '<label>BOOKED GROUP GAME FEE (LKR)<input id="visitBaseCharge" type="number" step=".01" min="1" '+(lockedGroupRate?'readonly ':'')+'value="'+(basePrice||Number(lines[0]?.unit_price||invoice.total_amount))+'"></label>'+
    '<p id="visitBillPreview" class="fz-visit-subtotal">FINAL TOTAL: LKR '+amount(invoice.total_amount)+'</p>'+
    '<button class="primary fz-visit-wide" id="visitFinalize" type="button" '+(!game?'disabled':'')+'>FINALIZE BILL & ISSUE INVOICE</button>'+(game?'':'<p class="hint">Complete customer check-in first.</p>')+'</div>'
  :"";
@@ -185,6 +187,7 @@ async function render(booking,knownInvoice,afterChange){
  }
  if(extraHost){savedExtras.forEach(row);
   panel.querySelector("#visitAddExtra").onclick=()=>row(null);
+  panel.querySelector("#visitAddAmmo").onclick=()=>row({description:"Extra gel-ball ammunition bottle",quantity:1,unit_price:150});
   panel.querySelector("#visitBaseCharge")?.addEventListener("input",preview);preview();
  }
  bind("#visitFinalize",async()=>{
@@ -192,6 +195,7 @@ async function render(booking,knownInvoice,afterChange){
   if(entries.some(x=>x.description.length<2||!Number.isFinite(x.unit_price)||x.unit_price<0||!Number.isFinite(x.quantity)||x.quantity<=0))
    throw Error("Every invoice item needs a description, positive quantity and valid price");
   if(!Number.isFinite(entries[0].unit_price)||entries[0].unit_price<=0)throw Error("Base charge must be greater than zero");
+  if(lockedGroupRate&&Math.abs(entries[0].unit_price-bookedGroupFee)>0.005)throw Error("The booked group fee is fixed at LKR "+amount(bookedGroupFee)+". Add ammunition as extra items.");
   await api("fz_staff_finalize_bill",{p_booking_id:booking.id,p_items:entries,p_discount_amount:0,p_tax_rate:0});
  });
  bind("#visitMarkPaid",async()=>{

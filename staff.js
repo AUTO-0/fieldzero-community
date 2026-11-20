@@ -51,6 +51,9 @@ async function loadAccounts(){
 }
 const teamExperiences=new Set(["1-Hour Battle Mix","Team Deathmatch","Capture the Flag","King of the Hill","Elimination"]);
 function priceFor(b){
+ // The original agreed team rate must not include subsequently purchased ammunition.
+ const original=Number(b.base_session_fee);
+ if(b.base_session_fee!=null&&Number.isFinite(original)&&original>0)return original;
  const quoted=Number(b.quoted_amount);
  if(b.quoted_amount!=null&&Number.isFinite(quoted)&&quoted>0)return quoted;
  if(teamExperiences.has(b.experience))return null;
@@ -98,7 +101,7 @@ async function showBooking(id){
   if(i.error||lines.error||paid.error){msg(i.error?.message||lines.error?.message||paid.error?.message,true);}
   invoice=i.data;invoiceItems=lines.data||[];payments=paid.data||[];
  }
- const preview=priceFor(b),isTeam=teamExperiences.has(b.experience),fixedQuote=isTeam&&preview!=null;
+ const preview=priceFor(b),isTeam=teamExperiences.has(b.experience),fixedQuote=isTeam&&b.base_session_fee!=null&&preview!=null;
  const isSent=confirmations.some(x=>x.booking_id===id);
  const accountOptions=accounts.map(a=>'<option value="'+esc(a.id)+'">'+esc(a.account_name)+'</option>').join("");
  const paymentControls='<div class="controls"><label>RECEIVING ACCOUNT<select id="payAccount">'+accountOptions+'</select></label><label>METHOD<select id="payMethod"><option value="cash">Cash</option><option value="bank">Bank transfer</option><option value="card">Card</option><option value="online">Online</option><option value="other">Other</option></select></label><label class="wide">PAYMENT REFERENCE<input id="payReference" placeholder="Optional receipt / bank reference"></label></div>';

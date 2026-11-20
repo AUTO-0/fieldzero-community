@@ -49,11 +49,14 @@ async function loadAccounts(){
  const {data,error}=await db.from("fz_financial_accounts").select("id,account_name,account_type,active").eq("field_id",fieldId()).eq("active",true);
  if(error){msg(error.message,true);accounts=[];}else accounts=data||[];
 }
+const teamExperiences=new Set(["1-Hour Battle Mix","Team Deathmatch","Capture the Flag","King of the Hill","Elimination"]);
 function priceFor(b){
+ const quoted=Number(b.quoted_amount);
+ if(b.quoted_amount!=null&&Number.isFinite(quoted)&&quoted>0)return quoted;
+ if(teamExperiences.has(b.experience))return null;
  const p=prices.find(x=>x.package_name===b.experience);
- if(!p||p.price_amount==null)return 0;
- const unit=(p.price_note||"").toLowerCase();
- return Number(p.price_amount)*(unit.includes("per player")?Number(b.player_count||1):1);
+ if(!p||p.price_amount==null)return null;
+ return Number(p.price_amount)*((p.price_note||"").toLowerCase().includes("per player")?Number(b.player_count||1):1);
 }
 function summarize(b){
  const status=b.status==="approved"?(b.payment_status==="paid"?"PAID / APPROVED":"CONFIRMED"):b.status;
@@ -79,7 +82,7 @@ async function loadBookings(){
  (filter==="pending"&&["pending","pending_payment"].includes(b.status))||
  (filter==="paid"&&b.payment_status==="paid"));
  $("#bookingsList").innerHTML=filtered.length?filtered.map(b=>
- '<button class="record clickable '+(selectedId===b.id?"active":"")+'" data-booking="'+esc(b.id)+'"><b>'+esc(b.booking_reference||"BOOKING")+' · '+esc(b.experience||"Field game")+'</b><div class="meta">'+summarize(b)+' <small>'+dt(b.booking_start)+'</small></div><small>'+esc(b.real_name)+' · '+esc(b.player_count)+' players</small></button>').join("")
+ '<button class="record clickable '+(selectedId===b.id?"active":"")+'" data-booking="'+esc(b.id)+'"><b>'+esc(b.booking_reference||"BOOKING")+' · '+esc(b.experience||"Field game")+'</b><div class="meta">'+summarize(b)+' <small>'+dt(b.booking_start)+'</small></div><small>'+esc(b.real_name)+' · '+esc(b.player_count)+' players · '+(priceFor(b)==null?'Quote pending':money(priceFor(b))+' total group price')+'</small></button>').join("")
  :'<div class="panel"><p>No bookings in this filter.</p></div>';
  $$("[data-booking]").forEach(button=>button.onclick=()=>showBooking(button.dataset.booking));
 }
@@ -95,21 +98,21 @@ async function showBooking(id){
   if(i.error||lines.error||paid.error){msg(i.error?.message||lines.error?.message||paid.error?.message,true);}
   invoice=i.data;invoiceItems=lines.data||[];payments=paid.data||[];
  }
- const preview=priceFor(b);
+ const preview=priceFor(b),isTeam=teamExperiences.has(b.experience),fixedQuote=isTeam&&preview!=null;
  const isSent=confirmations.some(x=>x.booking_id===id);
  const accountOptions=accounts.map(a=>'<option value="'+esc(a.id)+'">'+esc(a.account_name)+'</option>').join("");
  const paymentControls='<div class="controls"><label>RECEIVING ACCOUNT<select id="payAccount">'+accountOptions+'</select></label><label>METHOD<select id="payMethod"><option value="cash">Cash</option><option value="bank">Bank transfer</option><option value="card">Card</option><option value="online">Online</option><option value="other">Other</option></select></label><label class="wide">PAYMENT REFERENCE<input id="payReference" placeholder="Optional receipt / bank reference"></label></div>';
  let out='<span class="kicker">BOOKING / '+esc(b.booking_reference||"")+'</span><h3>'+esc(b.experience||"FIELD GAME")+'</h3>'+summarize(b)+
- '<dl><dt>CUSTOMER</dt><dd>'+esc(b.real_name)+'</dd><dt>CONTACT</dt><dd>'+esc(b.mobile)+'</dd><dt>START</dt><dd>'+dt(b.booking_start)+'</dd><dt>PLAYERS</dt><dd>'+esc(b.player_count)+'</dd><dt>BOOKING TYPE</dt><dd>'+(b.special_request?"SPECIAL":"STANDARD")+'</dd><dt>PAYMENT</dt><dd>'+esc(b.payment_status||"not invoiced")+'</dd><dt>REQUEST NOTES</dt><dd>'+esc(b.notes||"—")+'</dd></dl>';
+ '<dl><dt>GROUP TOTAL</dt><dd>'+(preview==null?'Needs owner quote':money(preview)+' for complete group')+'</dd><dt>DURATION</dt><dd>'+Math.round((new Date(b.booking_end)-new Date(b.booking_start))/60000)+' min</dd><dt>AMMO INCLUDED</dt><dd>'+(b.experience==='1-Hour Battle Mix'?'4 cartridges / player':isTeam?'1 cartridge / player':'Per package')+'</dd><dt>REFILLS</dt><dd>Rs. 150 per bottle</dd><dt>CUSTOMER</dt><dd>'+esc(b.real_name)+'</dd><dt>CONTACT</dt><dd>'+esc(b.mobile)+'</dd><dt>START</dt><dd>'+dt(b.booking_start)+'</dd><dt>PLAYERS</dt><dd>'+esc(b.player_count)+'</dd><dt>BOOKING TYPE</dt><dd>'+(b.special_request?"SPECIAL":"STANDARD")+'</dd><dt>PAYMENT</dt><dd>'+esc(b.payment_status||"not invoiced")+'</dd><dt>REQUEST NOTES</dt><dd>'+esc(b.notes||"—")+'</dd></dl>';
  if(b.special_request&&b.status==="pending")out+='<div class="action-block"><h4>01 / REVIEW SPECIAL REQUEST</h4><label>REPLY TO CUSTOMER<textarea id="specialReply" placeholder="Approval information or reason for rejection"></textarea></label><div class="button-row"><button class="primary" id="approveSpecial">APPROVE REQUEST</button><button class="danger" id="rejectSpecial">REJECT REQUEST</button></div></div>';
  if(b.status==="pending_payment"&&Number(b.deposit_required_amount||0)>0)out+='<div class="action-block"><h4>02 / RECORD BOOKING ADVANCE</h4><p class="hint">Verify the actual LKR 500 payment first. Recording an advance also creates the invoice and confirms the reservation.</p>'+paymentControls+'<button id="recordAdvance" class="primary">RECORD VERIFIED LKR 500 ADVANCE</button></div>';
  if(b.status==="approved"){
   const mobile=String(b.mobile||"").replace(/\D/g,"").replace(/^0/,"94");
-  const whatsapp=/^94\d{9}$/.test(mobile)?"https://wa.me/"+mobile+"?text="+encodeURIComponent("FIELDZERO RESERVATION CONFIRMATION\nReference: "+(b.booking_reference||"")+"\n"+(b.experience||"")+" / "+dt(b.booking_start)+"\nPlayers: "+b.player_count+"\nBring your booking reference and arrive 15 minutes early. Opening date and field readiness subject to confirmation."):"";
+  const whatsapp=/^94\d{9}$/.test(mobile)?"https://wa.me/"+mobile+"?text="+encodeURIComponent("FIELDZERO RESERVATION CONFIRMATION\nReference: "+(b.booking_reference||"")+"\n"+(b.experience||"")+" / "+dt(b.booking_start)+"\nPlayers: "+b.player_count+"\nTeam fee: "+(preview==null?"Ask for quote":money(preview))+"\nBring your booking reference and arrive 15 minutes early. Opening date and field readiness subject to confirmation."):"";
   out+='<div class="action-block"><h4>03 / SEND CONFIRMATION</h4><p class="hint">'+(isSent?"Marked as sent in FIELDZERO.":"Open WhatsApp, send the prepared confirmation, then mark it sent.")+'</p><div class="button-row">'+(whatsapp?'<a class="primary" style="padding:12px;border-radius:8px;color:#102015" target="_blank" rel="noopener" href="'+esc(whatsapp)+'">OPEN WHATSAPP ↗</a>':'<span class="alert">Check customer phone number</span>')+'<button class="ghost" id="markSent">MARK MESSAGE SENT</button></div></div>';
-  if(!invoice)out+='<div class="action-block"><h4>04 / PREPARE ARRIVAL INVOICE</h4><p class="hint">No booking advance was required. Issue the invoice when the customer arrives.</p><label>SESSION TOTAL (LKR)<input type="number" min="1" step=".01" id="arrivalTotal" value="'+esc(preview||"")+'"></label><button class="primary" id="arrivalInvoice">CREATE INVOICE</button></div>';
+  if(!invoice)out+='<div class="action-block"><h4>04 / PREPARE ARRIVAL INVOICE</h4><p class="hint">Issue an invoice for the booked team price on arrival. Record any extras during final checkout.</p><label>BOOKED TEAM TOTAL (LKR)<input type="number" min="1" step=".01" id="arrivalTotal" '+(fixedQuote?'readonly ':'')+'value="'+esc(preview??"")+'"></label><button class="primary" id="arrivalInvoice" '+(preview==null?'disabled ':'')+'>CREATE INVOICE</button></div>';
   else{
-   out+='<div class="action-block"><h4>04 / CHECKOUT & INVOICE</h4><p class="hint">'+esc(invoice.invoice_number)+' · Total '+money(invoice.total_amount)+' · Paid '+money(invoice.amount_paid)+' · Balance '+money(invoice.balance_due)+'</p><label>SESSION CHARGE (LKR)<input id="billPrice" type="number" min="1" step=".01" value="'+esc(preview||invoice.total_amount)+'"></label><label>ADDITIONAL CHARGES (LKR)<input id="billExtra" type="number" min="0" step=".01" value="0"></label><label>ADDITIONAL ITEMS DESCRIPTION<input id="billExtraDescription" placeholder="Optional extra purchases"></label><div class="button-row"><button id="finalBill" class="ghost">FINALIZE / UPDATE BILL</button><button id="downloadInvoice" class="ghost">DOWNLOAD INVOICE PDF</button></div>';
+   out+='<div class="action-block"><h4>04 / CHECKOUT & INVOICE</h4><p class="hint">'+esc(invoice.invoice_number)+' · Total '+money(invoice.total_amount)+' · Paid '+money(invoice.amount_paid)+' · Balance '+money(invoice.balance_due)+'</p><label>BOOKED GROUP FEE (LKR)<input id="billPrice" type="number" min="1" step=".01" '+(fixedQuote?'readonly ':'')+'value="'+esc(preview??invoice.total_amount)+'"></label><label>EXTRA AMMO BOTTLES · RS. 150 EACH<input id="billAmmoCount" type="number" min="0" max="100" step="1" value="0"></label><label>OTHER ADDITIONAL CHARGES (LKR)<input id="billExtra" type="number" min="0" step=".01" value="0"></label><label>ADDITIONAL ITEMS DESCRIPTION<input id="billExtraDescription" placeholder="Optional extra purchases"></label><div class="button-row"><button id="finalBill" class="ghost">FINALIZE / UPDATE BILL</button><button id="downloadInvoice" class="ghost">DOWNLOAD INVOICE PDF</button></div>';
    if(Number(invoice.balance_due)>0)out+='<div style="margin-top:15px"><p class="hint">Only record money after verifying it has been received. Current balance '+money(invoice.balance_due)+'.</p>'+paymentControls+'<label>AMOUNT RECEIVED (LKR)<input id="paymentAmount" type="number" min=".01" step=".01" value="'+esc(invoice.balance_due)+'"></label><button id="receivePayment" class="primary">RECORD PAYMENT & ISSUE RECEIPT</button></div>';
    out+='</div>';
   }
@@ -124,10 +127,15 @@ async function showBooking(id){
  assign("arrivalInvoice",()=>rpc("fz_staff_create_arrival_invoice",{p_booking_id:id,p_total_amount:Number($("#arrivalTotal").value)}));
  const payParams=()=>({p_payment_method:$("#payMethod").value,p_account_id:$("#payAccount").value||null,p_reference:$("#payReference").value.trim(),p_payment_date:today(),p_received_by:user.email||"Staff"});
  assign("recordAdvance",()=>rpc("fz_staff_record_advance",{p_booking_id:id,...payParams()}));
- assign("finalBill",()=>{const amount=Number($("#billPrice").value),extra=Number($("#billExtra").value);
-  const items=[{description:(b.experience||"FIELDZERO session")+" / "+b.booking_reference,quantity:1,unit_price:amount}];
+ assign("finalBill",()=>{
+  const amount=Number($("#billPrice").value),extra=Number($("#billExtra").value),bottles=Number($("#billAmmoCount")?.value||0);
+  if(!Number.isFinite(amount)||amount<=0||!Number.isInteger(bottles)||bottles<0||bottles>100||!Number.isFinite(extra)||extra<0)throw Error("Check the group fee, extra ammo bottles and additional charges.");
+  if(fixedQuote&&amount!==preview)throw Error("The booked group rate cannot be changed by workers. Ask the owner.");
+  const items=[{description:(b.experience||"FIELDZERO session")+" / "+b.booking_reference+" · "+b.player_count+" players",quantity:1,unit_price:amount}];
+  if(bottles>0)items.push({description:"Extra gel-ball ammunition bottle",quantity:bottles,unit_price:150});
   if(extra>0)items.push({description:$("#billExtraDescription").value.trim()||"Additional field charges",quantity:1,unit_price:extra});
-  return rpc("fz_staff_finalize_bill",{p_booking_id:id,p_items:items,p_discount_amount:0,p_tax_rate:0});});
+  return rpc("fz_staff_finalize_bill",{p_booking_id:id,p_items:items,p_discount_amount:0,p_tax_rate:0});
+ });
  assign("receivePayment",()=>rpc("fz_staff_record_payment",{p_invoice_id:invoice.id,p_amount:Number($("#paymentAmount").value),p_payment_date:today(),...payParams(),p_request_key:crypto.randomUUID()}));
  if($("#downloadInvoice"))$("#downloadInvoice").onclick=downloadInvoice;
   if(b.status==="approved" && window.FZVisitV25)window.FZVisitV25.render(b,invoice,()=>action(async()=>{}));

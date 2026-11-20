@@ -226,6 +226,7 @@
     if(!experience||!players||!duration)return;
     if(mode){
       const isTeam=fzTeamKeys.has(mode.package_key);
+      if(!isTeam&&special?.dataset.fzAutoLarge==='true'){special.value='false';delete special.dataset.fzAutoLarge;}
       if(mode.package_key==='birthday-private-event'&&special)special.value='true';
       const min=Number(mode.min_players)||1,max=Number(mode.max_players)||16,oldPlayers=Number(players.value)||min;
       players.innerHTML=Array.from({length:max-min+1},(_,i)=>'<option value="'+(min+i)+'">'+(min+i)+'</option>').join('');
@@ -255,6 +256,7 @@
         ?'SOLO TARGET BAY · Separate from the main arena. Target reservations never block arena matches. Only available target times are shown.'
         :'MAIN ARENA · Existing confirmed arena matches block overlapping starts. Solo target practice uses a separate bay.';
     }else{
+      if(special?.dataset.fzAutoLarge==='true'){special.value='false';delete special.dataset.fzAutoLarge;}
       duration.innerHTML='<option value="0.5">30 minutes</option><option value="1">1 hour</option><option value="2">2 hours</option><option value="3">3 hours</option>';
       duration.disabled=false;
       players.innerHTML=[1,2,3,4,5,6,7,8,9,10,12,16].map(v=>'<option>'+v+'</option>').join('');
@@ -279,10 +281,20 @@
   }
   async function loadMembershipPlans(){
     const host=$('#fzMembershipPlans');if(!host||!db)return;
-    const {data,error}=await db.from('fz_membership_plans').select('id,slug,name,price_amount,currency,sessions_included,duration_days,benefits,sort_order').eq('active',true).order('sort_order',{ascending:true});
-    if(error){host.innerHTML='<div class="empty-state">Membership plans are temporarily unavailable. Please contact FIELDZERO.</div>';console.warn('Membership plans:',error.message);return;}
+    const {data,error}=await db.from('fz_membership_plans').select('id,slug,name,price_amount,currency,sessions_included,duration_days,benefits,sort_order')
+      .eq('active',true).order('sort_order',{ascending:true});
+    if(error){host.innerHTML='<div class="empty-state">Memberships are temporarily unavailable. Contact FIELDZERO.</div>';console.warn('Membership plans:',error.message);return;}
     const rows=data||[];
-    host.innerHTML=rows.length?rows.map(function(p,i){return '<article class="fz-membership-plan-card '+(i===1?'featured':'')+'"><span class="fz-membership-plan-kicker">FIELDZERO / '+String(i+1).padStart(2,'0')+' · MEMBERSHIP</span><h3>'+escapeHtml(p.name)+'</h3><div class="fz-membership-plan-price">'+escapeHtml(p.currency||'LKR')+' '+Number(p.price_amount||0).toLocaleString('en-LK')+'</div><div class="fz-membership-plan-meta">'+Number(p.sessions_included||0)+' INCLUDED SESSIONS · '+Number(p.duration_days||30)+' DAYS</div><div class="fz-membership-plan-unit">LKR '+(Number(p.sessions_included)>0?Math.round(Number(p.price_amount||0)/Number(p.sessions_included)).toLocaleString('en-LK'):'—')+' PER SESSION</div><ul>'+(p.benefits||[]).map(function(b){return '<li>'+escapeHtml(b)+'</li>';}).join('')+'</ul><a class="button '+(i===1?'button-lime':'button-ghost')+'" href="#memberArea">JOIN / RENEW ↗</a></article>';}).join(''):'<div class="empty-state">Membership plans will be announced soon.</div>';
+    host.innerHTML=rows.length?rows.map((p,i)=>{
+      const credits=Number(p.sessions_included||0),days=Number(p.duration_days||180);
+      const meta=credits>0?credits+' INCLUDED SESSIONS · '+days+' DAYS':days+' DAYS · PHYSICAL MEMBER CARD';
+      const unit=credits>0?'LKR '+Math.round(Number(p.price_amount||0)/credits).toLocaleString('en-LK')+' PER INCLUDED SESSION':'GROUP BOOKING DISCOUNTS · NO FREE GAMES INCLUDED';
+      return '<article class="fz-membership-plan-card '+(i===1?'featured':'')+'"><span class="fz-membership-plan-kicker">FIELDZERO / '+String(i+1).padStart(2,'0')+' · MEMBERSHIP</span>'+
+        '<h3>'+escapeHtml(p.name)+'</h3><div class="fz-membership-plan-price">'+escapeHtml(p.currency||'LKR')+' '+Number(p.price_amount||0).toLocaleString('en-LK')+'</div>'+
+        '<div class="fz-membership-plan-meta">'+meta+'</div><div class="fz-membership-plan-unit">'+unit+'</div>'+
+        '<ul>'+(p.benefits||[]).map(b=>'<li>'+escapeHtml(b)+'</li>').join('')+'</ul>'+
+        '<a class="button '+(i===1?'button-lime':'button-ghost')+'" href="#memberArea">JOIN / RENEW ↗</a></article>';
+    }).join(''):'<div class="empty-state">Membership plans will be announced soon.</div>';
   }
   async function verifyMembershipLink(){
     const code=new URLSearchParams(location.search).get('verify_member');if(!code||!db)return;
